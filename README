@@ -1,0 +1,36 @@
+odml- Metadata handling Library
+-------------------------------------------------------------------------
+Copyright (C) 2009-2011 Jan Grewe & Jan Benda
+www.g-node.org/odml
+Sources can be downloaded from github (www.github.com): git@github.com:G-Node/odml-java-lib.git
+
+odml is simple hierarchical format for storing and transfering metadata
+about experimental data.
+This library contains the Java implementation of it which can easily be used 
+with Matlab.
+
+
+License
+-------------------------------------------------------------------------
+
+This work is published under the LGLP (GNU lesser general public license) version 3.0.
+
+The odml-library is free software, you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License.
+
+This library is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Installation/building
+-------------------------------------------------------------------------
+The odml Java library comes as a simgle Java Archive (*.jar) that does not 
+need to be installed.
+
+If you checked out the source and want to build it you require the java compiler 
+and Apache ant.
+
+just run "shell>ant" to compile and create an odml.jar file.
+
+

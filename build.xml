@@ -1,0 +1,47 @@
+<project name="odml" basedir="." default="build">
+  <property name="build.dir"   value="build"/>
+  <property name="classes.dir" value="${build.dir}"/>
+  <property name="src.dir"   value="${build.dir}/src"/>
+  <property name="lib.dir"     value="${build.dir}/lib"/>
+  <property name="javadoc.dir" value="${build.dir}/doc"/>
+  
+  <path id="classpath">
+    <fileset dir="${lib.dir}" includes="**/*.jar"/>
+  </path>
+
+  <target name="clean">
+    <delete dir="${build.dir}"/>
+    <mkdir dir="${build.dir}"/>
+  </target>
+  
+  <target name="compile">
+    <copy todir="${src.dir}">
+      <fileset dir="./src"/>
+    </copy>
+    <copy todir="${lib.dir}">
+      <fileset dir="./lib"/>
+    </copy>
+    <mkdir dir="${classes.dir}"/>
+    <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"/>
+  </target>
+  
+  <target name="javadoc">
+     <mkdir dir="${javadoc.dir}"/>
+    <javadoc access="protected" author="true" classpath="${lib.dir}/commons-codec-1.5/commons-codec-1.5.jar:${lib.dir}/jdom.jar:${lib.dir}/apache-log4j-1.2.15/log4j-1.2.15.jar" destdir="${javadoc.dir}" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="odml.util,odml.core" source="1.6" sourcepath="${src.dir}" splitindex="true" use="true" version="true"/>
+   </target>
+  
+  <target name="jar">
+    <copy todir="${build.dir}/log"><fileset dir="./log"/></copy>
+    <copy todir="${build.dir}/resources"><fileset dir="./src/resources"/></copy>
+    <copy file="./NOTICE" todir="${build.dir}"/>
+    <copy file="./README" todir="${build.dir}"/>
+    <copy file="./LICENSE" todir="${build.dir}"/>
+    <jar destfile="./odml.jar" basedir="${build.dir}"></jar>
+    <!--<jar destfile="./odml.jar" basedir="${classes.dir}" excludes="${jar.dir}/*" includes=""></jar>-->
+    <delete dir="${build.dir}"/>
+  </target>
+  
+  <target name="build" depends="clean, compile, javadoc, jar"/>
+    
+  
+</project>
