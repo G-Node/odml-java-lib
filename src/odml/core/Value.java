@@ -31,11 +31,10 @@ import java.util.Vector;
 
 import javax.swing.tree.TreeNode;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
 
 
@@ -194,21 +193,23 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode{
 		}
 		this.content 			= new Object();
 		this.uncertainty 		= new Object();
-		this.filename 	= new String();
+		this.filename 			= new String();
 		this.definition			= new String();
-		this.reference					= new String();
+		this.reference			= new String();
 		//*** value stuff
 		if(type.equalsIgnoreCase("binary")){
-			BASE64Encoder enc = new BASE64Encoder();
+			Base64 enc = new Base64();
 			//the value has to be converted to String; if it is already just take it, if it is not
 			//try different things 
 			if(content instanceof File){
 				this.content = enc.encode(getBytesFromFile((File)content));
+				this.setFilename(((File)content).getName());
 			}
 			else if (content instanceof URI){
 				try{
 					File tempFile = new File((URI)content);
 					this.content = enc.encode(getBytesFromFile(tempFile));
+					this.setFilename(tempFile.getName());
 				}catch (Exception e) {
 					logger.error("", e);
 					throw e;
@@ -218,6 +219,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode{
 				try{
 					File tempFile = new File(((URL)content).toURI());
 					this.content = enc.encode(getBytesFromFile(tempFile));
+					this.setFilename(tempFile.getName());
 				}catch (Exception e) {
 					logger.error("", e);
 					throw e;
@@ -227,9 +229,10 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode{
 				this.content = content;						
 			}
 			else{
-				throw new Exception("Base64 encoding of the binary value failed! If you want to add a binar " +
+				throw new Exception("Base64 encoding of the binary value failed! If you want to add binary content" +
 				"to the property it must be either an already encoded String, a File, an URI or URL.");
 			}
+			this.setEncoder("Base64");
 		}
 		else{
 			this.content = content;	
@@ -244,16 +247,8 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode{
 			}
 		}
 		//*** filename
-		if(filename == null){
-			if(type.equalsIgnoreCase("binary")){	this.filename = "";	}
-			else{	this.filename = "";	}
-		}
-		else{
-			try{	this.filename = filename;	}
-			catch (Exception e) {
-				this.filename = "";
-				logger.error("", e);	
-			}
+		if(filename != null && !filename.isEmpty()){
+			this.filename = filename;
 		}
 		//*** definition	
 		if(definition == null){	this.definition = "";	}
@@ -962,9 +957,9 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode{
 			throw e;
 		}
 		//create the decoder
-		BASE64Decoder decoder = new BASE64Decoder();
+		Base64 base = new Base64();
 		//decode the content
-		byte[] bytes = decoder.decodeBuffer(content);
+		byte[] bytes = base.decode(content);
 		//write bytes to disc
 		os.write(bytes);
 		os.flush();
