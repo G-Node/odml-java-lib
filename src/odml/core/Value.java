@@ -185,17 +185,16 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode{
 	 */
 	private void initialize(Object content, String unit, Object uncertainty, String type, String filename, 
 			String definition, String reference, String encoder, String checksum)throws Exception{
-		if(type == null){
+		if(type == null || type.isEmpty()){
 			throw new Exception("Could not create Value! 'type' must not be null or empty!");
 		}
-		else if(type.isEmpty()){
-			throw new Exception("Could not create Value! 'type' must not be null or empty!");
-		}
+		
 		this.content 			= new Object();
 		this.uncertainty 		= new Object();
 		this.filename 			= new String();
 		this.definition			= new String();
 		this.reference			= new String();
+		this.type 				= type;
 		//*** value stuff
 		if(type.equalsIgnoreCase("binary")){
 			Base64 enc = new Base64();
@@ -265,9 +264,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode{
 		//*** unit
 		if(unit == null){	this.unit ="";	}
 		else{	this.unit = unit;	}
-		//*** type
-		if(type == null){	this.type = "string";	}
-		else{	this.type = type;	}
 		//*** encoder
 		if(encoder == null){	this.encoder = "";	}
 		//*** checksum

@@ -189,7 +189,7 @@ public class Reader implements Serializable {
 		}
 		Element rootElement = dom.getDocumentElement();
 		String odmlVersion = rootElement.getAttribute("version");
-		if (!odmlVersion.equalsIgnoreCase("1")) {
+		if (Float.parseFloat(odmlVersion) != 1.0) {
 			logger.error("can not handle odmlVersion: " + odmlVersion + " ending processing!");
 			return;
 		}
@@ -361,6 +361,7 @@ public class Reader implements Serializable {
 		String include = getDirectChildContent(domSection, "include");
 		Section section = null;
 		try {
+			
 			section = new Section(parent, name, type, reference, definition, url, mapURL);
 			section.setLink(link, true);
 			if (link != null) {
@@ -599,8 +600,8 @@ public class Reader implements Serializable {
 		String content = null;
 		NodeList l = element.getElementsByTagName(elementName);
 		for (int i = 0; i < l.getLength(); i++) {
-			if (l.item(i).getParentNode().isEqualNode(element)) {
-				content = l.item(0).getTextContent();
+			if (l.item(i).getParentNode().isSameNode(element)) {
+				content = l.item(i).getTextContent();
 				return content;
 			}
 		}

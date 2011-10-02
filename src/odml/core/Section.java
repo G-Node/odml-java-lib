@@ -241,12 +241,12 @@ public class Section extends Object implements Serializable, TreeNode {
 			logger.warn("Invalid section name:\treplacing blanks '/' by '-'");
 		}
 
-		String nameRegex = "^[a-zA-Z]{1}.*"; // checking beginning: normal
-		// letter, than anything
-		if (!name.matches(nameRegex)) {
-			name = "s_" + name;
-			logger.warn("Invalid section type:\t's_' added as no leading character found");
-		}
+//		String nameRegex = "^[a-zA-Z]{1}.*"; // checking beginning: normal
+//		// letter, than anything
+//		if (!name.matches(nameRegex)) {
+//			name = "s_" + name;
+//			logger.warn("Invalid section type:\t's_' added as no leading character found");
+//		}
 		return name;
 	}
 

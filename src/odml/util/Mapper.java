@@ -224,11 +224,11 @@ public class Mapper {
 			e.printStackTrace();
 		}
 
-		Section destination = mapped.getSection(forwardMap.get(p.getParentSection().getPath()));// find the destination
+		Section parentDest = mapped.getSection(forwardMap.get(p.getParentSection().getPath()));// find the destination
 		// section
 		if (p.getMapping() == null) { // no mapping defined, just add to
 			// destination
-			destination.add(myCopy);
+			parentDest.add(myCopy);
 		} else {// there is mapping information
 			String ref = p.getMapping().getRef(); // get the reference part of
 			// the URL
@@ -237,7 +237,7 @@ public class Mapper {
 			if (ref == null || ref.isEmpty()) {// mapping has no reference part
 				logger
 					.warn("Property mapping does not containt reference information! Just appending to current section!");
-				destination.add(myCopy);
+				parentDest.add(myCopy);
 			} else if (!ref.contains(":")) {// there is a reference part but no
 				// section type
 				mapName = ref;
@@ -268,7 +268,7 @@ public class Mapper {
 						.error("Property.mapProperty: Could not uniquely map the property due to missing section type in reference part of mapping url.");
 				} else {// only one type: assuming that this will be the target
 					destType = temp.getSection(0).getType();
-					if (destination.getType().equalsIgnoreCase(destType)) {// if
+					if (parentDest.getType().equalsIgnoreCase(destType)) {// if
 						// the
 						// destination
 						// type
@@ -279,27 +279,27 @@ public class Mapper {
 						// add
 						// the
 						// property
-						destination.add(myCopy);// add to destination section
-					} else if (destination.getSectionsByType(destType).size() > 0) {
-						if (destination.getSectionsByType(destType).size() > 1)
+						parentDest.add(myCopy);// add to destination section
+					} else if (parentDest.getSectionsByType(destType).size() > 0) {
+						if (parentDest.getSectionsByType(destType).size() > 1)
 							logger.error("Cannot uniquely assign property: " + p.getName() + " in section: "
 									+ p.getParentSection().getPath());
 						else {
-							destination.getSectionByType(destType).add(myCopy);
+							parentDest.getSectionByType(destType).add(myCopy);
 						}
-					} else if (destination.getParent().getSectionByType(destType) != null) {
-						if (destination.getParent().getSectionsByType(destType).size() > 1)
+					} else if (parentDest.getParent().getSectionByType(destType) != null) {
+						if (parentDest.getParent().getSectionsByType(destType).size() > 1)
 							logger.warn("Cannot uniquely assign property: " + p.getName() + " in section: "
 									+ p.getParentSection().getPath());
 						else {// check if there are multiple dependencies,
 							// create subsection and create a link
-							Section destSection = destination.getParent().getSectionByType(destType);
-							if (destSection.getRelatedSections(destination.getType()).size() > 1) {// there
+							Section destSection = parentDest.getParent().getSectionByType(destType);
+							if (destSection.getRelatedSections(parentDest.getType()).size() > 1) {// there
 								// are
 								// multiple
 								// dependencies
 								temp.add(myCopy);
-								destination.add(temp);
+								parentDest.add(temp);
 								temp.setLink(destSection.getPath());
 							} else {// no multiple dependencies, just add.
 								destSection.add(myCopy);
@@ -314,7 +314,7 @@ public class Mapper {
 					else {// if neither mapped Section nor sibling is of
 						// matching type add the terminology
 						temp.getSection(0).add(myCopy);
-						destination.getParent().add(temp.getSection(0));
+						parentDest.getParent().add(temp.getSection(0));
 					}
 				}
 			} else {// there is a reference part and it contains section-type
@@ -332,34 +332,34 @@ public class Mapper {
 					myCopy.setName(mapName);
 				else
 					logger
-						.warn("Property.mapProperty: terminology does not contain a property with the name specidied in the mapping!");
+						.warn("Property.mapProperty: terminology does not contain a property with the name specified in the mapping!");
 				// figure out the right destination
-				if (destination.getType().equalsIgnoreCase(type)) { // if it is
+				if (parentDest.getType().equalsIgnoreCase(type)) { // if it is
 					// the
 					// destination
 					// section
 					// itself,
 					// add
 					// property
-					destination.add(myCopy);
-				} else if (destination.getSectionsByType(type).size() > 0) {
-					if (destination.getSectionsByType(type).size() > 1)
+					parentDest.add(myCopy);
+				} else if (parentDest.getSectionsByType(type).size() > 0) {
+					if (parentDest.getSectionsByType(type).size() > 1)
 						logger.error("Cannot uniquely assign property: " + p.getName() + " in section: "
 								+ p.getParentSection().getPath());
 					else {
-						destination.getSectionByType(type).add(myCopy);
+						parentDest.getSectionByType(type).add(myCopy);
 					}
-				} else if (destination.getParent().getSectionByType(type) != null) {
-					if (destination.getParent().getSectionsByType(type).size() > 1)
+				} else if (parentDest.getParent().getSectionByType(type) != null) {
+					if (parentDest.getParent().getSectionsByType(type).size() > 1)
 						logger.warn("Cannot uniquely assign property: " + p.getName() + " in section: "
 								+ p.getParentSection().getPath());
 					else {// check if there are unique or multiple dependencies
-						Section destSection = destination.getParent().getSectionByType(type);
-						if (destSection.getRelatedSections(destination.getType()).size() > 1) {// there are
+						Section destSection = parentDest.getParent().getSectionByType(type);
+						if (destSection.getRelatedSections(parentDest.getType()).size() > 1) {// there are
 							// multiple
 							// dependencies
 							temp.add(myCopy);
-							destination.add(temp);
+							parentDest.add(temp);
 							temp.setLink(destSection.getPath());
 						} else {// there is a single dependency
 							destSection.add(myCopy);
@@ -369,7 +369,7 @@ public class Mapper {
 					// System.out.println("\tMapper.mapProperty: neither mappedSection nor sibling is of desired type.");
 					if (temp != null) {
 						temp.add(myCopy);
-						destination.getParent().add(temp);
+						parentDest.getParent().add(temp);
 					} else {
 						logger.error("Property.mapProperty: could not find section of type: " + type
 								+ " in the mapped terminology!");
