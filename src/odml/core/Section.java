@@ -738,10 +738,10 @@ public class Section extends Object implements Serializable, TreeNode {
 			if (subsections.get(i).getType().equalsIgnoreCase(type)) {
 				temp.add(subsections.get(i));
 			} else if (subsections.get(i).getType().contains("/") && subsections.get(i).getType().startsWith(type)) {// TODO
-																														// Problem
-																														// with
-																														// sam
-																														// beginnings
+				// Problem
+				// with
+				// sam
+				// beginnings
 				temp.add(subsections.get(i));
 			}
 		}
@@ -1036,10 +1036,12 @@ public class Section extends Object implements Serializable, TreeNode {
 			logger.error("Section.setName: name must not be empty");
 			return false;
 		}
-		// if (type.contains("/")){
-		// logger.error("Section.setName: name must not be a path");
-		// return false;
-		// }
+		if (this.getProperty("name") != null && !this.getProperty("name").getName().equalsIgnoreCase(this.name)) {
+			logger
+				.error("Section.setName: provided name is in conflict with the one provided by the 'name' property! No change done!");
+			return false;
+		}
+
 		this.name = name;
 		return true;
 	}
@@ -1300,6 +1302,11 @@ public class Section extends Object implements Serializable, TreeNode {
 		}
 		if (this.terminology != null) {
 			this.checkTerminologyConsistency(property);
+		}
+		// override section name when "name" property is added
+		if (property.getName().equalsIgnoreCase("name")) {
+			this.setName(property.getValue(0).toString());
+			logger.info("Section.addProperty: New Property overrides the section name. Section name was replaced!");
 		}
 		return propertyCount() - 1;
 	}

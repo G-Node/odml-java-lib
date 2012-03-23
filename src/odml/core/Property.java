@@ -692,14 +692,18 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 	 */
 	public boolean setValueAt(Object value, int index) {
 		if (index < 0 || index >= this.valueCount()) {
-			logger.error("! specified index out of range!");
+			logger.error("Property.setValueAt: specified index out of range!");
 			return false;
 		}
 		try {
 			Value toAdd = new Value(value, null);
 			this.values.set(index, toAdd);
+			logger.info("Property.setValueAt: successfully set value at index " + index);
 		} catch (Exception e) {
-			logger.error("", e);
+			logger.error("Property.setValueAt: An exception occurred! ", e);
+		}
+		if (this.name.equalsIgnoreCase("name") && value instanceof String) {
+			this.parentSection.setName((String) value);
 		}
 		return true;
 	}
