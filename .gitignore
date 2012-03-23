@@ -1,0 +1,6 @@
+.classpath
+bin/
+*.jar
+log/
+*~
+test/
