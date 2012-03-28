@@ -2,9 +2,10 @@
 <classpath>
 	<classpathentry excluding="test/" kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
-	<classpathentry kind="lib" path="lib/jdom.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/apache-log4j-1.2.15/log4j-1.2.15.jar" sourcepath="lib/apache-log4j-1.2.15/src"/>
-	<classpathentry kind="lib" path="lib/commons-codec-1.5/commons-codec-1.5.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/slf4j-api.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/jdom1.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/commons-codec.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/slf4j-jdk14.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
