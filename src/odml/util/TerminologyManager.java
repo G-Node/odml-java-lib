@@ -126,7 +126,7 @@ public class TerminologyManager {
     * section found in the terminology. If the terminology does not contain that type of section null is returned. If
     * no type is specified, loadTerminology returns the root section of the terminology.
     * 
-    * @param URL {@link URL}
+    * @param repository {@link URL}
     * @return {@link Section}
     */
    public Section loadTerminology(URL repository, String sectionType) {
@@ -173,6 +173,11 @@ public class TerminologyManager {
    }
 
 
+   /**
+    * Returns the repository provided with the url in form of a Section. 
+    * @param repository {@link URL}
+    * @return {@link Section}
+    */
    private Section getRepository(URL repository) {
       Section rep = null;
       String key = repository.getProtocol() + "://" + repository.getAuthority()
