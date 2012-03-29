@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+
+export JAVA_HOME=/usr/lib/jvm/default-java
+export CLASSPATH=/usr/share/java/jdom1.jar:/usr/share/java/slf4j-api.jar:/usr/share/java/slf4j-jdk14.jar:/usr/share/java/commons-codec.jar
+
+
+%:
+	dh --with javahelper $@
+

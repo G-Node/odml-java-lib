@@ -1,0 +1,21 @@
+Source: libodml
+Section: java
+Priority: optional
+Maintainer:  Jan Grewe <jan.grewe@g-node.org>
+Build-Depends: debhelper (>> 7), javahelper (>= 0.24) , ant, libjdom1-java, libslf4j-java, libcommons-codec-java
+Build-Depends-Indep: default-jdk
+Standards-Version: 3.8.1
+Homepage: http://www.g-node.org/odml
+Vcs-Browser: http://github.com/G-Node/odml-java-lib
+Vcs-Git: git://github.com/G-Node/odml-java-lib.git
+
+Package: libodml-java
+Architecture: all
+Depends: ${java:Depends}, ${misc:Depends}
+Description: Python GUI and API for data annotation with odml.
+ The odml format is a simple hierarchical format basically consisting
+ of extended key-value pairs that can be grouped in sections. The odml
+ format is designed for data annotation with any kind of metadata. 
+ These are stored in xml files. 
+ .
+ Standardization can be achieved by applying odml-terminologies.
