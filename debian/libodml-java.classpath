@@ -1,1 +1,1 @@
-libodml-java.jar /usr/share/java/jdom1.jar /usr/share/java/slf4j-api.jar /usr/share/java/slf4j-jdk14.jar
+libodml.jar /usr/share/java/jdom1.jar /usr/share/java/slf4j-api.jar /usr/share/java/slf4j-jdk14.jar /usr/share/java/commons-codec.jar
