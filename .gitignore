@@ -4,3 +4,5 @@ bin/
 log/
 *~
 test/
+debian/
+build/

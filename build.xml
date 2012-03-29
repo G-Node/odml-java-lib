@@ -41,7 +41,6 @@
     	</section>
   	</manifest>
   	
-    <copy todir="${build.dir}/resources"><fileset dir="./src/resources"/></copy>
     <copy file="./NOTICE" todir="${build.dir}"/>
     <copy file="./README" todir="${build.dir}"/>
     <copy file="./LICENSE" todir="${build.dir}"/>
