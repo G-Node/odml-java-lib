@@ -537,8 +537,9 @@ public class Reader implements Serializable {
          type = "";
       }
       // *** the filename
-      if (domValue.getElementsByTagName("defaultFileName").getLength() > 0) {
-         filename = ((Element) domValue.getElementsByTagName("filename").item(0)).getTextContent();
+      if (domValue.getElementsByTagName("filename").getLength() > 0) {
+         filename = ((Element) domValue.getElementsByTagName("filename").item(0))
+               .getTextContent();
       }
       // *** the value definitions
       if (domValue.getElementsByTagName("definition").getLength() > 0) {
