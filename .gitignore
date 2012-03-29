@@ -3,4 +3,6 @@ bin/
 *.jar
 log/
 *~
+build/
+debian/
 test/
