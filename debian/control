@@ -9,13 +9,14 @@ Homepage: http://www.g-node.org/odml
 Vcs-Browser: http://github.com/G-Node/odml-java-lib
 Vcs-Git: git://github.com/G-Node/odml-java-lib.git
 
-Package: libodml-java
-Architecture: all
-Depends: ${java:Depends}, ${misc:Depends}
-Description: Python GUI and API for data annotation with odml.
+Package: libodml-java 
+Architecture: all 
+Depends: ${java:Depends}, ${misc:Depends} 
+Description: Java API for data annotation with odml.
  The odml format is a simple hierarchical format basically consisting
  of extended key-value pairs that can be grouped in sections. The odml
  format is designed for data annotation with any kind of metadata. 
- These are stored in xml files. 
- .
+ These are stored in xml files.  The Java library can be easily
+ imported to Matlab to include automated metadata handling into your
+ workflow.
  Standardization can be achieved by applying odml-terminologies.
