@@ -382,6 +382,12 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          }
          // integer could be masked as string
          else if (content instanceof java.lang.String) {
+        	if (((java.lang.String) content).contains(".") || ((String)content).contains(",")){
+        	 int index = ((String)content).indexOf(".");
+        	 if(index == -1) 
+        		 index = ((String)content).indexOf(",");
+        	 content = ((String)content).substring(0, index);
+        	} 
             int checked = Integer.parseInt((String) content);
             logger.debug("value of class String:\tparsed to int \t> correct");
             return checked;
@@ -664,41 +670,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          // bool could be masked as string > case5 in checkStringsforDatatype(..) would be bool
          else if (content instanceof java.lang.String) {
             logger.debug("value of class:\tString");
-            //added by jan to catch empty value problems
-            int checkNumber = checkStringsforDatatype((String) content);
-            boolean checked;
-
-            switch (checkNumber) {
-               case 6:
-                  logger.debug("checked String:\tparsed to boolean\t> correct");
-                  if (((String) content).matches("(true)|1")) {
-                     checked = true;
-                     return checked;
-                  } else {
-                     checked = false;
-                     return checked;
-                  }
-
-                  // explicit errors
-               case 0:
-                  throw new WrongTypeException("'bool' expected, not 'string': " + content);
-               case 10:
-                  throw new WrongTypeException("'bool' expected, not 'text': " + content);
-               case 2:
-                  throw new WrongTypeException("'bool' expected, not 'n-tuple': " + content);
-               case 3:
-                  throw new WrongTypeException("'bool' expected, not 'date': " + content);
-               case 4:
-                  throw new WrongTypeException("'bool' expected, not 'time': " + content);
-               case 5:
-                  throw new WrongTypeException("'bool' expected, not 'int': " + content);
-               case 55:
-                  throw new WrongTypeException("'bool' expected, not 'float': " + content);
-
-               default:
-                  throw new WrongTypeException("'bool' expected, got '" + content + "' as input");
-
-            }
+            return Boolean.parseBoolean((String) content);
          } else {
             throw new WrongTypeException("'bool' expected, not " + content.getClass());
          }
