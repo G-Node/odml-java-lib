@@ -7,7 +7,5 @@
 	<classpathentry kind="lib" path="/usr/share/java/jdom.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/commons-codec.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/slf4j-jdk14.jar"/>
-	<classpathentry kind="lib" path="lib/slf4j-api.jar"/>
-	<classpathentry kind="lib" path="lib/slf4j-jdk14.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
