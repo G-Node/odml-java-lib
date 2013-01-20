@@ -141,8 +141,9 @@ public class Reader implements Serializable {
       Document dom = parseXML(fileURL);
       if (dom == null) {
          this.root = null;
-         throw new Exception("parsing of file: " + fileURL.toString()
-               + " failed! Please check file name.");
+         return s;
+//         throw new Exception("parsing of file: " + fileURL.toString()
+//               + " failed! Please check file name.");
       }
       logger.info("... parsing succeeded.");
       if (validate && schemaLocations != null) {
@@ -261,7 +262,8 @@ public class Reader implements Serializable {
          try {
             stream = url.openStream();
          } catch (Exception e) {
-            logger.error("Could not open url. ", e);
+            logger.error("Could not open file at specified url: "+
+            		url.toString()+". Verify connection!", e);
             return null;
          }
          DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

@@ -135,10 +135,10 @@ public class TerminologyManager {
       String key = repository.getProtocol() + "://" + repository.getAuthority()
             + repository.getPath() + "#"
             + sectionType;
-      System.out.println("TerminologyManager.loadTerminology: looking for type " + sectionType);
+//      System.out.println("TerminologyManager.loadTerminology: looking for type " + sectionType);
       if (urlSectionHash.containsKey(key)) {
          s = urlSectionHash.get(key);
-         System.out.println("TerminologyManager.loadTerminology: got from hash: " + key);
+//         System.out.println("TerminologyManager.loadTerminology: got from hash: " + key);
       } else {// if not successful, get repository
          Section rep = getRepository(repository);
          if (rep != null) {
@@ -166,7 +166,7 @@ public class TerminologyManager {
          s.loadInclude();
          if (!urlSectionHash.containsKey(key)) {
             urlSectionHash.put(key, s);
-            System.out.println("TerminologyManager.loadTerminology: put to hash: " + key);
+//            System.out.println("TerminologyManager.loadTerminology: put to hash: " + key);
          }
       }
       return s;
@@ -184,7 +184,7 @@ public class TerminologyManager {
             + repository.getPath();
       if (urlSectionHash.containsKey(key)) {
          rep = urlSectionHash.get(key);
-         System.out.println("TerminologyManager.getRepository: got from hash: " + key);
+//         System.out.println("TerminologyManager.getRepository: got from hash: " + key);
       } else {
          try {
             Reader r = new Reader();
@@ -396,7 +396,7 @@ public class TerminologyManager {
     */
    @Override
    public void finalize() {
-      out.println("finalize");
+//      out.println("finalize");
       File userFile = new File(TERMINOLOGIES_FILE);
       if (userFile.exists() && userFile.canWrite()) {
          try {
