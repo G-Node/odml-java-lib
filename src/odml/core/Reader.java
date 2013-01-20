@@ -141,6 +141,55 @@ public class Reader implements Serializable {
       Document dom = parseXML(fileURL);
       if (dom == null) {
          this.root = null;
+         return s;
+//         throw new Exception("parsing of file: " + fileURL.toString()
+//               + " failed! Please check file name.");
+      }
+      logger.info("... parsing succeeded.");
+      if (validate && schemaLocations != null) {
+         isValid = validateXML(dom);
+         if (isValid)
+            logger.info("Validation succeeded.");
+      } else if (schemaLocations == null) {
+         validate = false;
+      } else {
+         logger.info("Validation skipped on request.");
+      }
+      if (isValid) {
+         logger.info("Creating odML tree representation...");
+         createTree(dom);
+         logger.info("... finished.");
+      } else {
+         logger.error("Validation failed.");
+      }
+      if (option == LOAD_AND_RESOLVE || option == FULL_CONVERSION) {
+         loadIncludes();
+      }
+      if (option == LOAD_AND_RESOLVE || option == FULL_CONVERSION) {
+         resolveLinks();
+      }
+      if (option == FULL_CONVERSION) {
+         s = map();
+      } else {
+         s = this.getRootSection();
+      }
+      return s;
+   }
+   /**
+    * Load the file that is identified with the passed {@link URL}.
+    * 
+    * @param fileURL
+    *            The URL of the file.
+    * @param option
+    * @return {@link Section}: the root section of the loaded file.
+    * @throws Exception
+    */
+   public Section load(URL fileURL, int option, boolean validate) throws Exception {
+      Section s = null;
+      this.fileUrl = fileURL;
+      Document dom = parseXML(fileURL);
+      if (dom == null) {
+         this.root = null;
          throw new Exception("parsing of file: " + fileURL.toString()
                + " failed! Please check file name.");
       }
@@ -193,7 +242,7 @@ public class Reader implements Serializable {
       Element rootElement = dom.getDocumentElement();
       String odmlVersion = rootElement.getAttribute("version");
       if (Float.parseFloat(odmlVersion) != 1.0) {
-         logger.error("can not handle odmlVersion: " + odmlVersion + " ending processing!");
+    	  logger.error("Can not handle odmlVersion: " + odmlVersion + " stopping further processing!");
          return;
       }
 
@@ -261,7 +310,8 @@ public class Reader implements Serializable {
          try {
             stream = url.openStream();
          } catch (Exception e) {
-            logger.error("Could not open url. ", e);
+            logger.error("Could not open file at specified url: "+
+            		url.toString()+". Verify connection!", e);
             return null;
          }
          DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -677,7 +727,12 @@ public class Reader implements Serializable {
 
 
    /**
-    * Loads all included Files into the document.
+    * Loads all included files into the document. Sections can contain includes 
+    * which are links to sections located in a separate file. Includes are specified
+    * by an URL pointing to an odml file. This url may include a hash (#)followed by
+    * the absolute path of the target section. 
+    * When loading an included section, the section is extended by the content of target
+    * section (including subsections and their properties). 
     */
    public void loadIncludes() {
       for (int i = 0; i < includes.size(); i++) {
@@ -698,7 +753,10 @@ public class Reader implements Serializable {
 
 
    /**
-    * Resolves all links that are stored in the tree.
+    * Resolves all links that are stored in the tree. This means that the
+    * linking section are extended with the content of the section that is
+    * referenced in the linking section. Links can only be established
+    *  within the same file.
     */
    public void resolveLinks() {
       root.resolveAllLinks();

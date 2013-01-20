@@ -4,8 +4,10 @@
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/usr/share/java/slf4j-api.jar"/>
-	<classpathentry kind="lib" path="/usr/share/java/jdom1.jar"/>
+	<classpathentry kind="lib" path="/usr/share/java/jdom.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/commons-codec.jar"/>
 	<classpathentry kind="lib" path="/usr/share/java/slf4j-jdk14.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-jdk14.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

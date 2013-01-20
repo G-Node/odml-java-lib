@@ -55,6 +55,10 @@ public class Mapper {
     * @return {@link Section} the converted tree.
     */
    public Section map() {
+	   if(original.getRepository() == null || original.getRepository().toString().isEmpty()){
+		   logger.error("Cannot perform mapping procedure on section " + original.toString()+
+		   "! No repository for terminologies specified!");
+	   }
       try {
          original.resolveAllLinks();// before start of mapping resolve all
          // links and
