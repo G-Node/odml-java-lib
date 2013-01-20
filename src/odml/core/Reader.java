@@ -194,7 +194,7 @@ public class Reader implements Serializable {
       Element rootElement = dom.getDocumentElement();
       String odmlVersion = rootElement.getAttribute("version");
       if (Float.parseFloat(odmlVersion) != 1.0) {
-         logger.error("can not handle odmlVersion: " + odmlVersion + " ending processing!");
+    	  logger.error("Can not handle odmlVersion: " + odmlVersion + " stopping further processing!");
          return;
       }
 
@@ -679,7 +679,12 @@ public class Reader implements Serializable {
 
 
    /**
-    * Loads all included Files into the document.
+    * Loads all included files into the document. Sections can contain includes 
+    * which are links to sections located in a separate file. Includes are specified
+    * by an URL pointing to an odml file. This url may include a hash (#)followed by
+    * the absolute path of the target section. 
+    * When loading an included section, the section is extended by the content of target
+    * section (including subsections and their properties). 
     */
    public void loadIncludes() {
       for (int i = 0; i < includes.size(); i++) {
@@ -700,7 +705,10 @@ public class Reader implements Serializable {
 
 
    /**
-    * Resolves all links that are stored in the tree.
+    * Resolves all links that are stored in the tree. This means that the
+    * linking section are extended with the content of the section that is
+    * referenced in the linking section. Links can only be established
+    *  within the same file.
     */
    public void resolveLinks() {
       root.resolveAllLinks();
