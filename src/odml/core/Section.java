@@ -50,7 +50,7 @@ public class Section extends Object implements Serializable, TreeNode {
          MERGE_COMBINE = 2;
    private String            type                       = null, definition = null, name = null,
          reference = null;
-   private Vector<Property>  properties;                                                          // = new Vector<Property>();
+   private Vector<Property>  properties;                                                         // = new Vector<Property>();
    private URL               repositoryURL              = null, fileUrl = null;
    private String            link                       = null;
    private String            include                    = null, author = null, version = null;
@@ -666,7 +666,8 @@ public class Section extends Object implements Serializable, TreeNode {
       Vector<Section> temp = getSections(name);
       if (temp != null && temp.size() > 1) {
          logger
-               .warn("Section.getSection: more than one subsection of this name exists > returning first occurence");
+               .warn("Section.getSection: more than one subsection of this name exists > returning first occurence(Section "
+                     + this.getPath() + " asked for " + name + ")");
          return temp.get(0);
       } else if (temp != null && temp.size() == 1) {
          return temp.get(0);
@@ -690,8 +691,6 @@ public class Section extends Object implements Serializable, TreeNode {
             name = ensureValidPathEnding(name);
             logger
                   .info("name for getSections actually a path > calling getSectionViaPath to search at right place");
-            // actualParentsName is at penultimate position, ultimate
-            // position is name of wanted sections!
             Section actualParent = getSectionViaPath(name.substring(0, name.lastIndexOf("/")));
             return actualParent.getSections(name.substring(name.lastIndexOf("/") + 1));
          }
@@ -704,7 +703,8 @@ public class Section extends Object implements Serializable, TreeNode {
             }
          }
          if (temp.size() == 0) {
-            logger.info("Section.getSections: no subsection of this name exists!");
+            logger.debug("Section.getSections: no subsection of this name exists! ("
+                  + this.getPath() + " asked for " + name + ")");
          }
       }
       return temp;
@@ -2907,7 +2907,8 @@ public class Section extends Object implements Serializable, TreeNode {
       try {
          fileUrl = new URL(this.getInclude());
       } catch (NullPointerException e) {
-         System.out.println("Section.loadInclude: NullPointerException");
+         logger.error("Section.loadInclude() raised: NullPointerException! Called on "
+               + this.getPath());
       } catch (Exception e) {
          // try if a file can be created
          try {
