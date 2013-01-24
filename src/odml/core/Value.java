@@ -144,10 +144,10 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       }
       this.content = null;
       this.uncertainty = null;
-      this.filename = new String();
-      this.definition = new String();
-      this.reference = new String();
-      this.checksum = new String();
+      this.filename = "";
+      this.definition = "";
+      this.reference = "";
+      this.checksum = "";
       this.type = type;
       if (content == null || content.toString().isEmpty()) {
          logger.warn("! value should not be empty except for terminologies!");
@@ -192,14 +192,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          this.unit = "";
       } else {
          this.unit = unit;
-      }
-      //*** encoder
-      if (encoder == null) {
-         this.encoder = "";
-      }
-      //*** checksum
-      if (checksum == null) {
-         this.checksum = "";
       }
    }
 
@@ -833,7 +825,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          this.setChecksum("CRC32$" + crc.getValue());
          this.setFilename(file.getName());
          this.setEncoder("Base64");
-         encoded = bytes.toString();
+         encoded = new String(bytes, "UTF-8");
       } catch (Exception e) {
          logger.error("An error occurred during encoding: " + e.getLocalizedMessage());
       }
