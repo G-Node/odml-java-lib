@@ -212,27 +212,26 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
     * @return {@link String} the type under which odml refers to it.
     */
    public static String inferType(Object value) {
-      if (value instanceof String) {
-         return "string";
-      } else if (value instanceof Integer) {
-         return "int";
-      } else if (value instanceof Boolean) {
-         return "boolean";
-      } else if (value instanceof Date) {
-         return "datetime";
-      } else if (value instanceof Float) {
-         return "float";
-      } else if (value instanceof Double) {
-         return "float";
-      } else if (value instanceof URL) {
-         return "url";
-      } else if (value instanceof File) {
-         return "binary";
-      } else if (value instanceof Date) {
-         return "date";
-      } else {
-         return "string";
-      }
+	   if (value instanceof Integer) {
+		   return "int";
+	   } else if (value instanceof Boolean) {
+		   return "boolean";
+	   } else if (value instanceof Date) {
+		   return "datetime";
+	   } else if (value instanceof Float) {
+		   return "float";
+	   } else if (value instanceof Double) {
+		   return "float";
+	   } else if (value instanceof URL) {
+		   return "url";
+	   } else if (value instanceof File) {
+		   return "binary";
+	   } else if (value instanceof Date) {
+		   return "date";
+	   } else  if (value instanceof String) {
+		   return checkStringsforDatatype(value.toString());
+	   }
+	   return "string";
    }
 
 
@@ -444,105 +443,81 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
 
    /**
-    * Checks one String Object more in detail, could be
-    * string (oneWord): 		caseNumber 0
-    * text (more words&lines): caseNumber 10
-    * n-tuple (DIGIT;DIGIT): 	caseNumber 2
-    * date (yyyy-mm-dd):		caseNumber 3
-    * time (HH:mm:ss):			caseNumber 4
-    * integer:					caseNumber 5
-    * float:					caseNumber 55
-    * boolean:					caseNumber 6
-    * datetime (yyyy-mm-dd HH:mm:ss): caseNumber 7 (3+4 ;)
+    * Checks a {@link String} in more detail, and returns the odml data type.
+    * 
     * @param content {@link String}
-    * @return {@link Integer}: the caseNumber for the String
+    * @return {@link String}: the odml type that matches best.
     */
-   protected static int checkStringsforDatatype(String content) {
+   protected static String checkStringsforDatatype(String content) {
       content = content.trim();
-      int caseNumber = 0; // by default string = oneWord
-      // case 10: theContent has whitespaces in it > 'text'
+//      String regExDate = "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))";
+////      String regExDateGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2}";
+//      String regExTime = "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))"; // for time
+////      String regExTimeGeneral = "[0-9]{2}:[0-9]{2}:[0-9]{2}";
+//      String regExInt = "^[+-]?[0-9]+$";
+//      String regExFloat = "^[+-]?[0-9]*\\.[0-9]+$";
+//      String regExBool = "(true)|(false)|1|0";
+//      String regExDatetimeGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}";
 
-      // pattern matchers for strings
-
-      // case 2: for n-tuple: format DIGITSxDIGITS
-      //String regExNTuple = "(?i)[0-9]{1,};[0-9]{1,}";
-
-      /* case 3: for date: 
-       * max. 12 for months allowed
-       * max. 31 for days allowed
-       * ensuring that February has max 29 days (not checking for leap years...)
-       */
-      String regExDate = "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))";
-      String regExDateGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2}";
-
-      /* case 4: for time:
-       * max 24 hours
-       * max 60 min
-       * max 60 seconds
-       */
-      String regExTime = "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))"; // for time
-      String regExTimeGeneral = "[0-9]{2}:[0-9]{2}:[0-9]{2}";
-
-      // case 5: for int:
-      // possibility for signs +- followed by at least one digit. nothing else can be in the pattern (i.e.  !
-      String regExInt = "^[+-]?[0-9]+$";
-      // case 55: for float:
-      // possibility for signs +- maybe followed by digits, then must have a '.', 
-      // then must be followed by at least one digit. nothing else can be in the pattern!
-      String regExFloat = "^[+-]?[0-9]*\\.[0-9]+$";
-
-      // case 6: for bool:
-      String regExBool = "(true)|(false)|1|0";
-
-      // String regExURL = "";	// for URL
-
-      //case 7: for datetime
-      String regExDatetimeGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}";
-
-      if (content.matches(regExNTuple)) {
-         caseNumber = 2;
-         logger.debug("checkStringsForDatatype:\tfound 'n-tuplet'");
-      } else if (content.matches(regExDateGeneral)) {
-         if (content.matches(regExDate)) {
-            caseNumber = 3;
-            logger.debug("checkStringsForDatatype:\tfound 'date'");
-         } else { // (6)66 eeevvvill! instead of first 6 > 3 for Date
-            caseNumber = 366;
-            logger.info("checkStringsForDatatype:\tfound 'date'-like thing: " + content);
-         }
-         if (content.matches(regExDatetimeGeneral)) {
-            caseNumber = 7;
-            logger.debug("checkStringsForDatatype:\tfound 'datetime'");
-         }
-      } else if (content.matches(regExTimeGeneral)) {
-         if (content.matches(regExTime)) {
-            caseNumber = 4;
-            logger.debug("checkStringsForDatatype:\tfound 'time'");
-         } else { // (6)66 eeevvvill! instead of first 6 > 4 for Time
-            caseNumber = 466;
-            logger.info("checkStringsForDatatype:\tfound 'time'-like thing: " + content);
-         }
-         if (content.matches(regExDatetimeGeneral)) {
-            caseNumber = 7;
-            logger.debug("checkStringsForDatatype:\tfound 'datetime'");
-         }
-      } else if (content.matches(regExInt)) {
-         caseNumber = 5;
-         logger.debug("checkStringsForDatatype:\tfound 'int'");
-      } else if (content.matches(regExFloat)) {
-         caseNumber = 55;
-         logger.debug("checkStringsForDatatype:\tfound 'float'");
-      } else if (content.matches(regExBool)) {
-         caseNumber = 6;
-         logger.debug("checkStringsForDatatype:\tfound 'bool'");
-      } else if (content.matches(regExDatetimeGeneral)) {
-         caseNumber = 7;
-         logger.debug("checkStringsForDatatype:\tfound 'datetime'");
-      } else if (content.contains(" ")) {
-         caseNumber = 10;
-         logger.debug("checkStringsForDatatype:\tfound 'text'");
+      HashMap<String, String> regExpMap = new HashMap<String, String>();
+      regExpMap.put("date", "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))");
+      regExpMap.put("datetime","[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}");
+      regExpMap.put("time","(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))");
+      regExpMap.put("int","^[+-]?[0-9]+$");
+      regExpMap.put("float","^[+-]?[0-9]*\\.[0-9]+$");
+      regExpMap.put("boolean","(true)|(false)|1|0");
+      regExpMap.put("n-tuple",regExNTuple);
+      Iterator<String> iter = regExpMap.keySet().iterator();
+      while(iter.hasNext()){
+    	  String key = iter.next();
+    	  if (content.toLowerCase().matches(regExpMap.get(key)))
+    		  return key;
       }
-      return caseNumber;
+      return "string";
+//      if (content.matches(regExNTuple)) {
+//         caseNumber = 2;
+//         logger.debug("checkStringsForDatatype:\tfound 'n-tuplet'");
+//      } else if (content.matches(regExDateGeneral)) {
+//         if (content.matches(regExDate)) {
+//            caseNumber = 3;
+//            logger.debug("checkStringsForDatatype:\tfound 'date'");
+//         } else { // (6)66 eeevvvill! instead of first 6 > 3 for Date
+//            caseNumber = 366;
+//            logger.info("checkStringsForDatatype:\tfound 'date'-like thing: " + content);
+//         }
+//         if (content.matches(regExDatetimeGeneral)) {
+//            caseNumber = 7;
+//            logger.debug("checkStringsForDatatype:\tfound 'datetime'");
+//         }
+//      } else if (content.matches(regExTimeGeneral)) {
+//         if (content.matches(regExTime)) {
+//            caseNumber = 4;
+//            logger.debug("checkStringsForDatatype:\tfound 'time'");
+//         } else { // (6)66 eeevvvill! instead of first 6 > 4 for Time
+//            caseNumber = 466;
+//            logger.info("checkStringsForDatatype:\tfound 'time'-like thing: " + content);
+//         }
+//         if (content.matches(regExDatetimeGeneral)) {
+//            caseNumber = 7;
+//            logger.debug("checkStringsForDatatype:\tfound 'datetime'");
+//         }
+//      } else if (content.matches(regExInt)) {
+//         caseNumber = 5;
+//         logger.debug("checkStringsForDatatype:\tfound 'int'");
+//      } else if (content.matches(regExFloat)) {
+//         caseNumber = 55;
+//         logger.debug("checkStringsForDatatype:\tfound 'float'");
+//      } else if (content.matches(regExBool)) {
+//         caseNumber = 6;
+//         logger.debug("checkStringsForDatatype:\tfound 'bool'");
+//      } else if (content.matches(regExDatetimeGeneral)) {
+//         caseNumber = 7;
+//         logger.debug("checkStringsForDatatype:\tfound 'datetime'");
+//      } else if (content.contains(" ")) {
+//         caseNumber = 10;
+//         logger.debug("checkStringsForDatatype:\tfound 'text'");
+//      }
+//      return caseNumber;
    }
 
 
