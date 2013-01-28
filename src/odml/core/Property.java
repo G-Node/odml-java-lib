@@ -1985,7 +1985,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
          return;
       }
       if (outFile.exists()) {
-         throw new Exception("File already exists please provide a different file name.");
+         logger.error("File already exists please provide a different file name.");
       }
       Value.writeBinaryToDisc(values.get(index).getContent().toString(), outFile);
    }

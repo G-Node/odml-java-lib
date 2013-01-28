@@ -558,9 +558,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
     */
    public static byte[] getBytesFromFile(File file) throws IOException {
       InputStream in = new FileInputStream(file);
-      //Get the size of the file
       long length = file.length();
-      //ensure that the file not larger than Integer.MAX_VALUE.
       if (length > Integer.MAX_VALUE) {
          throw new IOException("File exceeds max value: " + Integer.MAX_VALUE);
       }
@@ -577,7 +575,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       if (offset < bytes.length) {
          throw new IOException("Could not completely read file" + file.getName());
       }
-      //Close stream
       in.close();
       return bytes;
    }
@@ -600,10 +597,9 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          logger.error("", e);
          throw e;
       }
-      //create the decoder
       Base64 base = new Base64();
       //decode the content
-      byte[] bytes = base.decode(content);
+      byte[] bytes = base.decode(content.getBytes("UTF-8"));
       //write bytes to disc
       os.write(bytes);
       os.flush();
