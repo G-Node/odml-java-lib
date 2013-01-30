@@ -117,16 +117,16 @@ public class Writer implements Serializable {
    /**
     * 
     * @param odMLRoot {@link Section}: the section to start the dom creation.
-    * @param asTemplate {@link boolean}: flag to indicate whether Template is used or not
+    * @param asTerminology {@link boolean}: flag to indicate whether Template is used or not
     * @return {@link boolean}: true if creating Dom successfully, otherwise false
     */
-   private boolean createDom(Section odMLRoot, boolean asTemplate) {
+   private boolean createDom(Section odMLRoot, boolean asTerminology) {
       logger.debug("in createDom\twith RootSection");
       doc = new Document();
       //create processing instruction the last one added is the preferred one
       ProcessingInstruction instr = null;
       ProcessingInstruction altInstr = null;
-      if (asTemplate) {
+      if (asTerminology) {
          altInstr = new ProcessingInstruction("xml-stylesheet",
                "type=\"text/xsl\" href=\"odml.xsl\"");
          instr = new ProcessingInstruction("xml-stylesheet",
@@ -187,7 +187,7 @@ public class Writer implements Serializable {
          rootElement.addContent(repElement);
       }
       for (int i = 0; i < dummyRoot.sectionCount(); i++) {
-         appendSection(rootElement, dummyRoot.getSection(i), asTemplate);
+         appendSection(rootElement, dummyRoot.getSection(i), asTerminology);
       }
       streamToFile(file);
       return true;

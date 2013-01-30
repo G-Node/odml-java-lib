@@ -53,7 +53,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    private String                        unit             = null, type = null, reference = null;
    private Object                        content, uncertainty;
    private String                        definition, filename, checksum, encoder;
-   private Property                      associatedProperty;
+   private Property                      parent;
    private final static SimpleDateFormat dateFormat       = new SimpleDateFormat("yyyy-MM-dd");
    private final static SimpleDateFormat datetimeFormat   = new SimpleDateFormat(
                                                                 "yyyy-MM-dd hh:mm:ss");
@@ -211,10 +211,8 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
     * @param value {@link Object} the value;
     * @return {@link String} the type under which odml refers to it.
     */
-   public static String inferType(Object value) {
-      if (value instanceof String) {
-         return "string";
-      } else if (value instanceof Integer) {
+   public static String inferOdmlType(Object value) {
+      if (value instanceof Integer) {
          return "int";
       } else if (value instanceof Boolean) {
          return "boolean";
@@ -230,9 +228,10 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          return "binary";
       } else if (value instanceof Date) {
          return "date";
-      } else {
-         return "string";
+      } else if (value instanceof String) {
+         return inferDatatypeFromString(value.toString());
       }
+      return "string";
    }
 
 
@@ -247,13 +246,10 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          logger.info("Found empty content!!!");
          return null;
       }
-      // check for int
       if (type.matches("(?i)int.*")) {
          if (content instanceof java.lang.Integer) {
             return content;
-         }
-         // integer could be masked as string
-         else if (content instanceof java.lang.String) {
+         } else if (content instanceof java.lang.String) {
             if (((java.lang.String) content).contains(".") || ((String) content).contains(",")) {
                int index = ((String) content).indexOf(".");
                if (index == -1)
@@ -268,9 +264,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                   + " to requested type: " + type);
             return null;
          }
-      }
-      // check for float
-      else if (type.matches("(?i)float.*")) {
+      } else if (type.matches("(?i)float.*")) {
          if (content instanceof Number) {
             return ((Number) content).floatValue();
          } else if (content instanceof java.lang.String) { // float could be masked as string
@@ -280,10 +274,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                   + " to requested type " + type);
             return null;
          }
-      }
-
-      // check for string (string = oneWord in this case)!
-      else if (type.matches("(?i)string") || type.matches("(?i)text")) {
+      } else if (type.matches("(?i)string") || type.matches("(?i)text")) {
          logger.debug("type specified:\tstring");
          if (content instanceof String) {
             return content;
@@ -294,10 +285,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                   + content.getClass().getSimpleName() + " to requested type: " + type);
             return null;
          }
-      }
-
-      // check for n-tuple (format DIGITSxDIGITS)
-      else if (type.matches("(?i)n-tuple")) {
+      } else if (type.matches("(?i)n-tuple")) {
          if (content instanceof String && ((String) content).matches(regExNTuple)) {
             return content;
          } else {
@@ -305,10 +293,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                   + regExNTuple + ")!");
             return null;
          }
-      }
-
-      // check for date (format yyyy-mm-dd)
-      else if (type.matches("(?i)date")) {
+      } else if (type.matches("(?i)date")) {
          if (content instanceof java.util.Date) {
             try {
                Date date = dateFormat.parse(dateFormat.format(content));
@@ -331,10 +316,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                   + " to a date value!");
             return null;
          }
-      }
-
-      // check for time (format hh:mm:ss)
-      else if (type.matches("(?i)time")) {
+      } else if (type.matches("(?i)time")) {
          if (content instanceof java.util.Date) {
             try {
                Date date = timeFormat.parse(timeFormat.format(content));
@@ -355,10 +337,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                   + " to a time value!");
             return null;
          }
-      }
-
-      // check for datetime (format yyyy-MM-dd HH:mm:ss)
-      else if (type.matches("(?i)datetime")) {
+      } else if (type.matches("(?i)datetime")) {
          if (content instanceof java.util.Date) {
             try {
                Date date = datetimeFormat.parse(datetimeFormat.format(content));
@@ -379,10 +358,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                   + " to a datetime value!");
             return null;
          }
-      }
-
-      // check for boolean
-      else if (type.matches("(?i)bool.*")) {
+      } else if (type.matches("(?i)bool.*")) {
          if (content instanceof java.lang.Boolean) {
             return content;
          } else if (content instanceof java.lang.String) {
@@ -392,10 +368,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                   + content.getClass().getSimpleName() + " to a " + type + ": value!");
             return null;
          }
-      }
-
-      // check for URL
-      else if (type.matches("(?i)URL")) {
+      } else if (type.matches("(?i)URL")) {
          if (content instanceof java.net.URL) {
             return content;
          } else if (content instanceof java.lang.String) {
@@ -410,9 +383,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                   + " to required type: " + type);
             return null;
          }
-      }
-      // check for binary content
-      else if (type.matches("(?i)binary")) {
+      } else if (type.matches("(?i)binary")) {
          if (content instanceof java.lang.String || content instanceof File
                || content instanceof URL || content instanceof URI) {
             return content;
@@ -421,20 +392,14 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                   + content.getClass().getSimpleName() + " found!");
             return null;
          }
-      }
-
-      // check for persons = string
-      else if (type.matches("(?i)person")) {
+      } else if (type.matches("(?i)person")) {
          if (!(content instanceof java.lang.String)) {
             logger.error("Expect a person to be of class expected, not " + content.getClass());
             return null;
          } else {
             return content;
          }
-      }
-
-      // all cases checked > unknown type specified!
-      else {
+      } else {
          type = "string";
          logger.warn("type unknown:\thandling as 'string':\tcorrect");
          return content;
@@ -444,105 +409,39 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
 
    /**
-    * Checks one String Object more in detail, could be
-    * string (oneWord): 		caseNumber 0
-    * text (more words&lines): caseNumber 10
-    * n-tuple (DIGIT;DIGIT): 	caseNumber 2
-    * date (yyyy-mm-dd):		caseNumber 3
-    * time (HH:mm:ss):			caseNumber 4
-    * integer:					caseNumber 5
-    * float:					caseNumber 55
-    * boolean:					caseNumber 6
-    * datetime (yyyy-mm-dd HH:mm:ss): caseNumber 7 (3+4 ;)
+    * Checks a {@link String} in more detail, and returns the odml data type.
+    * 
     * @param content {@link String}
-    * @return {@link Integer}: the caseNumber for the String
+    * @return {@link String}: the odml type that matches best.
     */
-   protected static int checkStringsforDatatype(String content) {
+   protected static String inferDatatypeFromString(String content) {
       content = content.trim();
-      int caseNumber = 0; // by default string = oneWord
-      // case 10: theContent has whitespaces in it > 'text'
+      //      String regExDate = "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))";
+      ////      String regExDateGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2}";
+      //      String regExTime = "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))"; // for time
+      ////      String regExTimeGeneral = "[0-9]{2}:[0-9]{2}:[0-9]{2}";
+      //      String regExInt = "^[+-]?[0-9]+$";
+      //      String regExFloat = "^[+-]?[0-9]*\\.[0-9]+$";
+      //      String regExBool = "(true)|(false)|1|0";
+      //      String regExDatetimeGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}";
 
-      // pattern matchers for strings
-
-      // case 2: for n-tuple: format DIGITSxDIGITS
-      //String regExNTuple = "(?i)[0-9]{1,};[0-9]{1,}";
-
-      /* case 3: for date: 
-       * max. 12 for months allowed
-       * max. 31 for days allowed
-       * ensuring that February has max 29 days (not checking for leap years...)
-       */
-      String regExDate = "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))";
-      String regExDateGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2}";
-
-      /* case 4: for time:
-       * max 24 hours
-       * max 60 min
-       * max 60 seconds
-       */
-      String regExTime = "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))"; // for time
-      String regExTimeGeneral = "[0-9]{2}:[0-9]{2}:[0-9]{2}";
-
-      // case 5: for int:
-      // possibility for signs +- followed by at least one digit. nothing else can be in the pattern (i.e.  !
-      String regExInt = "^[+-]?[0-9]+$";
-      // case 55: for float:
-      // possibility for signs +- maybe followed by digits, then must have a '.', 
-      // then must be followed by at least one digit. nothing else can be in the pattern!
-      String regExFloat = "^[+-]?[0-9]*\\.[0-9]+$";
-
-      // case 6: for bool:
-      String regExBool = "(true)|(false)|1|0";
-
-      // String regExURL = "";	// for URL
-
-      //case 7: for datetime
-      String regExDatetimeGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}";
-
-      if (content.matches(regExNTuple)) {
-         caseNumber = 2;
-         logger.debug("checkStringsForDatatype:\tfound 'n-tuplet'");
-      } else if (content.matches(regExDateGeneral)) {
-         if (content.matches(regExDate)) {
-            caseNumber = 3;
-            logger.debug("checkStringsForDatatype:\tfound 'date'");
-         } else { // (6)66 eeevvvill! instead of first 6 > 3 for Date
-            caseNumber = 366;
-            logger.info("checkStringsForDatatype:\tfound 'date'-like thing: " + content);
-         }
-         if (content.matches(regExDatetimeGeneral)) {
-            caseNumber = 7;
-            logger.debug("checkStringsForDatatype:\tfound 'datetime'");
-         }
-      } else if (content.matches(regExTimeGeneral)) {
-         if (content.matches(regExTime)) {
-            caseNumber = 4;
-            logger.debug("checkStringsForDatatype:\tfound 'time'");
-         } else { // (6)66 eeevvvill! instead of first 6 > 4 for Time
-            caseNumber = 466;
-            logger.info("checkStringsForDatatype:\tfound 'time'-like thing: " + content);
-         }
-         if (content.matches(regExDatetimeGeneral)) {
-            caseNumber = 7;
-            logger.debug("checkStringsForDatatype:\tfound 'datetime'");
-         }
-      } else if (content.matches(regExInt)) {
-         caseNumber = 5;
-         logger.debug("checkStringsForDatatype:\tfound 'int'");
-      } else if (content.matches(regExFloat)) {
-         caseNumber = 55;
-         logger.debug("checkStringsForDatatype:\tfound 'float'");
-      } else if (content.matches(regExBool)) {
-         caseNumber = 6;
-         logger.debug("checkStringsForDatatype:\tfound 'bool'");
-      } else if (content.matches(regExDatetimeGeneral)) {
-         caseNumber = 7;
-         logger.debug("checkStringsForDatatype:\tfound 'datetime'");
-      } else if (content.contains(" ")) {
-         caseNumber = 10;
-         logger.debug("checkStringsForDatatype:\tfound 'text'");
+      HashMap<String, String> regExpMap = new HashMap<String, String>();
+      regExpMap.put("date",
+            "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))");
+      regExpMap.put("datetime", "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}");
+      regExpMap.put("time",
+            "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))");
+      regExpMap.put("int", "^[+-]?[0-9]+$");
+      regExpMap.put("float", "^[+-]?[0-9]*\\.[0-9]+$");
+      regExpMap.put("boolean", "(true)|(false)|1|0");
+      regExpMap.put("n-tuple", regExNTuple);
+      Iterator<String> iter = regExpMap.keySet().iterator();
+      while (iter.hasNext()) {
+         String key = iter.next();
+         if (content.toLowerCase().matches(regExpMap.get(key)))
+            return key;
       }
-      return caseNumber;
+      return "string";
    }
 
 
@@ -589,7 +488,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       if (outFile == null) {
          throw new Exception("Argument outFile not specified!");
       }
-      //create the outputStream
       FileOutputStream os = null;
       try {
          os = new FileOutputStream(outFile);
@@ -598,9 +496,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          throw e;
       }
       Base64 base = new Base64();
-      //decode the content
       byte[] bytes = base.decode(content.getBytes("UTF-8"));
-      //write bytes to disc
       os.write(bytes);
       os.flush();
       os.close();
@@ -612,12 +508,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    //****************************************************************
    // associated property (so to say dad in tree)
    protected void setAssociatedProperty(Property property) {
-      this.associatedProperty = property;
-   }
-
-
-   protected Property getAssociatedProperty() {
-      return this.associatedProperty;
+      this.parent = property;
    }
 
 
@@ -720,34 +611,58 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
+   /**
+    * Validates this {@link Value} against the terminology definition.
+    * This function is marked @deprecated and will be removed in future versions!
+    * 
+    * Use validate instead!
+    * 
+    * @param termProp Property: The definition retrieved from a terminology.
+    */
+   @Deprecated
    public void compareToTerminology(Property termProp) {
+      validate(termProp);
+   }
+
+
+   /**
+    * Validates a {@link Value} against the value definition in a terminology. 
+    * 
+    * @param terminologyProperty {@link Property}: The respective {@link Property} 
+    * that defines the kind of value.
+    * 
+    */
+   public void validate(Property terminologyProperty) {
       if (this.type != null && !this.type.isEmpty()) {
-         if (!this.type.equalsIgnoreCase(termProp.getType())) {
+         if (!this.type.equalsIgnoreCase(terminologyProperty.getType())) {
             logger.warn("Value type (" + this.type
-                  + ") does not match the one given in the terminology(" + termProp.getType()
+                  + ") does not match the one given in the terminology("
+                  + terminologyProperty.getType()
                   + ")! To guarantee interoperability please ckeck. However, kept provided type.");
          }
       } else {
          try {
-            checkDatatype(this.content, termProp.getType());
-            this.setType(termProp.getType());
+            checkDatatype(this.content, terminologyProperty.getType());
+            this.setType(terminologyProperty.getType());
             logger.info("Added type information to value.");
          } catch (Exception e) {
             logger
                   .warn("Value is not compatible with the type information the terminology suggests ("
-                        + termProp.getType() + "). Did nothing but please check");
+                        + terminologyProperty.getType()
+                        + "). Did not change anything, but please check");
          }
       }
       if (this.unit != null && !this.unit.isEmpty()) {
-         if (!this.unit.equalsIgnoreCase(termProp.getUnit(0))) {
+         if (!this.unit.equalsIgnoreCase(terminologyProperty.getUnit(0))) {
             logger.warn("Value unit (" + this.unit
-                  + ") does not match the one given in the terminology(" + termProp.getUnit()
+                  + ") does not match the one given in the terminology("
+                  + terminologyProperty.getUnit()
                   + ")! To guarantee interoperability please ckeck. However, kept provided unit.");
          }
       } else {
-         if (termProp.getUnit() != null && !termProp.getUnit(0).isEmpty()) {
-            this.setUnit(termProp.getUnit(0));
-            logger.info("Added unit " + termProp.getUnit() + " information to value.");
+         if (terminologyProperty.getUnit() != null && !terminologyProperty.getUnit(0).isEmpty()) {
+            this.setUnit(terminologyProperty.getUnit(0));
+            logger.info("Added unit " + terminologyProperty.getUnit() + " information to value.");
          }
       }
    }
@@ -863,8 +778,8 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
 
    @Override
-   public TreeNode getParent() {
-      return this.getAssociatedProperty();
+   public Property getParent() {
+      return this.parent;
    }
 
 

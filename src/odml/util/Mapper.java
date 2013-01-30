@@ -55,10 +55,10 @@ public class Mapper {
     * @return {@link Section} the converted tree.
     */
    public Section map() {
-	   if(original.getRepository() == null || original.getRepository().toString().isEmpty()){
-		   logger.error("Cannot perform mapping procedure on section " + original.toString()+
-		   "! No repository for terminologies specified!");
-	   }
+      if (original.getRepository() == null || original.getRepository().toString().isEmpty()) {
+         logger.error("Cannot perform mapping procedure on section " + original.toString() +
+               "! No repository for terminologies specified!");
+      }
       try {
          original.resolveAllLinks();// before start of mapping resolve all
          // links and
@@ -230,7 +230,7 @@ public class Mapper {
          e.printStackTrace();
       }
 
-      Section parentDest = mapped.getSection(forwardMap.get(p.getParentSection().getPath()));// find the destination
+      Section parentDest = mapped.getSection(forwardMap.get(p.getParent().getPath()));// find the destination
       // section
       if (p.getMapping() == null) { // no mapping defined, just add to
          // destination
@@ -290,7 +290,7 @@ public class Mapper {
                   if (parentDest.getSectionsByType(destType).size() > 1)
                      logger.error("Cannot uniquely assign property: " + p.getName()
                            + " in section: "
-                           + p.getParentSection().getPath());
+                           + p.getParent().getPath());
                   else {
                      parentDest.getSectionByType(destType).add(myCopy);
                   }
@@ -298,7 +298,7 @@ public class Mapper {
                   if (parentDest.getParent().getSectionsByType(destType).size() > 1)
                      logger.warn("Cannot uniquely assign property: " + p.getName()
                            + " in section: "
-                           + p.getParentSection().getPath());
+                           + p.getParent().getPath());
                   else {// check if there are multiple dependencies,
                      // create subsection and create a link
                      Section destSection = parentDest.getParent().getSectionByType(destType);
@@ -354,14 +354,14 @@ public class Mapper {
             } else if (parentDest.getSectionsByType(type).size() > 0) {
                if (parentDest.getSectionsByType(type).size() > 1)
                   logger.error("Cannot uniquely assign property: " + p.getName() + " in section: "
-                        + p.getParentSection().getPath());
+                        + p.getParent().getPath());
                else {
                   parentDest.getSectionByType(type).add(myCopy);
                }
             } else if (parentDest.getParent().getSectionByType(type) != null) {
                if (parentDest.getParent().getSectionsByType(type).size() > 1)
                   logger.warn("Cannot uniquely assign property: " + p.getName() + " in section: "
-                        + p.getParentSection().getPath());
+                        + p.getParent().getPath());
                else {// check if there are unique or multiple dependencies
                   Section destSection = parentDest.getParent().getSectionByType(type);
                   if (destSection.getRelatedSections(parentDest.getType()).size() > 1) {// there are
