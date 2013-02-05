@@ -56,7 +56,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    private Property                      parent;
    private final static SimpleDateFormat dateFormat       = new SimpleDateFormat("yyyy-MM-dd");
    private final static SimpleDateFormat datetimeFormat   = new SimpleDateFormat(
-                                                                "yyyy-MM-dd hh:mm:ss");
+   "yyyy-MM-dd hh:mm:ss");
    private final static SimpleDateFormat timeFormat       = new SimpleDateFormat("hh:mm:ss");
    private final static String           regExNTuple      = "(?i)[0-9]{1,};[0-9]{1,}";
 
@@ -138,7 +138,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
    protected Value(Object content, String unit, Object uncertainty, String type, String filename,
                    String definition, String reference, String encoder, String checksum)
-                                                                                        throws Exception {
+   throws Exception {
       if (type == null || type.isEmpty()) {
          throw new Exception("Could not create Value! 'type' must not be null or empty!");
       }
@@ -148,6 +148,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       this.definition = "";
       this.reference = "";
       this.checksum = "";
+      this.encoder = "";
       this.type = type;
       if (content == null || content.toString().isEmpty()) {
          logger.warn("! value should not be empty except for terminologies!");
@@ -202,7 +203,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
     */
    public boolean isEmpty() {
       return (content == null)
-            || (content != null && content instanceof String && ((String) content).isEmpty());
+      || (content != null && content instanceof String && ((String) content).isEmpty());
    }
 
 
@@ -427,10 +428,10 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
       HashMap<String, String> regExpMap = new HashMap<String, String>();
       regExpMap.put("date",
-            "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))");
+      "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))");
       regExpMap.put("datetime", "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}");
       regExpMap.put("time",
-            "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))");
+      "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))");
       regExpMap.put("int", "^[+-]?[0-9]+$");
       regExpMap.put("float", "^[+-]?[0-9]*\\.[0-9]+$");
       regExpMap.put("boolean", "(true)|(false)|1|0");
@@ -589,9 +590,11 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   // encoder
    protected void setEncoder(String encoder) {
-      this.encoder = encoder;
+      if(encoder == null || encoder.isEmpty())
+         this.encoder = "";
+      else
+         this.encoder = encoder;
    }
 
 
@@ -600,9 +603,11 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   // checksum
    protected void setChecksum(String checksum) {
-      this.checksum = checksum;
+      if(checksum == null || checksum.isEmpty())
+         this.checksum = "";
+      else
+         this.checksum = checksum;
    }
 
 
@@ -647,9 +652,9 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
             logger.info("Added type information to value.");
          } catch (Exception e) {
             logger
-                  .warn("Value is not compatible with the type information the terminology suggests ("
-                        + terminologyProperty.getType()
-                        + "). Did not change anything, but please check");
+            .warn("Value is not compatible with the type information the terminology suggests ("
+                  + terminologyProperty.getType()
+                  + "). Did not change anything, but please check");
          }
       }
       if (this.unit != null && !this.unit.isEmpty()) {

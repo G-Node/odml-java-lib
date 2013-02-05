@@ -42,7 +42,7 @@ public class Section extends Object implements Serializable, TreeNode {
          MERGE_COMBINE = 2;
    private String            type                       = null, definition = null, name = null,
          reference = null;
-   private Vector<Property>  properties;                                                         // = new Vector<Property>();
+   private Vector<Property>  properties         = new Vector<Property>();
    private URL               repositoryURL              = null, fileUrl = null;
    private String            link                       = null;
    private String            include                    = null, author = null, version = null;
@@ -51,7 +51,7 @@ public class Section extends Object implements Serializable, TreeNode {
    private URL               mapping                    = null;
    protected int             level;
    private boolean           isTerminology              = false;
-   protected Vector<Section> subsections;
+   protected Vector<Section> subsections = new Vector<Section>();
 
 
    /**
@@ -97,7 +97,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * @throws Exception
     */
    public Section(String name, String type, String reference) throws Exception {
-      this(null, name, type, reference);
+      this(null, name, type, reference, null);
    }
 
 
@@ -112,8 +112,8 @@ public class Section extends Object implements Serializable, TreeNode {
     * @param type
     *            - {@link String}:
     */
-   public Section(Section parent, String name, String type, String reference) throws Exception {
-      this(parent, name, type, reference, null);
+   public Section(Section parent, String name, String type) throws Exception {
+      this(parent, name, type, null, null);
    }
 
 
@@ -179,15 +179,15 @@ public class Section extends Object implements Serializable, TreeNode {
          logger.error("odml.core.Section.initialize causes exception");
          throw new Exception("Type must not be empty.");
       }
-      this.type = checkTypeStyle(type);
       if (name == null || name.isEmpty()) {
          name = type;
       }
-      this.name = checkNameStyle(name);
-      this.reference = reference;
-      this.definition = definition;
-      this.repositoryURL = repository;
-      this.mapping = mappingURL;
+      setName(checkNameStyle(name));
+      setType(checkTypeStyle(type));
+      setReference(reference);
+      setDefinition(definition);
+      setRepository(repository);
+      setMapping(mappingURL);
       this.subsections = new Vector<Section>();
       this.properties = new Vector<Property>();
 
@@ -830,9 +830,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Sets the terminology of the section.
     * 
-    * @param url
-    *            - {@link URL}: the url of the new terminology.
-    * @return - boolean: returns true if operation succeeded, otherwise false.
+    * @param url {@link URL}: the url of the new terminology.
     */
    public void setRepository(String url) {
       try {
@@ -2237,7 +2235,10 @@ public class Section extends Object implements Serializable, TreeNode {
       return false;
    }
 
-
+   /**
+    * Displays the odml tree in a dialog window. This view has no further 
+    * function but to give an impression of the stored information.
+    */
    public void displayTree() {
       JDialog d = new JDialog();
       d.add(new JScrollPane(new JTree(new DefaultTreeModel(this))));

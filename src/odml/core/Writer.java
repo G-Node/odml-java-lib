@@ -26,7 +26,7 @@ import org.jdom.output.XMLOutputter;
 import org.slf4j.*;
 
 /**
- * The {@link Writer} class is the other user interface that provides the tools to write 
+ * The {@link Writer} class provides the tools to write 
  * odML metadata files. 
  * 
  * @since 08.2009
