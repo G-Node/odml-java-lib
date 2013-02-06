@@ -27,21 +27,33 @@ public class Tutorial {
 	private void sections1() {
 		try {
 		   //create a section
-			Section s = new Section("myFirstSection","dataset");
-			//create a second section with s being parent of s2
+			Section s = new Section("myFirstSection","recording");
+			//create a second section with s being the parent 
 			new Section(s,"myNextSection","dataset");
-			//another one with a different type but the same name as s2
+			//another one with a different type but the same name as s2!!
+			//NOTE: have a look at the logger Warning. Section names must be unique among siblings
 			new Section(s, "myNextSection", "stimulus");
-			//create a Property and add it to section s
-			Property p = new Property("TrialCount", 10, "int");
-			s.add(p);
-			//show the tree
+			//adding a subsection with a derived type
+			new Section(s, "stimulus", "stimulus/white_noise");
+			//  another section
+            new Section(s, "thirdSection", "dataset");
+            //show the tree
 			s.displayTree();
-			//show the tree starting at s2
+			
+			//*****************************
+			//***** accessing sections
+			//***************************** 
 			//display all subsections
 			System.out.println(s.getSections());
-			//retrieve a single section
+			//retrieve a section by name
 			System.out.println(s.getSection("myNextSection"));
+			//retrieve all sections by type
+			System.out.println(s.getSectionByType("dataset"));
+			//retrieve all sections of the same type
+			System.out.println(s.getSectionsByType("dataset"));
+			//retrieving subsections by type includes derived types!
+			System.out.println(s.getSectionsByType("stimulus"));
+            
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -49,7 +61,22 @@ public class Tutorial {
 	}
 	
 	private void sections2() {
+	   //validation of a section
 	   
+	   //related sections....
+	}
+	
+	private void properties1(){
+	   try{
+//	      create a section
+	   Section s = new Section("Data01","dataset");
+	     //create a Property and add it to section s
+	   Property p = new Property("TrialCount", 10, "int");
+       s.add(p);
+	   }
+	   catch (Exception e) {
+	      e.printStackTrace();
+      }
 	}
 	
 	public static void main(String[] args) {
