@@ -19,6 +19,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.*;
 import odml.util.TerminologyManager;
+import odml.util.SectionPath;
 import org.slf4j.*;
 
 /**
@@ -297,7 +298,7 @@ public class Section extends Object implements Serializable, TreeNode {
    public int add(Section section) {
       int index = -1;
       if (section != null) {
-         if (this.getSections(section.name).size() > 0) {
+         if (this.containsSection(section.name, section.type)) {
             logger
             .warn("There already exists a section with that name! Will append an index to the name!");
             section.setName(section.getName() + this.getSectionsByType(section.getType()).size());
@@ -337,19 +338,19 @@ public class Section extends Object implements Serializable, TreeNode {
    }
 
 
-   /**
-    * Returns a section specified by it's path from the root (beginning with '/') or from the current section
-    * (beginning directly with the subsection-name)
-    * 
-    * @param pathOfSections
-    *            {@link String}: path to the wanted section
-    * @return {@Section} - returns the section specified by the given path
-    */
-   private Section getSectionViaPath(String pathOfSections) {
-      String path = ensureValidPathEnding(pathOfSections);
-      Section sectionSpecifiedByPath = getActualSectionSpecifiedByPath(path, false);
-      return sectionSpecifiedByPath;
-   }
+   //   /**
+   //    * Returns a section specified by it's path from the root (beginning with '/') or from the current section
+   //    * (beginning directly with the subsection-name)
+   //    * 
+   //    * @param pathOfSections
+   //    *            {@link String}: path to the wanted section
+   //    * @return {@Section} - returns the section specified by the given path
+   //    */
+   //   private Section getSectionViaPath(String pathOfSections) {
+   //      String path = sanitizePath(pathOfSections,SECTION_PATH);
+   //      Section sectionSpecifiedByPath = getActualSectionSpecifiedByPath(path, false);
+   //      return sectionSpecifiedByPath;
+   //   }
 
 
    /**
@@ -377,56 +378,33 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return the first section matching with its name
     */
    public Section getSection(String name) {
-      // name containing "/" meaning path is given
-      if (name.contains("/")) {
-         return getSectionViaPath(name);
-      }
-      Vector<Section> temp = getSections(name);
-      if (temp != null && temp.size() > 1) {
-         logger
-         .warn("Section.getSection: more than one subsection of this name exists > returning first occurence(Section "
-               + this.getPath() + " asked for " + name + ")");
-         return temp.get(0);
-      } else if (temp != null && temp.size() == 1) {
-         return temp.get(0);
-      }
-      return null;
-   }
-
-
-   /**
-    * Returns a {@link Vector} of subsections that match the name. Matching is case-insensitive.<br/>
-    * 
-    * @param name
-    *            - {@link String}: the name of subsections.
-    * @return Vector<Section> the {@link Vector} of matching {@link Section}s or an empty {@link Vector}.
-    */
-   @Deprecated
-   public Vector<Section> getSections(String name) {
-      Vector<Section> temp = new Vector<Section>();
-      // name containing "/" meaning path is given
-      if (name != null) {
-         if (name.contains("/")) {
-            name = ensureValidPathEnding(name);
-            logger
-            .info("name for getSections actually a path > calling getSectionViaPath to search at right place");
-            Section actualParent = getSectionViaPath(name.substring(0, name.lastIndexOf("/")));
-            return actualParent.getSections(name.substring(name.lastIndexOf("/") + 1));
+      if(isPath(name)){
+         SectionPath sp = new SectionPath(name);
+         if( !sp.isValid()){
+            logger.error("Section.getSection: provided path is invalid!");
+            return null;  
          }
-         // ensure validness of name (i.e. if no loading character > adding
-         // S_ as also done so when adding Section
-         name = checkNameStyle(name);
-         for (int i = 0; i < subsections.size(); i++) {
-            if (subsections.get(i).getName().equalsIgnoreCase(name)) {
-               temp.add(subsections.get(i));
+         if(sp.isAbsolute()){
+            return this.getRootSection().getSection(name.substring(1));
+         }
+         else{
+            Section s = this.getSection(sp.nextSection());
+            if(s != null && sp.hasRest())
+               return s.getSection(sp.getRestPath());
+            return s;
+         }  
+      }
+      else{
+         Iterator<Section> iter = subsections.iterator();
+         while(iter.hasNext()){
+            Section s = iter.next();
+            if(s.getName().equalsIgnoreCase(name)){
+               return s;
             }
          }
-         if (temp.size() == 0) {
-            logger.debug("Section.getSections: no subsection of this name exists! ("
-                  + this.getPath() + " asked for " + name + ")");
-         }
       }
-      return temp;
+      logger.error("Section.getSection(): could not locate section: " + name + " in the tree!");
+      return null;
    }
 
 
@@ -511,32 +489,6 @@ public class Section extends Object implements Serializable, TreeNode {
       }
    }
 
-
-   /**
-    * Finds all {@link Section}s that have the given name. Name may also be a absolute or relative path.
-    * 
-    * @param name
-    *            {@link String} the name or path to look for.
-    * @return {@link Vector}<{@link Section}> All matching sections. In case of a path the vector contains only one
-    *         element. May be empty if no match found.
-    */
-   public Vector<Section> findSections(String name) {
-      Vector<Section> temp = new Vector<Section>();
-      if (name.contains("/")) {// is a path
-         Section s = getSectionViaPath(name);
-         if (s != null) {
-            temp.add(s);
-         }
-         return temp;
-      }
-      temp.addAll(this.getSections(name));
-      for (int i = 0; i < sectionCount(); i++) {// no path, look for it
-         temp.addAll(subsections.get(i).getSections(name));
-      }
-      return temp;
-   }
-
-
    /**
     * Finds the first child {@link Section} matching the requested type.
     * 
@@ -557,7 +509,6 @@ public class Section extends Object implements Serializable, TreeNode {
       } else {
          return found;
       }
-
    }
 
 
@@ -594,7 +545,7 @@ public class Section extends Object implements Serializable, TreeNode {
             if (temp.size() != 0) {
                return temp.get(0);
             } else {
-               parent = parent.getParent();// TODO uncles!!!!
+               parent = parent.getParent();
             }
          }
          return null;
@@ -663,42 +614,37 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Deletes a section from the tree.
     * 
-    * @param toRemove
+    * @param section
     *            {@link Section} the section that should be deleted.
     * @return {@link Boolean} true if operation succeeded. False otherwise.
     */
-   public boolean removeSection(Section toRemove) {
-      return subsections.remove(toRemove);
+   public boolean removeSection(Section section) {
+      return subsections.remove(section);
    }
 
 
    /**
-    * Removes the first subsection with this name (accordingly at this position in the tree with the name as the last
-    * section in path)
+    * Removes the first subsection that matches the specified name. Name can also be a path. 
     * 
     * @param name
     *            - {@link String}: the name of the subsection accordingly the path (e.g. sec/subsec/toRemoveSec
     * @return boolean: true if removing successful, false otherwise
     */
    public boolean removeSection(String name) {
-      Vector<Section> temp = new Vector<Section>();
-      if (name.contains("/")) {// is path
+      if(isPath(name)){
          Section s = getSection(name);
-         if (s != null) {
-            temp.add(s);
+         s.getParent().removeSection(this);
+      }
+      else{
+         int index = indexOfSection(name);
+         if(index > 0)
+            this.subsections.remove(index);
+         else{
+            logger.error("Section.removeSection(): Cannot remove section ("+name+")!");
+            return false;
          }
-      } else {
-         temp = this.findSections(name);
       }
-      if (temp.size() == 0) {
-         logger.error("no section with that name found!");
-         return false;
-      }
-      if (temp.size() > 1) {
-         logger.error("Delete not unique! Found " + temp.size() + " matches.");
-         return false;
-      }
-      return temp.get(0).getParent().removeSection(temp.get(0));
+     return true;    
    }
 
 
@@ -914,7 +860,7 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public Section getLinkedSection() {
       Section temp = null;
-      temp = getSectionViaPath(this.link);
+      temp = getSection(this.link);
       return temp;
    }
 
@@ -928,14 +874,14 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public boolean resolveLink() {
       if (this.link != null) {
-         Section linkedSection = getSectionViaPath(this.link);
+         Section linkedSection = getSection(this.link);
          if (linkedSection != null) {
             linkedSection.resolveLink();
          } else {
             logger.error("Section.resolveLink: could not find referenced section!");
             return false;
          }
-         this.merge(getSectionViaPath(this.link), MERGE_THIS_OVERRIDES_OTHER);
+         this.merge(getSection(this.link), MERGE_THIS_OVERRIDES_OTHER);
          return true;
       } else {
          return false;
@@ -998,27 +944,22 @@ public class Section extends Object implements Serializable, TreeNode {
     * Adds a property to the section given by the the path and returns its index. If sections in path not existing yet,
     * creating them. path beginning with '/' meaning starting from the root.
     * 
-    * @param pathOfSections
+    * @param path
     *            {@link String}: the path form the root, where the property shall be added; different levels separated
     *            by "/", path ending on section-name!!
     * @param property
     *            - {@link Property}: the property you want to add.
     * @return {@link Integer}: the index of the added property in the properties vector or -1 if command failed.
     */
-   public int add(String pathOfSections, Property property) {
-      if (property == null) {
-         logger.error("!no property for adding (is null)");
-         return -1;
-      }
-      String path = ensureValidPathEnding(pathOfSections);
-      Section newParent = getSectionViaPath(pathOfSections);
-      // getActualSectionSpecifiedByPath(path, true); TODO check
-      if (newParent == null) {
+   public int add(String path, Property property) {
+      assert property != null : "Property must not be null!";
+      Section parent = getSection(path);
+      if (parent == null) {
          logger.error("!path somehow wrong, no parent for adding porperty found! (path '" + path
                + "')");
          return -1;
       }
-      return newParent.add(property);
+      return parent.add(property);
    }
 
 
@@ -1032,47 +973,36 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return int the property index.
     */
    public int addProperty(String name, Object value) {
-      Property prop = null;
-      // name is a path as containing "/"
-      name = ensureValidPathEnding(name);
-      try {
-         if (name.startsWith("/") && (name.indexOf("/", 1) > 0)) {
-            String path = name;
-            prop = new Property(path.substring(path.lastIndexOf("/") + 1), value);
-            return this.add(path.substring(0, path.lastIndexOf("/")), prop);
-         } else if (name.startsWith("/")) {
-            prop = new Property(name.substring(1), value);
-            return this.add(prop);
+      int index = -1;
+      try{
+      if(isPath(name)){
+         SectionPath sp = new SectionPath(name);
+         if(sp.isValid() && sp.addressesProperty()){
+            Property prop = new Property(sp.getPropertyPart(), value);
+            Section s = getSection(name);
+            if(prop != null && s != null){
+               index = s.add(prop);
+            }
+            else{
+               logger.error("An error occurred adding property with path specification: " +name);
+            }
          }
-         // name ordinary section name
-         else {
-            prop = new Property(name, value);
-            return this.add(prop);
+         else{
+            logger.error("Section.addProperty: " + "specified path is not valid!");
          }
-      } catch (Exception e) {
-         logger.error("Section.addProperty: adding Property failed!");
-         return -1;
       }
+      else{
+         Property prop = new Property(name, value);
+         index = this.add(prop);
+      }
+      }
+      catch (Exception e) {
+         logger.error(e.getLocalizedMessage());
+      }
+      return index;
    }
 
-
-   /**
-    * Method to remove a property specified by a path. Leading "/" means path beginning from root, otherwise beginning
-    * from current section (e.g. /root/subsec/subsubsec/propToRemove)
-    * 
-    * @param path
-    * @return {@link boolean}: true if removed successfully, false if no property with specified name existing
-    */
-   private boolean removePropertyViaPath(String path) {
-      path = ensureValidPathEnding(path);
-      Section parentOfRemover = getActualSectionSpecifiedByPath(path.substring(0, path
-            .lastIndexOf("/")), false);
-      if (parentOfRemover == null)
-         return false;
-      return parentOfRemover.removeProperty(path.substring(path.lastIndexOf("/") + 1));
-   }
-
-
+   
    /**
     * Removes a property matching with its name from the properties that are stored in this section. Removes the first
     * occurrence with this name and does not check for duplicate entries!
@@ -1082,20 +1012,22 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return {@link Boolean} true if successful, false if not.
     */
    public boolean removeProperty(String name) {
-      if (name.contains("/")) { // name is a path
-         name = ensureValidPathEnding(name);
-         if (name.substring(1).contains("/"))
-            return removePropertyViaPath(name);
-         else {
-            name = name.substring(1);
+      boolean result = false;
+      if(isPath(name)){
+         SectionPath sp = new SectionPath(name);
+         if(sp.isValid() && sp.addressesProperty()){
+            Section s = getSection(name);
+            if(s != null)
+               result = s.removeProperty(sp.getPropertyPart());
+         }
+         else{
+            logger.error("Specified path is invalid or does not address a property.");
          }
       }
-      int index = indexOfProperty(name);
-      if (index == -1) {
-         logger.info("No property with the name '" + name + "' could be found!");
+      else{
+         result = removeProperty(this.indexOfProperty(name));
       }
-      properties.removeElementAt(index);
-      return true;
+      return result;
    }
 
 
@@ -1159,37 +1091,7 @@ public class Section extends Object implements Serializable, TreeNode {
       }
    }
 
-
-   /**
-    * Returns the property given by a path (looking like /root/sec1/subsec1/property-name). If sections of path not
-    * existing returning null.
-    * 
-    * @param pathToProperty
-    *            {@link String}: the path to the wanted property, ending with the name of the property (if ending with
-    *            '/' > deleting last character!) i.e. wanted path, not only the property-name itself (as there is
-    *            another method getProperty (String name)
-    * @return: the found property
-    */
-   private Property getPropertyViaPath(String pathToProperty, boolean resolveLink) {
-      pathToProperty = ensureValidPathEnding(pathToProperty);
-      String pathToParentSec = pathToProperty.substring(0, pathToProperty.lastIndexOf("/"));
-      String propName = pathToProperty.substring(pathToProperty.lastIndexOf("/") + 1);
-      logger.debug("total path: " + pathToProperty + ", path to section: " + pathToParentSec
-            + " and propName: "
-            + propName);
-      Section newParent = getActualSectionSpecifiedByPath(pathToParentSec, false);
-      if (newParent == null) {
-         logger.error("!no parent found for given path (" + pathToParentSec + ")!");
-         return null;
-      }
-      if (newParent.getType() != null)
-         logger.debug("found parentsec of property '" + propName + "' via path with name: '"
-               + newParent.getType()
-               + "' and total path: '" + pathToParentSec + "'");
-      return newParent.getProperty(propName, resolveLink);
-   }
-
-
+   
    /**
     * Returns the first property stored in this section that matches the name. Name matching is case-insensitive. The
     * name can also be a path looking like /section/section/property. Leading "/" means beginning from root, leading
@@ -1204,7 +1106,7 @@ public class Section extends Object implements Serializable, TreeNode {
       Property p = null;
       if (name != null && !name.isEmpty()) {
          if (name.contains("/")) // name is actually a path as containing "/"
-            p = getPropertyViaPath(name, true);
+            p = getProperty(name, true);
          else
             p = getProperty(name, true); // ordinary property name
       }
@@ -1344,46 +1246,26 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    private Property getProperty(String name, boolean resolveLink) {
       Property p = null;
-      if (name.contains("/")) {
-         p = getPropertyViaPath(name, resolveLink);
-      } else {
-         for (int i = 0; i < properties.size(); i++) {
-            if (properties.get(i).getName().equalsIgnoreCase(name)) {
-               p = properties.get(i);
+      if(isPath(name)){
+         SectionPath sp = new SectionPath(name);
+         if(sp.isValid() && sp.addressesProperty()){
+            p = getSection(name).getProperty(sp.getPropertyPart());
+         }
+         else{
+            logger.error("Section.getProperty: specified path is not valid or does not specify a property!");
+            return p;
+         }
+      }
+      else{
+         Iterator<Property> iter = properties.iterator();
+         while(iter.hasNext()){
+            Property temp = iter.next();
+            if(temp.getName().equalsIgnoreCase(name)){
+               p = temp;
             }
          }
-         if (p == null && resolveLink && this.resolveLink()) {
-            p = this.getProperty(name, false);
-         }
       }
-      if (p == null)
-         logger.warn("Could not find property with name: " + name + "!");
       return p;
-   }
-
-
-   /**
-    * Returns all properties stored in this section that have the specified name. Name matching is case insensitive.
-    * 
-    * @param name
-    *            - {@link String}: the property name.
-    * @return - Vector<odMLProperty>: returns the matching properties or null if no properties stored.
-    */
-   public Vector<Property> getProperties(String name) {
-      if (name.contains("/")) { // name actually a path > calling method from
-         logger.info("name to look for properties actually a path");
-         name = ensureValidPathEnding(name);
-         Section actualSec = getActualSectionSpecifiedByPath(name.substring(0, name
-               .lastIndexOf("/")), false);
-         return actualSec.getProperties(name.substring(name.lastIndexOf("/") + 1));
-      }
-      Vector<Property> temp = new Vector<Property>();
-      for (int i = 0; i < properties.size(); i++) {
-         if (properties.get(i).getName().equalsIgnoreCase(name)) {
-            temp.add(properties.get(i));
-         }
-      }
-      return temp;
    }
 
 
@@ -1397,21 +1279,6 @@ public class Section extends Object implements Serializable, TreeNode {
          return null;
       }
       return properties;
-   }
-
-
-   /**
-    * Checks whether the path ends on "/" or not. If yes deleting last char
-    * 
-    * @param {@link String}: the path (e.g. section/section or /section/section/property/)
-    * @return {@link String}: a path ending on an alphabetic char (i.e. not on "/")
-    */
-   private String ensureValidPathEnding(String path) {
-      if (path.endsWith("/")) {
-         path = path.substring(0, path.lastIndexOf("/"));
-         logger.info("given path ending on '/' > deleting last character");
-      }
-      return path;
    }
 
 
@@ -1573,7 +1440,24 @@ public class Section extends Object implements Serializable, TreeNode {
       return indexOfSection(sectionName, sectionType) != -1;
    }
 
+   
+   /**
+    * Returns whether this section contains a section of the specified name.
+    * 
+    * @param name String
+    * @return boolean 
+    */
+   public boolean containsSection(String name){
+      Iterator<Section> iter = subsections.iterator();
+      while (iter.hasNext()){
+         if(iter.next().getName().equalsIgnoreCase(name)){
+            return true;
+         }
+      }
+      return false;
+   }
 
+   
    /**
     * Returns the index of the first matching {@link Property}. Method compares only the name. 
     * the method is marked @deprecated use indexOfProperty instead.
@@ -1623,6 +1507,25 @@ public class Section extends Object implements Serializable, TreeNode {
          for (int i = 0; i < subsections.size(); i++) {
             if (subsections.get(i).getType().equalsIgnoreCase(sectionType)
                   && subsections.get(i).getName().equalsIgnoreCase(sectionName)) {
+               index = i;
+               break;
+            }
+         }
+      }
+      return index;
+   }
+   
+   
+   /**
+    * Find the index of a subsection that first matches regarding its name.
+    * @param sectionName
+    * @return int the index
+    */
+   public int indexOfSection(String sectionName) {
+      int index = -1;
+      if (subsections != null) {
+         for (int i = 0; i < subsections.size(); i++) {
+            if (subsections.get(i).getName().equalsIgnoreCase(sectionName)) {
                index = i;
                break;
             }
@@ -1732,8 +1635,6 @@ public class Section extends Object implements Serializable, TreeNode {
    }
 
 
-   // *****************************************************************
-   // ************** optimization the tree ***********
    /**
     * Returns the repository url stored in this section or in one of its ancestors.
     * 
@@ -1761,9 +1662,6 @@ public class Section extends Object implements Serializable, TreeNode {
    }
 
 
-   /**
-    * 
-    */
    private void validateRecursively() {
       this.validate();
       for (int i = 0; i < sectionCount(); i++) {
@@ -1999,131 +1897,6 @@ public class Section extends Object implements Serializable, TreeNode {
 
 
    /**
-    * Method for getting the parent = section where to add new Property / Section via a path of sections. Different
-    * Sections / levels separated by "/"
-    * 
-    * @param pathOfSections
-    *            {@link String}: The path to specify the destination
-    * @param usedForInserting
-    *            {@link boolean}: flag to specify whether method is used for adding or getting sec/prop via path
-    * @return Section {@link Section}: the section that is end of the path. created if not existing yet (same for other
-    *         not existing sections yet on path)
-    */
-   private Section getActualSectionSpecifiedByPath(String pathOfSections, boolean usedForAdding) {
-      pathOfSections = ensureValidPathEnding(pathOfSections);
-      String[] pathPieces = pathOfSections.split("/"); // '/' is the separator
-      Section newParent = this;
-      // beginning from current section
-      if (!pathPieces[0].isEmpty()) {
-         logger.debug("path beginning from current section");
-         boolean ignoreFirst = false;
-         if (pathPieces[0].equalsIgnoreCase(".")) {
-            logger.info("found leading point, handling as path beginning from current position");
-            ignoreFirst = true;
-         }
-         newParent = newParent.followPath(pathPieces, ignoreFirst, usedForAdding);
-         return newParent;
-      }
-      // else beginning from root
-      int pathDepth = pathPieces.length - 1; // -1 as tree level begins at
-      // zero
-      logger.debug("pathPieces with length: '" + pathPieces.length
-            + "'; section for inserting prop/sec has level: "
-            + pathDepth);
-      if (pathDepth < 0)
-         return null;
-
-      if ((this.level == pathDepth) && (this.getPath() == pathOfSections)) {
-         logger.debug("addProperty/addSection to parentSec as path same as specified one");
-         return newParent;
-      } else { // check where to add the prop/sec; creating section(s) if not
-         // existing yet
-         if (this.level > 0) {
-            newParent = this.parent;
-            while (newParent.level != 0) { // go to root first to follow
-               // path from there
-               newParent = newParent.parent;
-            }
-         }
-         // check whether root has name, if not go one level deeper to first
-         // path-piece
-         if (newParent.type == null) {
-            if (newParent.getSection(pathPieces[1]) == null) {
-               if (usedForAdding) {
-                  logger.warn("subsec '" + pathPieces[1] + "' does not exist > creating it");
-                  try {
-                     newParent.add(new Section(pathPieces[1], ""));
-                  } catch (Exception e) {
-                     e.printStackTrace();
-                  }
-               } else {
-                  // logger.error("!section according to given path ("+pathOfSections+
-                  // ") not existing!");
-                  return null;
-               }
-            }
-            newParent = newParent.getSection(pathPieces[1]);
-         } else if (!newParent.type.equalsIgnoreCase(pathPieces[1])) {
-            // logger.error("path from root specified but names differ!: '"+newParent.type+"' & '"
-            // +pathPieces[1]+"'; meaning: there can only be one root!");
-            return null;
-         }
-         String[] pathPiecesFromRoot = new String[pathPieces.length - 2];
-         for (int i = 2; i < pathPieces.length; i++) {
-            pathPiecesFromRoot[i - 2] = pathPieces[i];
-         } // copying all besides first two, as [0] is empty string and [1]
-         // is already starting point
-
-         newParent = newParent.followPath(pathPiecesFromRoot, false, usedForAdding);
-      } // end determining parent of prop/sec to add
-      logger.debug("Section specified by path has name: '" + newParent.type
-            + "', and total path: '"
-            + newParent.getPath() + "'");
-      return newParent;
-   }
-
-
-   /**
-    * returning the section obtained by following the given path fragmented in an array. possibility to ignore first
-    * entry (important when having "." in it. distinguishing between adding and getting-case > for getting no sections
-    * must be created!
-    * 
-    * @param pathPieces
-    *            {@link String[]}: String array containing single path elements = section names
-    * @param givenIgnoreFirst
-    *            {@link boolean}: flag to be able to ignore first entry (could be ".")
-    * @param usedForAdding
-    *            {@link boolean}: flag for distinguishing between adding and getting-case; for getting-case no sections
-    *            must be created (returned section null then)
-    * @return {@link Section} - returning the section specified by path. usedForAdding == true: creating sections on
-    *         path when not existing yet usedForAdding == false: returning null when sections on path not existing
-    */
-   private Section followPath(String[] pathPieces, boolean givenIgnoreFirst, boolean usedForAdding) {
-      boolean ignoreFirst = givenIgnoreFirst;
-      Section SectionAtEndOfPath = this;
-      for (int i = 0; i < pathPieces.length; i++) {
-         if (ignoreFirst) {
-            ignoreFirst = false;
-            continue; // "." in first array position, not interesting
-         }
-         if (SectionAtEndOfPath.getSection(pathPieces[i]) == null) {
-            if (usedForAdding) {
-               try {
-                  SectionAtEndOfPath.add(new Section(pathPieces[i], ""));
-               } catch (Exception e) {
-                  e.printStackTrace();
-               }
-            } else {
-               return null;
-            }
-         }
-         SectionAtEndOfPath = SectionAtEndOfPath.getSection(pathPieces[i]);
-      }
-      return SectionAtEndOfPath;
-   }
-
-
-   /**
     * This method returns the absolute path of this section beginning from the root. Paths are made up from section
     * names separated by "/". Leading '/' indicates an absolute path.
     * 
@@ -2272,7 +2045,7 @@ public class Section extends Object implements Serializable, TreeNode {
             .warn("Section.setLink: A link must be given as an abolute path in the tree, i.e. start with '/'.");
             link = "/" + link;
          }
-         Section temp = this.getSectionViaPath(link);
+         Section temp = this.getSection(link);
          if (temp == null) {
             logger
             .error("Section.setLink: The link is invalid. Referenced section does not exist. Link: "
@@ -2406,112 +2179,79 @@ public class Section extends Object implements Serializable, TreeNode {
     * Loads an included file into this section and merges them while the locally defined information (properties of
     * this section) overwrites the imported one.
     */
+   //TODO TEST me!!!
    public void loadInclude() {
       if (this.include == null) {
          return;
       }
-      Reader r = null;
-      URL fileUrl = null;
       Section includeSection = null;
-      Section rootSection = null;
-      String includeSectionName = null;
-      if (this.getInclude().contains("#")) {
-         includeSectionName = this.getInclude().substring(this.getInclude().indexOf("#") + 1);
-         this.setInclude(this.getInclude().substring(0, this.getInclude().indexOf("#"))); // TODO does this lead to
-         // errors if load
-         // include is evoked
-         // more than once?
-      }
-      try {
-         fileUrl = new URL(this.getInclude());
-      } catch (NullPointerException e) {
-         logger.error("Section.loadInclude() raised: NullPointerException! Called on "
-               + this.getPath());
-      } catch (Exception e) {
-         try {
-            File thisFile = new File(this.getRootSection().getFileUrl().toURI());
-            fileUrl = new File(new File(thisFile.getParent()), this.getInclude()).toURI().toURL();
-         } catch (Exception e1) {
-            try {
-               logger
-               .error("Section.loadInclude: Could not create a file from the include information: "
-                     + this.getRootSection().getFileUrl().toURI()
-                     + " combined with "
-                     + this.getInclude());
-            } catch (Exception e2) {
-               e2.printStackTrace();
-            }
-            return;
-         }
-      }
-      try {
-         r = new Reader();
-         rootSection = r.load(fileUrl, Reader.NO_CONVERSION, false);
-      } catch (Exception e) {
-         logger.error("Section.loadInclude: Could not read file from the include location: "
-               + fileUrl);
-         return;
-      }
+      String includePath = getIncludeSectionPath();
+      URL fileUrl = getIncludeFileURL();
 
-      Vector<Section> includeSections = null;
-
-      if (includeSectionName != null) {
-         includeSections = rootSection.findSections(includeSectionName);
-         for (int i = includeSections.size() - 1; i >= 0; i--) {
-            if (!includeSections.get(i).getType().equalsIgnoreCase(this.getType())) {
-               includeSections.remove(i);
-            }
-         }
-      } else {
-         includeSections = rootSection.findSectionsByType(this.getType());
-      }
-      if (includeSections.size() > 1
-            && (includeSectionName == null || includeSectionName.isEmpty())) {
-         boolean unique = false;
-         for (int i = 0; i < includeSections.size(); i++) {
-            if (includeSections.get(i).getType() != null
-                  && includeSections.get(i).getType().equals(this.getType())
-                  && !unique) {
-               unique = true;
-               includeSection = includeSections.get(i);
-            } else if (includeSections.get(i).getType() != null
-                  && includeSections.get(i).getType().equals(this.getType()) && unique) {
-               unique = false;
-               break;
-            }
-         }
-         if (includeSection == null || !unique)
-            logger
-            .error("Section.loadInclude: Could not include from indicated location: Include statement is ambiguous!");
-      } else if (includeSections.size() > 1) {
-         for (int j = 0; j < includeSections.size(); j++) {
-            if (includeSections.get(j).getName().equalsIgnoreCase(this.getName())) {
-               includeSection = includeSections.get(j);
-               break;
-            }
-         }
-      } else if (includeSections.size() == 1) {
-         includeSection = includeSections.get(0);
-      } else {
-         logger
-         .error("Could not find corresponding include section Include location does not contain section of type: "
-               + this.getType());
-         return;
+      if(fileUrl != null){
+         Section temp = loadIncludeFile(fileUrl);
+         assert temp != null : "loadIncludeFile returns empty section! Something is wrong with the include element.";
+         includeSection = locateIncludeSection(temp, includePath);
       }
       if (includeSection != null) {
          this.merge(includeSection, Section.MERGE_THIS_OVERRIDES_OTHER);
-      } else {
-         logger
-         .error("Could not find corresponding include section. Inlcude location does not contain section of type: "
-               + this.getType());
-         return;
       }
       this.include = null;
    }
 
+   private Section locateIncludeSection(Section temp, String includePath) {
+      Section s = temp.getSection(includePath);
+      if(s == null){
+         Vector<Section> typeMatches = temp.findSectionsByType(this.getType());
+         if(typeMatches.size() > 1){
+            logger.error("Section.locateIncludeSection: Include statement is ambiguous!");
+         }
+         else{
+            s = typeMatches.firstElement();
+         }
+      }
+      return s;
+   }
+
+
+   private Section loadIncludeFile(URL fileUrl) {
+      Section includeRoot = null;
+      try {
+         Reader r = new Reader();
+         includeRoot = r.load(fileUrl, Reader.NO_CONVERSION, false);
+      } catch (Exception e) {
+         logger.error("Section.loadIncludeFile: Could not read file from the include location: "
+               + fileUrl);
+      }
+      return includeRoot;
+   }
+
+
+   private String getIncludeSectionPath(){
+      String sectionPath= "";
+      if(this.getInclude() != null && this.getInclude().contains("#")){
+         sectionPath = this.include.substring(this.getInclude().indexOf("#")+1);
+      }
+      return sectionPath;
+   }
+
+   private URL getIncludeFileURL(){
+      URL url = null;
+      if(this.getInclude() != null && this.getInclude().contains("#")){
+         String urlPart = this.include.substring(0,this.getInclude().indexOf("#"));
+         try{
+            File thisFile = new File(this.getRootSection().getFileUrl().toURI());
+            url = new File(new File(thisFile.getParent()), urlPart).toURI().toURL();
+         }
+         catch (Exception e) {
+            logger.error("Section.getIncludeURL: Could not locate the file referenced with the include information!");
+         }
+      }
+      return url;
+   }
 
    /**
-    * Loads inlcudes from this section and cylces through all subsections. If you want to load all includes in the tree
+    * Loads includes from this section and cycles through all subsections. If you want to load all includes in the tree
     * call this function on the rootSection.
     */
    public void loadAllIncludes() {
@@ -2535,7 +2275,8 @@ public class Section extends Object implements Serializable, TreeNode {
 
 
    /**
-    * Returns the stored file url, i.e. the url of the file this section originated from. Usually only defined for root
+    * Returns the stored file url, i.e. the url of the file this section originated from. Usually only set while reading 
+    * from file and only present in the root section. 
     * sections.
     * 
     * @return {@link URL} the URL, if present, null otherwise.
@@ -2552,7 +2293,7 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public Section getRootSection() {
       Section root = null;
-      if (this.isRoot()) {
+      if (this.getParent()== null) {
          root = this;
       } else {
          root = parent.getRootSection();
@@ -2639,4 +2380,12 @@ public class Section extends Object implements Serializable, TreeNode {
       this.isTerminology = isTerminology;
    }
 
+   /**
+    * Returns whether or not the string is a path 
+    * @param name String 
+    * @return boolean
+    */
+   private boolean isPath(String name){
+      return name.contains("#") || (name.contains("/") && !(name.indexOf("/") == name.lastIndexOf("/") && name.endsWith("/")));
+   }
 }

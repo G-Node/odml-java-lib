@@ -2008,7 +2008,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
 
    /**
-    * Compares this propertie's value to the given object. Returns
+    * Compares this property's value to the given object. Returns
     *
     * @param aObject
     * {@link Object} the object that
@@ -2025,7 +2025,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
 
    /**
-    * Compares this Property to another one and returns a macht-level
+    * Compares this Property to another one and returns a match-level
     *
     * @param anotherProperty
     * @return {@link Integer} the match level.
