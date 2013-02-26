@@ -21,27 +21,20 @@ import javax.swing.tree.TreeNode;
 import org.slf4j.*;
 
 /**
- * The {@link Property} class constitutes the building block of any odML file since all meta-information is stored in
- * properties. Properties have several fields of which only name and value are mandatory. These fields (except name,
- * nameDefintion, dependency, dependencyValue, synonym, mappingURL) are realized by a proper class called {@link Value}
- * Value
+ * The {@link Property} class constitutes the building block of any odML file that actually stores the information. A {@link Property} 
+ * must have a name and at least one {@link Value}. 
  *
  * <ol>
  * <li>name - mandatory, the name of the property.</li>
  * <li>value - mandatory, its value.</li>
- * <li>uncertainty - optional, an estimation of the value's uncertainty.</li>
- * <li>unit - optional, the value's unit.</li>
- * <li>type - optional, the data type of the value.</li>
- * <li>propertyDefinition - optional, a descriptive text that defines the meaning of this property.</li>
- * <li>valueDefinition- optional, here additional comments on the value of the property can be given.</li>
+ * <li>definition - optional, a descriptive text that defines the meaning of this property.</li>
  * <li>dependency - optional, mainly used in the terminologies to help GUIs and editors to assist the user entering
  * values. The dependency defines if this property should occur only under certain conditions. I.e. this property
  * occurs, makes sense, only if there also is a certain other property.</li>
  * <li>dependencyValue - optional, as the dependency entry: defines that this property is commonly depends on a certain
  * parent property that contains a specific parent value.</li>
- * <li>mappingURL - optional</li>
+ * <li>mapping - optional</li>
  * </ol>
- * Only name and value are mandatory, the others are optional.
  *
  * @since 08.2009
  * @author Jan Grewe, Christine Seitz
@@ -1211,12 +1204,11 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
       }
    }
 
-
    /**
     * Validates this {@link Property} against the definition in a terminology.
     * Method will cause logger Warnings in case validation did not succeed.
-    *
-    * @param terminologyProperty: The {@link Property} as it is defined in the terminology.
+    * 
+    * @param terminologyProperty The {@link Property} as it is defined in the terminology.
     */
    public void validate(Property terminologyProperty) {
       if (definition != null && !definition.isEmpty()) {

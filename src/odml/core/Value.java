@@ -27,8 +27,8 @@ import org.apache.commons.codec.binary.Base64;
 import org.slf4j.*;
 
 /**
- * The {@link Value} class constitutes the further information of a property where only the value = content
- * is mandatory. It contains the following fields:
+ * {@link Value} entities contain the values associated with a {@link Property}.
+ * Values have the following fields:
  * <ol>
  * <li>value - mandatory, its the value = content itself.</li>
  * <li>uncertainty - optional, an estimation of the value's uncertainty.</li>
@@ -40,7 +40,6 @@ import org.slf4j.*;
  * <li>encoder - optional. If binary content is included in the {@link Value}, indicate the encoder used in the form.</li>
  * <li>checksum - optional. The checksum of the file included in the {@link Value}. State the checksum in the form algorithm$checksum (e.g. crc32$...).</li>
  * </ol> 
- *  Only the value = content is mandatory, the others are optional.
  *   
  * @since 06.2010
  * @author Jan Grewe, Christine Seitz

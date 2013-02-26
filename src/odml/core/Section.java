@@ -377,7 +377,9 @@ public class Section extends Object implements Serializable, TreeNode {
     *            - {@link String}: the name of the target section. May be a path.
     * @return the first section matching with its name
     */
-   public Section getSection(String name) {
+   public  Section getSection(String name) {
+      if (name == null || name.isEmpty())
+         return null;
       if(isPath(name)){
          SectionPath sp = new SectionPath(name);
          if( !sp.isValid()){
@@ -1103,14 +1105,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return - {@link Property}: the first matching property or null if no match found.
     */
    public Property getProperty(String name) {
-      Property p = null;
-      if (name != null && !name.isEmpty()) {
-         if (name.contains("/")) // name is actually a path as containing "/"
-            p = getProperty(name, true);
-         else
-            p = getProperty(name, true); // ordinary property name
-      }
-      return p;
+      return getProperty(name, true);
    }
 
 
@@ -1246,6 +1241,9 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    private Property getProperty(String name, boolean resolveLink) {
       Property p = null;
+      if(name == null || name.isEmpty()){
+         return p;
+      }
       if(isPath(name)){
          SectionPath sp = new SectionPath(name);
          if(sp.isValid() && sp.addressesProperty()){
@@ -1265,6 +1263,10 @@ public class Section extends Object implements Serializable, TreeNode {
             }
          }
       }
+      if(p == null){
+         this.resolveLink();
+         this.getProperty(name, true);
+      }
       return p;
    }
 
@@ -1272,12 +1274,9 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns all properties stored in this section.
     * 
-    * @return - Vector<odMLProperty>: returns the properties Vector or null if no properties stored.
+    * @return - Vector<odMLProperty>: returns the properties Vector which may be empty.
     */
    public Vector<Property> getProperties() {
-      if (properties.size() == 0) {
-         return null;
-      }
       return properties;
    }
 

@@ -8,15 +8,17 @@ public class SectionPath{
    private String propertyPart = "";
    private boolean valid = false;
    private boolean absolute = false;
-   
+
    public SectionPath(String path) {
-      path = sanitizePath(path);
-      this.valid = validate(path);
-      if(path.startsWith("/")){
-         absolute = true;
-         path = path.substring(1);
+      if(path != null && !path.isEmpty()){
+         path = sanitizePath(path);
+         this.valid = validate(path);
+         if(path.startsWith("/")){
+            absolute = true;
+            path = path.substring(1);
+         }
+         splitPath(path);
       }
-      splitPath(path);
    }
 
 
