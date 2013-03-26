@@ -45,19 +45,19 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    protected static final Logger logger           = LoggerFactory.getLogger(Property.class);
    private static final long     serialVersionUID = 147L;
    private String                name             = "", dependency = "",
-   dependencyValue = "", definition = "";
+         dependencyValue = "", definition = "";
    private URL                   mappingURL;
    private Section               parentSection    = null;
    private Vector<Value>         values;
    public static Object[]        columns          = { "name", "reference", "value", "uncertainty",
-      "unit",
-      "type", "filename",
-      "valueDefinition", "propertyDefinition",
-      "dependency", "dependencyValue" };
+                                                  "unit",
+                                                  "type", "filename",
+                                                  "valueDefinition", "propertyDefinition",
+                                                  "dependency", "dependencyValue" };
    public static int             MATCH_ERROR      = -1, MATCH_NO = 0,
-   MATCH_FIRST_CONFLICT_LAST_MATCH = 5, MATCH_INITIALS_ONLY = 10,
-   MATCH_FIRST_OR_LAST_ONLY = 20, MATCH_FIRST_INITIAL_LAST = 30, MATCH_FIRST_LAST = 50,
-   MATCH_EXACT = 50;
+         MATCH_FIRST_CONFLICT_LAST_MATCH = 5, MATCH_INITIALS_ONLY = 10,
+         MATCH_FIRST_OR_LAST_ONLY = 20, MATCH_FIRST_INITIAL_LAST = 30, MATCH_FIRST_LAST = 50,
+         MATCH_EXACT = 50;
 
 
    /**
@@ -104,7 +104,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     * @throws Exception
     */
    public Property(String name, Object value, String unit, Object uncertainty, String type)
-   throws Exception {
+                                                                                           throws Exception {
       this(name, null, value, unit, uncertainty, type, null, null, null, null, null, null);
    }
 
@@ -613,7 +613,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    public boolean setValue(Object value) {
       if (this.values.size() > 1) {
          logger
-         .error("! property has more than one value > index must be specified to know which one shall be set");
+               .error("! property has more than one value > index must be specified to know which one shall be set");
          return false;
       }
       return setValueAt(value, 0);
@@ -834,7 +834,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    public boolean setValueReference(String reference) {
       if (this.values.size() > 1) {
          logger
-         .error("! property has more than one value > index must be specified to know which id to set!");
+               .error("! property has more than one value > index must be specified to know which id to set!");
          return false;
       }
       setValueReferenceAt(reference, 0);
@@ -954,7 +954,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    public boolean setValueUncertainty(Object uncertainty) {
       if (this.values.size() > 1) {
          logger
-         .error("! property has more than one value > index must be specified to know which uncertainty to set!");
+               .error("! property has more than one value > index must be specified to know which uncertainty to set!");
          return false;
       }
       return setValueUncertaintyAt(uncertainty, 0);
@@ -1046,7 +1046,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    public boolean setValueDefinition(String definition) {
       if (this.values.size() > 1) {
          logger
-         .error("! property has more than one value > index must be specified to know which valueComment to set!");
+               .error("! property has more than one value > index must be specified to know which valueComment to set!");
          return false;
       }
       return setValueDefinitionAt(definition, 0);
@@ -1134,25 +1134,25 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
       if ((this.getType() != null && otherProperty.getType() != null)
             && !this.getType().equalsIgnoreCase(otherProperty.getType())) {
          logger
-         .error("Property.merge error: cannot merge properties based with different datatypes!");
+               .error("Property.merge error: cannot merge properties based with different datatypes!");
          return;
       }
       if ((this.getMapping() != null && otherProperty.getMapping() != null)
             && !this.getMapping().sameFile(otherProperty.getMapping())) {
          logger
-         .error("Property.merge error: cannot merge properties mapping to different properties!");
+               .error("Property.merge error: cannot merge properties mapping to different properties!");
          return;
       }
       if ((this.getDefinition() != null && otherProperty.getDefinition() != null)
             && !this.getDefinition().equalsIgnoreCase(otherProperty.getDefinition())) {
          logger
-         .error("Property.merge error: cannot merge properties having different nameDefinitions!");
+               .error("Property.merge error: cannot merge properties having different nameDefinitions!");
          return;
       }
       if ((this.getUnit(0) != null && otherProperty.getUnit(0) != null)
             && !this.getUnit(0).equalsIgnoreCase(otherProperty.getUnit(0))) {
          logger
-         .error("Property.merge error: cannot merge properties having different units! Maybe the next version can...");
+               .error("Property.merge error: cannot merge properties having different units! Maybe the next version can...");
          return;
       }
       // actually merge: first the easy ones, i.e. those that can occur only once
@@ -1193,8 +1193,8 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
             if (mergeOption == Section.MERGE_COMBINE) {
                this.addValue(otherProperty.getValue(i), otherProperty.getValueReference(i),
                      otherProperty
-                     .getValueUncertainty(i), otherProperty.getFilename(i), otherProperty
-                     .getValueDefinition(i));
+                           .getValueUncertainty(i), otherProperty.getFilename(i), otherProperty
+                           .getValueDefinition(i));
             } else if (mergeOption == Section.MERGE_OTHER_OVERRIDES_THIS && this.valueCount() == 1) {
                setValueAt(otherProperty.getValue(), i);
                mergeValue(this.values.indexOf(otherProperty.getValue(i)), otherProperty, i,
@@ -1203,6 +1203,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
          }
       }
    }
+
 
    /**
     * Validates this {@link Property} against the definition in a terminology.
@@ -1214,9 +1215,9 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
       if (definition != null && !definition.isEmpty()) {
          if (!this.definition.equalsIgnoreCase(terminologyProperty.getDefinition())) {
             logger
-            .warn("Property: "
-                  + this.getName()
-                  + "contains a 'definition' that differs from terminology! Kept original definition!");
+                  .warn("Property: "
+                        + this.getName()
+                        + "contains a 'definition' that differs from terminology! Kept original definition!");
          }
       }
       if (terminologyProperty.getDependency() != null
@@ -1344,8 +1345,8 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
             }
             if (this.getValueFilename(thisValueIndex) == null) {
                this
-               .setValueFilenameAt(otherProperty.getValueFilename(otherValueIndex),
-                     thisValueIndex);
+                     .setValueFilenameAt(otherProperty.getValueFilename(otherValueIndex),
+                           thisValueIndex);
             }
             if (this.getValueReference(thisValueIndex) == null) {
                this.setValueReferenceAt(otherProperty.getValueReference(otherValueIndex),
@@ -1368,8 +1369,8 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
       name = name.trim();
       while (name.contains(" ")) {
          name = name.substring(0, name.indexOf(" "))
-         + name.substring(name.indexOf(" ") + 1, name.indexOf(" ") + 2).toUpperCase()
-         + name.substring(name.indexOf(" ") + 2);
+               + name.substring(name.indexOf(" ") + 1, name.indexOf(" ") + 2).toUpperCase()
+               + name.substring(name.indexOf(" ") + 2);
          logger.warn("Invalid property name:\tgenerating CamelCase by removing blanks");
       }
 
@@ -1527,7 +1528,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    public String getValueFilename() {
       if (values.size() > 1) {
          logger
-         .error("! property has more than one value > index for returning filename must be specified");
+               .error("! property has more than one value > index for returning filename must be specified");
          return null;
       }
       return getValueFilename(0);
@@ -1578,6 +1579,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
          return null;
    }
 
+
    /**
     * Returns the encoder of the first value. 
     * @return a {@link String} indicating the encoder or empty string.  
@@ -1585,6 +1587,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    public String getValueEncoder() {
       return getValueEncoder(0);
    }
+
 
    /**
     * Returns the encoder of the value specfied by the index.
@@ -1597,6 +1600,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
       else
          return "";
    }
+
 
    /**
     * Set the mapping of this {@link Property}. The mapping is specified 
@@ -1642,7 +1646,9 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     * {@link String} the new unit.
     */
    public void setUnit(String unit) {
-      logger.warn("updating unit for all values in this property!");
+      if (valueCount() > 1)
+         logger
+               .warn("You ask me to set the unit but there are many values. Changed the units for all values!");
       for (int i = 0; i < values.size(); i++) {
          values.get(i).setUnit(unit);
       }
@@ -1722,7 +1728,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    public boolean setReference(String reference) {
       if (this.values.size() > 1) {
          logger
-         .error("! Property has more than one value > index must be specified to know which reference shall be set!");
+               .error("! Property has more than one value > index must be specified to know which reference shall be set!");
          return false;
       }
       return setReferenceAt(reference, 0);
@@ -1854,7 +1860,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
       if (outFile.isDirectory()) {
          if (values.get(0).getFilename().isEmpty()) {
             throw new Exception(
-            "Property does not define a default file name. Please provide a full file name.");
+                  "Property does not define a default file name. Please provide a full file name.");
          }
          outFile = new File(filename + values.get(0).getFilename());
       }
@@ -2280,8 +2286,8 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
          return -1;
       } else {
          logger
-         .error("!should not happen as TreeNode type Property can only have childen of TreeNode type Value! "
-               + "Here we have: " + node.getClass());
+               .error("!should not happen as TreeNode type Property can only have childen of TreeNode type Value! "
+                     + "Here we have: " + node.getClass());
          return -1;
       }
    }
