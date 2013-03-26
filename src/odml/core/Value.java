@@ -140,8 +140,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                                                                                         throws Exception {
       if (type == null || type.isEmpty()) {
          type = inferOdmlType(content);
-         //         if(type == null || type.isEmpty() )
-         //         throw new Exception("Could not create Value! 'type' must not be null or empty!");
       }
       this.content = null;
       this.uncertainty = null;
@@ -151,18 +149,11 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       this.checksum = "";
       this.encoder = "";
       this.type = type;
-      if (content == null || content.toString().isEmpty()) {
-         logger.warn("! value should not be empty except for terminologies!");
-      }
-      this.content = checkDatatype(content, type);
-      if (this.content == null || this.content.toString().isEmpty()) {
-         logger.warn("! value should not be empty except for terminologies!");
-      }
-
       if (type.equalsIgnoreCase("binary")) {
          this.content = encodeContent(content);
+      } else {
+         this.content = checkDatatype(content, type);
       }
-      //*** uncertainty
       if (uncertainty == null) {
          this.uncertainty = "";
       } else {
@@ -173,23 +164,19 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
             logger.error("", e);
          }
       }
-      //*** filename
       if (filename != null && !filename.isEmpty()) {
          this.filename = filename;
       }
-      //*** definition  
       if (definition == null) {
          this.definition = "";
       } else {
          this.definition = definition;
       }
-      //*** reference
       if (reference == null) {
          this.reference = "";
       } else {
          this.reference = reference;
       }
-      //*** unit
       if (unit == null) {
          this.unit = "";
       } else {

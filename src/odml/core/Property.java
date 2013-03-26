@@ -60,6 +60,11 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
          MATCH_EXACT = 50;
 
 
+   public Property(String name) throws Exception {
+      this(name, null, null, null, null);
+   }
+
+
    /**
     * Default constructor for creating a property. Only name and the value must be given.
     *
@@ -818,8 +823,22 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    }
 
 
+   /**
+    * Returns whether or not this Property is empty. A Property is empty if
+    * it does not have any values or if all existing values have not content.
+    *  
+    * @return boolean
+    */
    public boolean isEmpty() {
-      return valueCount() == 0;
+      boolean isEmpty = true;
+      if (valueCount() == 0)
+         return isEmpty;
+      else {
+         for (int i = 0; i < valueCount(); i++) {
+            isEmpty = isEmpty & getWholeValue(i).isEmpty();
+         }
+      }
+      return isEmpty;
    }
 
 

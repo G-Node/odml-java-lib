@@ -262,16 +262,23 @@ public class Writer implements Serializable {
 
 
    /**
-    * Appends a property elements to the dom tree. If the property contains more than a single value
-    * a respective number of properties are created.
+    * Appends a property elements to the dom tree. Empty properties (those with no values) 
+    * will only be written to file if the file is to become a terminology.
     * 
     * @param parent {@link Element}: the parent Element to which the properties belong.
     * @param prop {@link Property}: the property to append.
-    * @param terms {@link Terminology}: The terminology that should be used to validate the properties. (non-functional so far)
+    * @param asTerminology boolean: defines whether the file will be a terminology.
     */
-   private void appendProperty(Element parent, Property prop, boolean asTemplate) {
+   private void appendProperty(Element parent, Property prop, boolean asTerminology) {
       logger.debug("in appendProperty\twith Property and Terminology");
-
+      if (!asTerminology) {
+         prop.removeEmptyValues();
+         if (prop.isEmpty()) {
+            logger.warn("Writer.appendProperty: Property " + prop.getName()
+                  + "is empty and will not be written to file!");
+            return;
+         }
+      }
       Element propertyElement = new Element("property");
       //actually write the property
       Element name = new Element("name");
@@ -307,7 +314,7 @@ public class Writer implements Serializable {
 
       // appending the values.
       for (int i = 0; i < prop.valueCount(); i++) {
-         appendValue(propertyElement, prop.getWholeValue(i), asTemplate);
+         appendValue(propertyElement, prop.getWholeValue(i), asTerminology);
       }
 
       //append to the parent			
