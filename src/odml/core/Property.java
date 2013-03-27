@@ -521,7 +521,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
 
    public boolean addValue(Object value, String unit) {
-      return addValue(value, unit, null, null, null);
+      return addValue(value, null, unit, null, null, null, null);
    }
 
 
@@ -564,6 +564,9 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
          return false;
       }
       try {
+         if (unit == null && this.valueCount() > 0) {
+            unit = this.getUnit(0);
+         }
          Value toAdd = new Value(value, unit, uncertainty, type, filename, comment, id);
          toAdd.setAssociatedProperty(this);
          if (values.contains(toAdd)) {
@@ -825,7 +828,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
    /**
     * Returns whether or not this Property is empty. A Property is empty if
-    * it does not have any values or if all existing values have not content.
+    * it does not have any values or if all existing values have no content.
     *  
     * @return boolean
     */
