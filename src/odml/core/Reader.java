@@ -142,8 +142,6 @@ public class Reader implements Serializable {
       if (dom == null) {
          this.root = null;
          return s;
-//         throw new Exception("parsing of file: " + fileURL.toString()
-//               + " failed! Please check file name.");
       }
       logger.info("... parsing succeeded.");
       if (validate && schemaLocations != null) {
@@ -225,9 +223,6 @@ public class Reader implements Serializable {
    }
 
 
-   // *********************************************************
-   // *********** handling the dom *************
-   // *********************************************************
    /**
     * Converts the DOM representation of the metadata-file to the tree like odML structure.
     * 
@@ -242,7 +237,8 @@ public class Reader implements Serializable {
       Element rootElement = dom.getDocumentElement();
       String odmlVersion = rootElement.getAttribute("version");
       if (Float.parseFloat(odmlVersion) != 1.0) {
-    	  logger.error("Can not handle odmlVersion: " + odmlVersion + " stopping further processing!");
+         logger.error("Can not handle odmlVersion: " + odmlVersion
+               + " stopping further processing!");
          return;
       }
 
@@ -251,7 +247,7 @@ public class Reader implements Serializable {
       Date date = null;
       String temp = getDirectChildContent(rootElement, "date");
       SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-      try {// convert the date to yyyy-MM-dd format
+      try {
          date = sdf.parse(temp);
       } catch (Exception e) {
          date = null;
@@ -274,7 +270,7 @@ public class Reader implements Serializable {
          for (int i = 0; i < rootElement.getElementsByTagName("section").getLength(); i++) {
             Element domSection = (Element) rootElement.getElementsByTagName("section").item(i);
             if (domSection.getParentNode().isSameNode(rootElement)) {
-               root.add(parseSection(domSection, root));
+               root.add(parseSection(domSection));
             }
          }
       }
@@ -286,9 +282,6 @@ public class Reader implements Serializable {
    }
 
 
-   // *********************************************************
-   // *********** handling of the xml - file **************
-   // *********************************************************
    /**
     * Parses the xml file and creates the DOM representation of it.
     * 
@@ -299,10 +292,6 @@ public class Reader implements Serializable {
       if (url == null) {
          return null;
       }
-      // test the connection to the url
-      // URLConnection testCon;
-      // testCon = url.openConnection();
-      // testCon.connect();
       this.fileUrl = url;
       logger.info("Parsing the xml file: " + url.toString() + "...");
       try {
@@ -310,14 +299,12 @@ public class Reader implements Serializable {
          try {
             stream = url.openStream();
          } catch (Exception e) {
-            logger.error("Could not open file at specified url: "+
-            		url.toString()+". Verify connection!", e);
+            logger.error("Could not open file at specified url: " +
+                  url.toString() + ". Verify connection!", e);
             return null;
          }
          DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-         // Using factory get an instance of document builder
          DocumentBuilder dbuilder = dbf.newDocumentBuilder();
-         // parse using builder to get DOM representation of the XML file
          Document dom = dbuilder.parse(stream);
          logger.info("... parsing succeeded!");
          return dom;
@@ -341,10 +328,8 @@ public class Reader implements Serializable {
     * @return - boolean true or false if validation succeeded or failed, respectively.
     */
    private boolean validateXML(Document dom) {
-      // create a SchemaFactory capable of understanding WXS schemas
       SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
       Schema schema = null;
-      // load a WXS schema, represented by a Schema instance
       for (int i = 0; i < schemaLocations.length; i++) {
          try {
             schema = factory.newSchema(schemaLocations[i]);
@@ -358,9 +343,7 @@ public class Reader implements Serializable {
          }
       }
       try {
-         // create a Validator instance, which can be used to validate an instance document
          Validator validator = schema.newValidator();
-         // validate the dom
          validator.validate(new DOMSource(dom));
       } catch (SAXException se) {
          logger.error("... validation failed! ", se);
@@ -383,12 +366,9 @@ public class Reader implements Serializable {
     * 
     * @param domSection
     *            - {@link Element}: the section that is to parse
-    * @param parent
-    *            - {@link Object}: the treeNode to which the section should be appended. Only {@link RootSection} or
-    *            {@link Section} parents allowed.
-    * @return odMLSection: the odMLSection representation of the dom section
+    * @return {@link Section}: the Section representation of the dom section
     */
-   private Section parseSection(Element domSection, Section parent) {
+   private Section parseSection(Element domSection) {
       String type = getDirectChildContent(domSection, "type");
       String name = getDirectChildContent(domSection, "name");
       String reference = getDirectChildContent(domSection, "reference");
@@ -417,8 +397,10 @@ public class Reader implements Serializable {
       String include = getDirectChildContent(domSection, "include");
       Section section = null;
       try {
-
-         section = new Section(parent, name, type, reference, definition, url, mapURL);
+         section = new Section(name, type, reference);
+         section.setDefinition(definition);
+         section.setRepository(url);
+         section.setMapping(mapURL);
          section.setLink(link, true);
          if (link != null) {
             links.add(section);
@@ -461,7 +443,7 @@ public class Reader implements Serializable {
             if (!sections.item(i).getParentNode().isSameNode(domSection)) {
                continue;
             }
-            section.add(parseSection((Element) sections.item(i), section));
+            section.add(parseSection((Element) sections.item(i)));
             logger.debug("Subsection added");
          }
       }
@@ -479,13 +461,11 @@ public class Reader implements Serializable {
    private Property parseProperty(Element domProperty) {
       String name = null;
       name = getTextValue(domProperty, "name");
-      // Vector<String> synonyms = new Vector<String>();
       String dependency = "";
       String dependencyValue = "";
       String definition = "";
       URL mapURL = null;
 
-      // ***the mappingURL
       String temp = getDirectChildContent(domProperty, "mapping");
 
       if (temp != null && !temp.isEmpty() && !temp.endsWith("?")) {
@@ -498,15 +478,9 @@ public class Reader implements Serializable {
                   + "'\n\t= mapURL of Property named: " + name, e);
          }
       }
-      // *** the name definition (element definition)
       definition = getDirectChildContent(domProperty, "definition");
-      // //*** the synonyms (element synonym)
-      // synonyms = getDirectChildContents(domProperty, "synonym");
-      // *** the dependency
       dependency = getDirectChildContent(domProperty, "dependency");
-      // *** the parent value
       dependencyValue = getDirectChildContent(domProperty, "dependencyValue");
-      // get a Vector containing all the values of type Value
       NodeList values = domProperty.getElementsByTagName("value");
       NodeList kids = domProperty.getChildNodes();
       Vector<Value> tmpValues = new Vector<Value>();
@@ -526,13 +500,9 @@ public class Reader implements Serializable {
          }
       }
 
-      // *** create the new property
       Property property = null;
       try {
          property = new Property(name, tmpValues, definition, dependency, dependencyValue, mapURL);
-         // for(int i=0;i<synonyms.size();i++){
-         // property.addSynonym(synonyms.get(i));
-         // }
          return property;
       } catch (Exception e) {
          logger.error("odMLReader.parseProperty: create new prop failed. ", e);
@@ -560,8 +530,6 @@ public class Reader implements Serializable {
       String reference = "";
       String encoder = "";
       String checksum = "";
-      // *** the value (as TextContent / NodeValue in xml-file)
-      // actually wanting getTextContent(), but this iterates recursively through everything coming below
       content = domValue.getFirstChild().getNodeValue();
       if (content == null) {
          content = "";
@@ -569,43 +537,31 @@ public class Reader implements Serializable {
       content = content.trim();
       if (content == null)
          content = "";
-      logger.debug(">>>>>>the value: " + content);
-      // *** the unit
       unit = getDirectChildContent(domValue, "unit");
-      // if(domValue.getElementsByTagName("unit").getLength()>0){
-      // unit = domValue.getElementsByTagName("unit").item(0).getTextContent();
-      // }
-      // *** the uncertainty
       if (domValue.getElementsByTagName("uncertainty").getLength() > 0) {
          uncertainty = ((Element) domValue.getElementsByTagName("uncertainty").item(0))
                .getTextContent();
       }
-      // *** the type
       if (domValue.getElementsByTagName("type").getLength() > 0) {
          type = ((Element) domValue.getElementsByTagName("type").item(0)).getTextContent();
       } else {
          type = "";
       }
-      // *** the filename
       if (domValue.getElementsByTagName("filename").getLength() > 0) {
          filename = ((Element) domValue.getElementsByTagName("filename").item(0))
                .getTextContent();
       }
-      // *** the value definitions
       if (domValue.getElementsByTagName("definition").getLength() > 0) {
          definition = ((Element) domValue.getElementsByTagName("definition").item(0))
                .getTextContent();
       }
-      // *** the reference entry
       if (domValue.getElementsByTagName("reference").getLength() > 0) {
          reference = ((Element) domValue.getElementsByTagName("reference").item(0))
                .getTextContent();
       }
-      // *** the encoder
       if (domValue.getElementsByTagName("encoder").getLength() > 0) {
          encoder = ((Element) domValue.getElementsByTagName("encoder").item(0)).getTextContent();
       }
-      // *** the checksum entry
       if (domValue.getElementsByTagName("checksum").getLength() > 0) {
          checksum = ((Element) domValue.getElementsByTagName("checksum").item(0)).getTextContent();
       }

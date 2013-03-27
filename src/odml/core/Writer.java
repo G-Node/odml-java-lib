@@ -26,7 +26,7 @@ import org.jdom.output.XMLOutputter;
 import org.slf4j.*;
 
 /**
- * The {@link Writer} class is the other user interface that provides the tools to write 
+ * The {@link Writer} class provides the tools to write 
  * odML metadata files. 
  * 
  * @since 08.2009
@@ -117,16 +117,16 @@ public class Writer implements Serializable {
    /**
     * 
     * @param odMLRoot {@link Section}: the section to start the dom creation.
-    * @param asTemplate {@link boolean}: flag to indicate whether Template is used or not
+    * @param asTerminology {@link boolean}: flag to indicate whether Template is used or not
     * @return {@link boolean}: true if creating Dom successfully, otherwise false
     */
-   private boolean createDom(Section odMLRoot, boolean asTemplate) {
+   private boolean createDom(Section odMLRoot, boolean asTerminology) {
       logger.debug("in createDom\twith RootSection");
       doc = new Document();
       //create processing instruction the last one added is the preferred one
       ProcessingInstruction instr = null;
       ProcessingInstruction altInstr = null;
-      if (asTemplate) {
+      if (asTerminology) {
          altInstr = new ProcessingInstruction("xml-stylesheet",
                "type=\"text/xsl\" href=\"odml.xsl\"");
          instr = new ProcessingInstruction("xml-stylesheet",
@@ -187,7 +187,7 @@ public class Writer implements Serializable {
          rootElement.addContent(repElement);
       }
       for (int i = 0; i < dummyRoot.sectionCount(); i++) {
-         appendSection(rootElement, dummyRoot.getSection(i), asTemplate);
+         appendSection(rootElement, dummyRoot.getSection(i), asTerminology);
       }
       streamToFile(file);
       return true;
@@ -262,16 +262,23 @@ public class Writer implements Serializable {
 
 
    /**
-    * Appends a property elements to the dom tree. If the property contains more than a single value
-    * a respective number of properties are created.
+    * Appends a property elements to the dom tree. Empty properties (those with no values) 
+    * will only be written to file if the file is to become a terminology.
     * 
     * @param parent {@link Element}: the parent Element to which the properties belong.
     * @param prop {@link Property}: the property to append.
-    * @param terms {@link Terminology}: The terminology that should be used to validate the properties. (non-functional so far)
+    * @param asTerminology boolean: defines whether the file will be a terminology.
     */
-   private void appendProperty(Element parent, Property prop, boolean asTemplate) {
+   private void appendProperty(Element parent, Property prop, boolean asTerminology) {
       logger.debug("in appendProperty\twith Property and Terminology");
-
+      if (!asTerminology) {
+         prop.removeEmptyValues();
+         if (prop.isEmpty()) {
+            logger.warn("Writer.appendProperty: Property " + prop.getName()
+                  + "is empty and will not be written to file!");
+            return;
+         }
+      }
       Element propertyElement = new Element("property");
       //actually write the property
       Element name = new Element("name");
@@ -307,7 +314,7 @@ public class Writer implements Serializable {
 
       // appending the values.
       for (int i = 0; i < prop.valueCount(); i++) {
-         appendValue(propertyElement, prop.getWholeValue(i), asTemplate);
+         appendValue(propertyElement, prop.getWholeValue(i), asTerminology);
       }
 
       //append to the parent			

@@ -19,14 +19,16 @@ package odml.core;
  */
 import java.io.*;
 import java.net.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.zip.CRC32;
 import javax.swing.tree.TreeNode;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.*;
 
 /**
- * The {@link Value} class constitutes the further information of a property where only the value = content
- * is mandatory. It contains the following fields:
+ * {@link Value} entities contain the values associated with a {@link Property}.
+ * Values have the following fields:
  * <ol>
  * <li>value - mandatory, its the value = content itself.</li>
  * <li>uncertainty - optional, an estimation of the value's uncertainty.</li>
@@ -38,7 +40,6 @@ import org.slf4j.*;
  * <li>encoder - optional. If binary content is included in the {@link Value}, indicate the encoder used in the form.</li>
  * <li>checksum - optional. The checksum of the file included in the {@link Value}. State the checksum in the form algorithm$checksum (e.g. crc32$...).</li>
  * </ol> 
- *  Only the value = content is mandatory, the others are optional.
  *   
  * @since 06.2010
  * @author Jan Grewe, Christine Seitz
@@ -46,12 +47,17 @@ import org.slf4j.*;
  */
 public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
-   static Logger             logger           = LoggerFactory.getLogger(Value.class);
-   private static final long serialVersionUID = 147L;
-   private String            unit             = null, type = null, reference = null;
-   private Object            content, uncertainty;
-   private String            definition, filename, checksum, encoder;
-   private Property          associatedProperty;
+   static Logger                         logger           = LoggerFactory.getLogger(Value.class);
+   private static final long             serialVersionUID = 147L;
+   private String                        unit             = null, type = null, reference = null;
+   private Object                        content, uncertainty;
+   private String                        definition, filename, checksum, encoder;
+   private Property                      parent;
+   private final static SimpleDateFormat dateFormat       = new SimpleDateFormat("yyyy-MM-dd");
+   private final static SimpleDateFormat datetimeFormat   = new SimpleDateFormat(
+                                                                "yyyy-MM-dd hh:mm:ss");
+   private final static SimpleDateFormat timeFormat       = new SimpleDateFormat("hh:mm:ss");
+   private final static String           regExNTuple      = "(?i)[0-9]{1,};[0-9]{1,}";
 
 
    //*****************************************************************
@@ -94,7 +100,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
    /**
     * Creates a Value from a Vector containing the value data in the following sequence:
-    * "content","unit","uncertainty","type","defaultFileName","valueDefinition","id"
+    * "content","unit","uncertainty","type","fileName","definition","reference"
     * @param data {@link Vector} of Objects that contains the data in the sequence as the {@link Value}
     * @throws Exception 
     */
@@ -132,135 +138,22 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    protected Value(Object content, String unit, Object uncertainty, String type, String filename,
                    String definition, String reference, String encoder, String checksum)
                                                                                         throws Exception {
-      if (content == null) {
-         logger.debug("! value should not be empty except for terminologies!");
-         //throw new ValueEmptyException("Could not create value! The Object 'value' is the mandatory entry and must not be null!");
-      } else if (content instanceof String && content.toString().isEmpty()) {
-         logger.debug("! value should not be empty except for terminologies!");
-         //throw new ValueEmptyException("Could not create value! The Object 'value' is the mandatory entry and must not be empty!");
-      }
-      boolean typeGiven = true;
       if (type == null || type.isEmpty()) {
-         type = inferType(content);
-         if (type.equalsIgnoreCase("string"))
-            typeGiven = false;
+         type = inferOdmlType(content);
       }
-      Object checkedValue = new Object();
-      try {
-         if (typeGiven)
-            checkedValue = checkDatatype(content, type);
-         else {
-            int caseNumber = checkStringsforDatatype((String) content);
-            switch (caseNumber) {
-               case 0:
-                  checkedValue = content;
-                  break;
-               case 10:
-                  checkedValue = content;
-                  type = "text";
-                  break;
-               case 2:
-                  checkedValue = content;
-                  type = "n-tuple";
-                  break;
-               case 3:
-                  checkedValue = content;
-                  type = "date";
-                  break;
-               case 4:
-                  checkedValue = content;
-                  type = "time";
-                  break;
-               case 5:
-                  checkedValue = Integer.parseInt((String) content);
-                  type = "int";
-                  break;
-               case 55:
-                  checkedValue = Float.parseFloat((String) content);
-                  type = "float";
-                  break;
-               case 6:
-                  checkedValue = Boolean.parseBoolean((String) content);
-                  type = "boolean";
-                  break;
-               case 7:
-                  checkedValue = content;
-                  type = "datetime";
-                  break;
-            }
-         }
-         initialize(checkedValue, unit, uncertainty, type, filename, definition, reference,
-               encoder, checksum);
-      } catch (Exception e) {
-         logger.error("! error during datacheck: ", e);
-      }
-   }
-
-
-   /**
-    * 
-    * @param content Object
-    * @param unit String
-    * @param uncertainty Object
-    * @param type String
-    * @param filename String
-    * @param definition String
-    * @param reference String
-    * @throws Exception
-    */
-   private void initialize(Object content, String unit, Object uncertainty, String type,
-                           String filename,
-                           String definition, String reference, String encoder, String checksum)
-         throws Exception {
-      if (type == null || type.isEmpty()) {
-         throw new Exception("Could not create Value! 'type' must not be null or empty!");
-      }
-
-      this.content = new Object();
-      this.uncertainty = new Object();
-      this.filename = new String();
-      this.definition = new String();
-      this.reference = new String();
+      this.content = null;
+      this.uncertainty = null;
+      this.filename = "";
+      this.definition = "";
+      this.reference = "";
+      this.checksum = "";
+      this.encoder = "";
       this.type = type;
-      //*** value stuff
       if (type.equalsIgnoreCase("binary")) {
-         Base64 enc = new Base64();
-         //the value has to be converted to String; if it is already just take it, if it is not
-         //try different things 
-         if (content instanceof File) {
-            this.content = enc.encode(getBytesFromFile((File) content));
-            this.setFilename(((File) content).getName());
-         } else if (content instanceof URI) {
-            try {
-               File tempFile = new File((URI) content);
-               this.content = enc.encode(getBytesFromFile(tempFile));
-               this.setFilename(tempFile.getName());
-            } catch (Exception e) {
-               logger.error("", e);
-               throw e;
-            }
-         } else if (content instanceof URL) {
-            try {
-               File tempFile = new File(((URL) content).toURI());
-               this.content = enc.encode(getBytesFromFile(tempFile));
-               this.setFilename(tempFile.getName());
-            } catch (Exception e) {
-               logger.error("", e);
-               throw e;
-            }
-         } else if (content instanceof String) {
-            this.content = content;
-         } else {
-            throw new Exception(
-                  "Base64 encoding of the binary value failed! If you want to add binary content"
-                        +
-                        "to the property it must be either an already encoded String, a File, an URI or URL.");
-         }
-         this.setEncoder("Base64");
+         this.content = encodeContent(content);
       } else {
-         this.content = content;
+         this.content = checkDatatype(content, type);
       }
-      //*** uncertainty
       if (uncertainty == null) {
          this.uncertainty = "";
       } else {
@@ -271,42 +164,24 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
             logger.error("", e);
          }
       }
-      //*** filename
       if (filename != null && !filename.isEmpty()) {
          this.filename = filename;
       }
-      //*** definition	
       if (definition == null) {
          this.definition = "";
       } else {
-         try {
-            this.definition = definition;
-         } catch (Exception e) {
-            this.definition = "";
-            logger.error("", e);
-         }
+         this.definition = definition;
       }
-      //*** reference
       if (reference == null) {
          this.reference = "";
       } else {
          this.reference = reference;
       }
-      //*** unit
       if (unit == null) {
          this.unit = "";
       } else {
          this.unit = unit;
       }
-      //*** encoder
-      if (encoder == null) {
-         this.encoder = "";
-      }
-      //*** checksum
-      if (checksum == null) {
-         this.checksum = "";
-      }
-
    }
 
 
@@ -320,29 +195,18 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   //*****************************************************************
-   //**************	additional methods for constructor  ***********	
-   //*****************************************************************	
    /**
     * Checks the passed values class and returns the odML type.
     * @param value {@link Object} the value;
     * @return {@link String} the type under which odml refers to it.
     */
-   private String inferType(Object value) {
-      if (value instanceof String) {
-         return "string";
-      } else if (value instanceof Integer) {
+   public static String inferOdmlType(Object value) {
+      if (value instanceof Integer) {
          return "int";
       } else if (value instanceof Boolean) {
          return "boolean";
-      } else if (value instanceof Date) { // TODO date can be date, time or datetime > use SimpleDateFormat?!
-         //			int caseNumber = checkStringsforDatatype((String) value);
-         //			switch(caseNumber){
-         //			case 3: return "date";
-         //			case 4: return "time";
-         //			case 7: return "datetime";
-         //			}
-         return "date";
+      } else if (value instanceof Date) {
+         return "datetime";
       } else if (value instanceof Float) {
          return "float";
       } else if (value instanceof Double) {
@@ -353,533 +217,220 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          return "binary";
       } else if (value instanceof Date) {
          return "date";
-      } else {
-         return "string";
+      } else if (value instanceof String) {
+         return inferDatatypeFromString(value.toString());
       }
+      return "string";
    }
 
 
    /**
-    * Checks the datatype  of the passed values and puts them into the checkedValues Vector.
-    * @param content Object 
-    * @param type String
-    * @throws Exception
+    * Checks and converts the content passed to the Value.
+    * @param content Object: The content that needs to be checked.
+    * @param type String: The type of the content
+    * @return returns the content in the correct class or null if an error occurred.
     */
-   public static Object checkDatatype(Object content, String type)
-         throws Exception {
-      logger.debug("entered method:\t'typeCheck'");
+   public static Object checkDatatype(Object content, String type) {
       if (content == null || content.toString().isEmpty()) {
-         logger
-               .debug("no typecheck performed as value is null/empty > can/should only occur for terminologies!");
-         return content;
+         logger.info("Found empty content!!!");
+         return null;
       }
-      // check for int
       if (type.matches("(?i)int.*")) {
-         logger.debug("type specified:\tint");
          if (content instanceof java.lang.Integer) {
-            logger.debug("value of class:\tint \t> correct");
-            return content;
-         }
-         // integer could be masked as string
-         else if (content instanceof java.lang.String) {
-        	if (((java.lang.String) content).contains(".") || ((String)content).contains(",")){
-        	 int index = ((String)content).indexOf(".");
-        	 if(index == -1) 
-        		 index = ((String)content).indexOf(",");
-        	 content = ((String)content).substring(0, index);
-        	} 
-            int checked = Integer.parseInt((String) content);
-            logger.debug("value of class String:\tparsed to int \t> correct");
-            return checked;
-         } else if (content instanceof java.lang.Double) {
-            double checked = ((Double) content).intValue();
-            logger.debug("value of class String:\tparsed to Double \t> correct");
-            return checked;
-         } else if (content instanceof java.lang.Float) {
-            float checked = ((Float) content).intValue();
-            logger.debug("value of class String:\tparsed to Float \t> correct");
-            return checked;
-         } else {
-            throw new WrongTypeException("Int expected, not " + content.getClass());
-         }
-      }
-
-      // check for float
-      else if (type.matches("(?i)float.*")) {
-         logger.debug("type specified:\tfloat");
-         if (content instanceof java.lang.Float) {
-            logger.debug("value of class:\tfloat \t> correct");
-            return content;
-         } else if (content instanceof java.lang.Double) {
-            double checked = ((Double) content).floatValue();
-            logger.debug("value of class:\tdouble \t> correct");
-            return checked;
-         }
-         // float could be masked as string
-         else if (content instanceof java.lang.String) {
-            float checked = Float.parseFloat((String) content);
-            logger.debug("value of class String:\tparsed to float \t> correct");
-            return checked;
-         } else {
-            logger.warn("Float expected, not " + content.getClass());
-            throw new WrongTypeException("Float expected, not " + content.getClass());
-         }
-      }
-
-      // check for string (string = oneWord in this case)!
-      else if (type.matches("(?i)string")) {
-         logger.debug("type specified:\tstring");
-
-         if (!(content instanceof java.lang.String) && !(content instanceof java.lang.Character)) {
-            throw new WrongTypeException("java.lang.String expected, not " + content.getClass());
-         }
-         // else string, but could contain everything > case0 is string in checkStringsforDatatype(..)
-         else {
-            logger.debug("value of class:\tString");
-            int checkNumber;
-            if (content instanceof java.lang.Character) {
-               checkNumber = checkStringsforDatatype(((Character) content).toString());
-            } else {
-               checkNumber = checkStringsforDatatype((String) content);
-            }
-            switch (checkNumber) {
-               case 0: // string > ok
-                  logger.debug("checked String = string\t> correct");
-                  return content;
-               case 10:
-                  logger.debug("checked String = string (text)\t> correct");
-                  return content;
-                  // strict definition: text contains whitespaces, string not..
-                  // throw new WrongTypeException("'string' expected, not 'text': "+values.get(i));
-
-                  // explicit errors
-               case 2:
-                  logger.warn("'string' expected, not 'n-tuple': " + content
-                        + "; added as string (respecting user-demand)");
-                  return content;
-                  //						throw new WrongTypeException("'string' expected, not 'n-tuple': "+values.get(i));
-               case 3:
-                  logger.warn("'string' expected, not 'date': " + content
-                        + "; added as string (respecting user-demand)");
-                  return content;
-                  //						throw new WrongTypeException("'string' expected, not 'date': "+values.get(i));
-               case 4:
-                  logger.warn("'string' expected, not 'time': " + content
-                        + "; added as string (respecting user-demand)");
-                  return content;
-                  //						throw new WrongTypeException("'string' expected, not 'time': "+values.get(i));
-               case 5:
-                  logger.warn("'string' expected, not 'int': " + content
-                        + "; added as string (respecting user-demand)");
-                  return content;
-                  //						throw new WrongTypeException("'string' expected, not 'int': "+values.get(i));
-               case 55:
-                  logger.warn("'string' expected, not 'float': " + content
-                        + "; added as string (respecting user-demand)");
-                  return content;
-                  //						throw new WrongTypeException("'string' expected, not 'float': "+values.get(i));
-               case 6:
-                  logger.warn("'string' expected, not 'boolean': " + content
-                        + "; added as string (respecting user-demand)");
-                  return content;
-                  //						throw new WrongTypeException("'string' expected, not 'boolean': "+values.get(i));
-
-               default:
-                  throw new WrongTypeException("'string' expected, got '" + content + "' as input");
-            }
-         }
-      }
-
-      // check for text = string containing newlines, blanks...
-      else if (type.matches("(?i)text")) {
-         logger.debug("type specified:\tstring");
-         if (!(content instanceof java.lang.String)) {
-            throw new WrongTypeException("java.lang.String expected, not " + content.getClass());
-         }
-         // else string, but could contain everything > case1 is text in checkStringsforDatatype(..)
-         else {
-            logger.debug("value of class:\tString");
-
-            int checkNumber = checkStringsforDatatype((String) content);
-            switch (checkNumber) {
-               case 10:
-                  logger.debug("checked String = text\t> correct");
-                  return content;
-               case 0:
-                  logger.debug("checked String = text (string)\t> correct");
-                  return content;
-                  // strict definition: text contains whitespaces, stirng not..
-                  // throw new WrongTypeException("'text' expected, not 'string'");
-
-                  // explicit errors
-               case 2:
-                  throw new WrongTypeException("'text' expected, not 'n-tuple': " + content);
-               case 3:
-                  throw new WrongTypeException("'text' expected, not 'date': " + content);
-               case 4:
-                  throw new WrongTypeException("'text' expected, not 'time': " + content);
-               case 5:
-                  throw new WrongTypeException("'text' expected, not 'int': " + content);
-               case 55:
-                  throw new WrongTypeException("'text' expected, not 'float': " + content);
-               case 6:
-                  throw new WrongTypeException("'text' expected, not 'boolean': " + content);
-
-               default:
-                  throw new WrongTypeException("'text' expected, got '" + content + "' as input");
-            }
-         }
-      }
-
-      // check for n-tuple (format DIGITSxDIGITS)
-      else if (type.matches("(?i)n-tuple")) {
-         logger.debug("type specified:\tn-tuple");
-         if (!(content instanceof java.lang.String)) {
-            throw new WrongTypeException("java.lang.String expected, not " + content.getClass());
-         }
-         // else string, but could contain everything > case2 is n-tuple in checkStringsforDatatype(..)
-         else {
-            logger.debug("value of class:\tString");
-
-            int checkNumber = checkStringsforDatatype((String) content);
-            switch (checkNumber) {
-               case 2:
-                  logger.debug("checked String:\tparsed to n-tuple\t> correct");
-                  return content;
-
-                  // explicit errors
-               case 0:
-                  throw new WrongTypeException("'n-tuple' expected, not 'string': " + content);
-               case 10:
-                  throw new WrongTypeException("'n-tuple' expected, not 'text': " + content);
-               case 3:
-                  throw new WrongTypeException("'n-tuple' expected, not 'date': " + content);
-               case 4:
-                  throw new WrongTypeException("'n-tuple' expected, not 'time': " + content);
-               case 5:
-                  throw new WrongTypeException("'n-tuple' expected, not 'int': " + content);
-               case 55:
-                  throw new WrongTypeException("'n-tuple' expected, not 'float': " + content);
-               case 6:
-                  throw new WrongTypeException("'n-tuple' expected, not 'boolean': " + content);
-
-               default:
-                  throw new WrongTypeException("'n-tuple' expected, got '" + content + "' as input");
-            }
-         }
-      }
-
-      // check for date (format yyyy-mm-dd)
-      else if (type.matches("(?i)date")) {
-         logger.debug("type specified:\tdate");
-         //				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd"); //TODO
-
-         if (content instanceof java.util.Date) {
-            logger.debug("value of class:\tdate\t> correct");
-            return content;
-         }
-         // else string, but could contain everything > case3 is date in checkStringsforDatatype(..)
-         else if (content instanceof java.lang.String) {
-
-            logger.debug("value of class:\tString");
-            int checkNumber = checkStringsforDatatype((String) content);
-
-            switch (checkNumber) {
-               case 3:
-                  logger.debug("checked String:\tparsed to date\t> correct");
-                  return content;
-
-                  // explicit errors
-               case 0:
-                  throw new WrongTypeException("'date' expected, not 'string': " + content);
-               case 10:
-                  throw new WrongTypeException("'date' expected, not 'text': " + content);
-               case 2:
-                  throw new WrongTypeException("'date' expected, not 'n-tuple': " + content);
-               case 4:
-                  throw new WrongTypeException("'date' expected, not 'time': " + content);
-               case 5:
-                  throw new WrongTypeException("'date' expected, not 'int': " + content);
-               case 55:
-                  throw new WrongTypeException("'date' expected, not 'float': " + content);
-               case 6:
-                  throw new WrongTypeException("'date' expected, not 'boolean': " + content);
-
-               default:
-                  throw new WrongTypeException("'date' expected, got '" + content + "' as input");
-            }
-         } else {
-            throw new WrongTypeException("java.util.Date or java.lang.String expected, not "
-                  + content.getClass());
-         }
-      }
-
-      // check for time (format hh:mm:ss)
-      else if (type.matches("(?i)time")) {
-         logger.debug("type specified:\ttime");
-         //				SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-
-         if (content instanceof java.util.Date) {
-            logger.debug("value of class:\tdate:\tfor time\t> correct");
-            return content;
-         }
-
-         // else string, but could contain everything > case4 is time in checkStringsforDatatype(..)
-         else if (content instanceof java.lang.String) {
-            logger.debug("value of class:\tString");
-            int checkNumber = checkStringsforDatatype((String) content);
-
-            switch (checkNumber) {
-               case 4:
-                  logger.debug("checked String:\tparsed to time\t> correct");
-                  return content;
-
-                  // explicit errors
-               case 0:
-                  throw new WrongTypeException("'time' expected, not 'string': " + content);
-               case 10:
-                  throw new WrongTypeException("'time' expected, not 'text': " + content);
-               case 2:
-                  throw new WrongTypeException("'time' expected, not 'n-tuple': " + content);
-               case 3:
-                  throw new WrongTypeException("'time' expected, not 'date': " + content);
-               case 5:
-                  throw new WrongTypeException("'time' expected, not 'int': " + content);
-               case 55:
-                  throw new WrongTypeException("'time' expected, not 'float': " + content);
-               case 6:
-                  throw new WrongTypeException("'time' expected, not 'boolean': " + content);
-
-               default:
-                  throw new WrongTypeException("'time' expected, got '" + content + "' as input");
-            }
-         } else {
-            throw new WrongTypeException(
-                  "java.util.Date (for 'time') or java.lang.String expected, not "
-                        + content.getClass());
-         }
-      }
-
-      // check for boolean
-      else if (type.matches("(?i)bool.*")) {
-         logger.debug("type specified:\tbool");
-         if (content instanceof java.lang.Boolean) {
-            logger.debug("value of class:\tboolean\t> correct");
-            return content;
-         }
-         // bool could be masked as string > case5 in checkStringsforDatatype(..) would be bool
-         else if (content instanceof java.lang.String) {
-            logger.debug("value of class:\tString");
-            return Boolean.parseBoolean((String) content);
-         } else {
-            throw new WrongTypeException("'bool' expected, not " + content.getClass());
-         }
-      }
-
-      // check for URL
-      else if (type.matches("(?i)URL")) {
-         logger.debug("type specified:\tURL");
-         if (content instanceof java.net.URL) {
-            logger.debug("value of class:\tURL\t> correct");
             return content;
          } else if (content instanceof java.lang.String) {
-            logger.debug("value of class:\tString");
-            try {
-               @SuppressWarnings("unused") URL parsedURL = new URL((String) content);
-               logger.debug("checked String:\tparsed to URL\t> correct");
-               return content;
-            } catch (MalformedURLException e) {
-               logger.error("checked String" + content + ": is not a valid URL!");
-               return content;
+            if (((java.lang.String) content).contains(".") || ((String) content).contains(",")) {
+               int index = ((String) content).indexOf(".");
+               if (index == -1)
+                  index = ((String) content).indexOf(",");
+               content = ((String) content).substring(0, index);
             }
+            return Integer.parseInt((String) content);
+         } else if (content instanceof Number) {
+            return ((Number) content).intValue();
          } else {
-            throw new WrongTypeException("URL expected, not " + content.getClass());
+            logger.error("Cannot convert value of class " + content.getClass().getSimpleName()
+                  + " to requested type: " + type);
+            return null;
          }
-      }
-
-      else if (type.matches("(?i)binary")) {
-         logger.debug("type specified:\tbinary");
-         if (!(content instanceof java.lang.String)) {
-            throw new WrongTypeException("Binary (String) expected, not " + content.getClass());
+      } else if (type.matches("(?i)float.*")) {
+         if (content instanceof Number) {
+            return ((Number) content).floatValue();
+         } else if (content instanceof java.lang.String) { // float could be masked as string
+            return Float.parseFloat((String) content);
          } else {
-            logger.debug("value of class:\tString\t> correct for binary");
+            logger.error("Cannot convert value of class " + content.getClass().getSimpleName()
+                  + " to requested type " + type);
+            return null;
+         }
+      } else if (type.matches("(?i)string") || type.matches("(?i)text")) {
+         logger.debug("type specified:\tstring");
+         if (content instanceof String) {
             return content;
-         }
-      }
-
-      // check for persons = string
-      else if (type.matches("(?i)person")) {
-         logger.debug("type specified:\tperson");
-         if (!(content instanceof java.lang.String)) {
-            throw new WrongTypeException("java.lang.String expected, not " + content.getClass());
+         } else if (content instanceof Character) {
+            return ((Character) content).toString();
          } else {
-            logger.debug("value of class:\tString:\tfor person\t> correct");
-            return content;
+            logger.error("Error converting content of class: "
+                  + content.getClass().getSimpleName() + " to requested type: " + type);
+            return null;
          }
-      }
-
-      // check for datetime (format yyyy-MM-dd HH:mm:ss)
-      else if (type.matches("(?i)datetime")) {
-         logger.debug("type specified:\tdatetime");
-         //				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
+      } else if (type.matches("(?i)n-tuple")) {
+         if (content instanceof String && ((String) content).matches(regExNTuple)) {
+            return content;
+         } else {
+            logger.error("Value does not match the n-tuple definition (regExp: "
+                  + regExNTuple + ")!");
+            return null;
+         }
+      } else if (type.matches("(?i)date")) {
          if (content instanceof java.util.Date) {
-            logger.debug("value of class:\tdate:\tfor datetime\t> correct");
+            try {
+               Date date = dateFormat.parse(dateFormat.format(content));
+               return date;
+            } catch (Exception e) {
+               logger.error(e.getMessage());
+            }
+         } else if (content instanceof java.lang.String) {
+            try {
+               Date date = dateFormat.parse((String) content);
+               return date;
+            } catch (Exception e) {
+               logger.error("Cannot convert passed String : " + content
+                     + " to a date value!");
+               return null;
+            }
+         } else {
+            logger.error("Cannot convert passed object of class: "
+                  + content.getClass().getSimpleName()
+                  + " to a date value!");
+            return null;
+         }
+      } else if (type.matches("(?i)time")) {
+         if (content instanceof java.util.Date) {
+            try {
+               Date date = timeFormat.parse(timeFormat.format(content));
+               return date;
+            } catch (Exception e) {
+               logger.error(e.getMessage());
+            }
+         } else if (content instanceof java.lang.String) {
+            try {
+               Date date = timeFormat.parse((String) content);
+               return date;
+            } catch (Exception e) {
+               logger.error(e.getLocalizedMessage());
+            }
+         } else {
+            logger.error("Cannot convert passed object of class: "
+                  + content.getClass().getSimpleName()
+                  + " to a time value!");
+            return null;
+         }
+      } else if (type.matches("(?i)datetime")) {
+         if (content instanceof java.util.Date) {
+            try {
+               Date date = datetimeFormat.parse(datetimeFormat.format(content));
+               return date;
+            } catch (Exception e) {
+               logger.error(e.getLocalizedMessage());
+            }
+         } else if (content instanceof java.lang.String) {
+            try {
+               Date date = datetimeFormat.parse((String) content);
+               return date;
+            } catch (Exception e) {
+               logger.error(e.getLocalizedMessage());
+            }
+         } else {
+            logger.error("Cannot convert passed object of class: "
+                  + content.getClass().getSimpleName()
+                  + " to a datetime value!");
+            return null;
+         }
+      } else if (type.matches("(?i)bool.*")) {
+         if (content instanceof java.lang.Boolean) {
+            return content;
+         } else if (content instanceof java.lang.String) {
+            return Boolean.parseBoolean((String) content);
+         } else {
+            logger.error("Cannot convert object of class: "
+                  + content.getClass().getSimpleName() + " to a " + type + ": value!");
+            return null;
+         }
+      } else if (type.matches("(?i)URL")) {
+         if (content instanceof java.net.URL) {
+            return content;
+         } else if (content instanceof java.lang.String) {
+            try {
+               URL parsedUrl = new URL((String) content);
+               return parsedUrl;
+            } catch (MalformedURLException e) {
+               logger.error(e.getLocalizedMessage());
+            }
+         } else {
+            logger.error("Could not convert " + content.getClass().getSimpleName()
+                  + " to required type: " + type);
+            return null;
+         }
+      } else if (type.matches("(?i)binary")) {
+         if (content instanceof java.lang.String || content instanceof File
+               || content instanceof URL || content instanceof URI) {
+            return content;
+         } else {
+            logger.error("Binary (String), File, URL, or URI content expected, "
+                  + content.getClass().getSimpleName() + " found!");
+            return null;
+         }
+      } else if (type.matches("(?i)person")) {
+         if (!(content instanceof java.lang.String)) {
+            logger.error("Expect a person to be of class expected, not " + content.getClass());
+            return null;
+         } else {
             return content;
          }
-         // else string, but could contain everything > case7 is datetime in checkStringsforDatatype(..)
-         else if (content instanceof java.lang.String) {
-            logger.debug("value of class:\tString");
-            int checkNumber = checkStringsforDatatype((String) content);
-
-            switch (checkNumber) {
-               case 7:
-                  logger.debug("checked String:\tparsed to datetime\t> correct");
-                  return content;
-
-                  // explicit errors
-               case 0:
-                  throw new WrongTypeException("'datetime' expected, not 'string': " + content);
-               case 10:
-                  throw new WrongTypeException("'datetime' expected, not 'text': " + content);
-               case 2:
-                  throw new WrongTypeException("'datetime' expected, not 'n-tuple': " + content);
-               case 3:
-                  throw new WrongTypeException("'datetime' expected, not 'date': " + content);
-               case 4:
-                  throw new WrongTypeException("'datetime' expected, not 'time': " + content);
-               case 5:
-                  throw new WrongTypeException("'datetime' expected, not 'int': " + content);
-               case 55:
-                  throw new WrongTypeException("'datetime' expected, not 'float': " + content);
-               case 6:
-                  throw new WrongTypeException("'datetime' expected, not 'boolean': " + content);
-
-               default:
-                  throw new WrongTypeException("'datetime' expected, got '" + content
-                        + "' as input");
-            }
-         }
-
-         else {
-            throw new WrongTypeException(
-                  "java.util.Date (for 'datetime') or java.lang.String expected, not "
-                        + content.getClass());
-         }
-      }
-
-      // all cases checked > unknown type specified!
-      else {
-         // type not supported > handled as String
+      } else {
          type = "string";
          logger.warn("type unknown:\thandling as 'string':\tcorrect");
          return content;
-         // more strict: there are no more types!
-         // throw new WrongTypeException("Type '"+type+"' specified doesn't exist!");
       }
+      return null;
    }
 
 
    /**
-    * Checks one String Object more in detail, could be
-    * string (oneWord): 		caseNumber 0
-    * text (more words&lines): caseNumber 10
-    * n-tuple (DIGIT;DIGIT): 	caseNumber 2
-    * date (yyyy-mm-dd):		caseNumber 3
-    * time (HH:mm:ss):			caseNumber 4
-    * integer:					caseNumber 5
-    * float:					caseNumber 55
-    * boolean:					caseNumber 6
-    * datetime (yyyy-mm-dd HH:mm:ss): caseNumber 7 (3+4 ;)
+    * Checks a {@link String} in more detail, and returns the odml data type.
+    * 
     * @param content {@link String}
-    * @return {@link Integer}: the caseNumber for the String
+    * @return {@link String}: the odml type that matches best.
     */
-   protected static int checkStringsforDatatype(String content) {
+   protected static String inferDatatypeFromString(String content) {
       content = content.trim();
-      int caseNumber = 0; // by default string = oneWord
-      // case 10: theContent has whitespaces in it > 'text'
+      //      String regExDate = "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))";
+      ////      String regExDateGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2}";
+      //      String regExTime = "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))"; // for time
+      ////      String regExTimeGeneral = "[0-9]{2}:[0-9]{2}:[0-9]{2}";
+      //      String regExInt = "^[+-]?[0-9]+$";
+      //      String regExFloat = "^[+-]?[0-9]*\\.[0-9]+$";
+      //      String regExBool = "(true)|(false)|1|0";
+      //      String regExDatetimeGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}";
 
-      // pattern matchers for strings
-
-      // case 2: for n-tuple: format DIGITSxDIGITS
-      String regExNTuple = "(?i)[0-9]{1,};[0-9]{1,}";
-
-      /* case 3: for date: 
-       * max. 12 for months allowed
-       * max. 31 for days allowed
-       * ensuring that February has max 29 days (not checking for leap years...)
-       */
-      String regExDate = "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))";
-      String regExDateGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2}";
-
-      /* case 4: for time:
-       * max 24 hours
-       * max 60 min
-       * max 60 seconds
-       */
-      String regExTime = "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))"; // for time
-      String regExTimeGeneral = "[0-9]{2}:[0-9]{2}:[0-9]{2}";
-
-      // case 5: for int:
-      // possibility for signs +- followed by at least one digit. nothing else can be in the pattern (i.e.  !
-      String regExInt = "^[+-]?[0-9]+$";
-      // case 55: for float:
-      // possibility for signs +- maybe followed by digits, then must have a '.', 
-      // then must be followed by at least one digit. nothing else can be in the pattern!
-      String regExFloat = "^[+-]?[0-9]*\\.[0-9]+$";
-
-      // case 6: for bool:
-      String regExBool = "(true)|(false)|1|0";
-
-      // String regExURL = "";	// for URL
-
-      //case 7: for datetime
-      String regExDatetimeGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}";
-
-      if (content.matches(regExNTuple)) {
-         caseNumber = 2;
-         logger.debug("checkStringsForDatatype:\tfound 'n-tuplet'");
-      } else if (content.matches(regExDateGeneral)) {
-         if (content.matches(regExDate)) {
-            caseNumber = 3;
-            logger.debug("checkStringsForDatatype:\tfound 'date'");
-         } else { // (6)66 eeevvvill! instead of first 6 > 3 for Date
-            caseNumber = 366;
-            logger.info("checkStringsForDatatype:\tfound 'date'-like thing: " + content);
-         }
-         if (content.matches(regExDatetimeGeneral)) {
-            caseNumber = 7;
-            logger.debug("checkStringsForDatatype:\tfound 'datetime'");
-         }
-      } else if (content.matches(regExTimeGeneral)) {
-         if (content.matches(regExTime)) {
-            caseNumber = 4;
-            logger.debug("checkStringsForDatatype:\tfound 'time'");
-         } else { // (6)66 eeevvvill! instead of first 6 > 4 for Time
-            caseNumber = 466;
-            logger.info("checkStringsForDatatype:\tfound 'time'-like thing: " + content);
-         }
-         if (content.matches(regExDatetimeGeneral)) {
-            caseNumber = 7;
-            logger.debug("checkStringsForDatatype:\tfound 'datetime'");
-         }
-      } else if (content.matches(regExInt)) {
-         caseNumber = 5;
-         logger.debug("checkStringsForDatatype:\tfound 'int'");
-      } else if (content.matches(regExFloat)) {
-         caseNumber = 55;
-         logger.debug("checkStringsForDatatype:\tfound 'float'");
-      } else if (content.matches(regExBool)) {
-         caseNumber = 6;
-         logger.debug("checkStringsForDatatype:\tfound 'bool'");
-      } else if (content.matches(regExDatetimeGeneral)) {
-         caseNumber = 7;
-         logger.debug("checkStringsForDatatype:\tfound 'datetime'");
-      } else if (content.contains(" ")) {
-         caseNumber = 10;
-         logger.debug("checkStringsForDatatype:\tfound 'text'");
+      HashMap<String, String> regExpMap = new HashMap<String, String>();
+      regExpMap.put("date",
+            "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))");
+      regExpMap.put("datetime", "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}");
+      regExpMap.put("time",
+            "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))");
+      regExpMap.put("int", "^[+-]?[0-9]+$");
+      regExpMap.put("float", "^[+-]?[0-9]*\\.[0-9]+$");
+      regExpMap.put("boolean", "(true)|(false)|1|0");
+      regExpMap.put("n-tuple", regExNTuple);
+      Iterator<String> iter = regExpMap.keySet().iterator();
+      while (iter.hasNext()) {
+         String key = iter.next();
+         if (content.toLowerCase().matches(regExpMap.get(key)))
+            return key;
       }
-      return caseNumber;
+      return "string";
    }
 
 
@@ -895,9 +446,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
     */
    public static byte[] getBytesFromFile(File file) throws IOException {
       InputStream in = new FileInputStream(file);
-      //Get the size of the file
       long length = file.length();
-      //ensure that the file not larger than Integer.MAX_VALUE.
       if (length > Integer.MAX_VALUE) {
          throw new IOException("File exceeds max value: " + Integer.MAX_VALUE);
       }
@@ -914,7 +463,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       if (offset < bytes.length) {
          throw new IOException("Could not completely read file" + file.getName());
       }
-      //Close stream
       in.close();
       return bytes;
    }
@@ -929,7 +477,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       if (outFile == null) {
          throw new Exception("Argument outFile not specified!");
       }
-      //create the outputStream
       FileOutputStream os = null;
       try {
          os = new FileOutputStream(outFile);
@@ -937,11 +484,8 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          logger.error("", e);
          throw e;
       }
-      //create the decoder
       Base64 base = new Base64();
-      //decode the content
-      byte[] bytes = base.decode(content);
-      //write bytes to disc
+      byte[] bytes = base.decode(content.getBytes("UTF-8"));
       os.write(bytes);
       os.flush();
       os.close();
@@ -953,12 +497,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    //****************************************************************
    // associated property (so to say dad in tree)
    protected void setAssociatedProperty(Property property) {
-      this.associatedProperty = property;
-   }
-
-
-   protected Property getAssociatedProperty() {
-      return this.associatedProperty;
+      this.parent = property;
    }
 
 
@@ -1039,9 +578,11 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   // encoder
    protected void setEncoder(String encoder) {
-      this.encoder = encoder;
+      if (encoder == null || encoder.isEmpty())
+         this.encoder = "";
+      else
+         this.encoder = encoder;
    }
 
 
@@ -1050,9 +591,11 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   // checksum
    protected void setChecksum(String checksum) {
-      this.checksum = checksum;
+      if (checksum == null || checksum.isEmpty())
+         this.checksum = "";
+      else
+         this.checksum = checksum;
    }
 
 
@@ -1061,34 +604,58 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
+   /**
+    * Validates this {@link Value} against the terminology definition.
+    * This function is marked @deprecated and will be removed in future versions!
+    * 
+    * Use validate instead!
+    * 
+    * @param termProp Property: The definition retrieved from a terminology.
+    */
+   @Deprecated
    public void compareToTerminology(Property termProp) {
+      validate(termProp);
+   }
+
+
+   /**
+    * Validates a {@link Value} against the value definition in a terminology. 
+    * 
+    * @param terminologyProperty {@link Property}: The respective {@link Property} 
+    * that defines the kind of value.
+    * 
+    */
+   public void validate(Property terminologyProperty) {
       if (this.type != null && !this.type.isEmpty()) {
-         if (!this.type.equalsIgnoreCase(termProp.getType())) {
+         if (!this.type.equalsIgnoreCase(terminologyProperty.getType())) {
             logger.warn("Value type (" + this.type
-                  + ") does not match the one given in the terminology(" + termProp.getType()
+                  + ") does not match the one given in the terminology("
+                  + terminologyProperty.getType()
                   + ")! To guarantee interoperability please ckeck. However, kept provided type.");
          }
       } else {
          try {
-            checkDatatype(this.content, termProp.getType());
-            this.setType(termProp.getType());
+            checkDatatype(this.content, terminologyProperty.getType());
+            this.setType(terminologyProperty.getType());
             logger.info("Added type information to value.");
          } catch (Exception e) {
             logger
                   .warn("Value is not compatible with the type information the terminology suggests ("
-                        + termProp.getType() + "). Did nothing but please check");
+                        + terminologyProperty.getType()
+                        + "). Did not change anything, but please check");
          }
       }
       if (this.unit != null && !this.unit.isEmpty()) {
-         if (!this.unit.equalsIgnoreCase(termProp.getUnit(0))) {
+         if (!this.unit.equalsIgnoreCase(terminologyProperty.getUnit(0))) {
             logger.warn("Value unit (" + this.unit
-                  + ") does not match the one given in the terminology(" + termProp.getUnit()
+                  + ") does not match the one given in the terminology("
+                  + terminologyProperty.getUnit()
                   + ")! To guarantee interoperability please ckeck. However, kept provided unit.");
          }
       } else {
-         if (termProp.getUnit() != null && !termProp.getUnit(0).isEmpty()) {
-            this.setUnit(termProp.getUnit(0));
-            logger.info("Added unit " + termProp.getUnit() + " information to value.");
+         if (terminologyProperty.getUnit() != null && !terminologyProperty.getUnit(0).isEmpty()) {
+            this.setUnit(terminologyProperty.getUnit(0));
+            logger.info("Added unit " + terminologyProperty.getUnit() + " information to value.");
          }
       }
    }
@@ -1106,6 +673,67 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          return false;
       }
       return true;
+   }
+
+
+   /**
+    * Base64 encodes the content if it represents either a File, URL, URI, or String that can be converted to a file.
+    * @param content
+    * @return
+    */
+   private String encodeContent(Object content) {
+      if (content == null) {
+         return null;
+      }
+      logger.info("Encoding content: " + content.toString());
+      String encoded = null;
+      File file = null;
+      if (content instanceof String) {
+         try {
+            URI uri = new URI((String) content);
+            file = new File(uri);
+         } catch (Exception e) {
+            return (String) content;
+         }
+      } else if (content instanceof URL) {
+         try {
+            file = new File(((URL) content).toURI());
+         } catch (Exception e) {
+            logger.error("Could not create a file from the specified URL: " + content.toString());
+            file = null;
+         }
+      } else if (content instanceof URI) {
+         try {
+            file = new File((URI) content);
+         } catch (Exception e) {
+            logger.error("Could not create a file from the specified URI: " + content.toString());
+            file = null;
+         }
+      } else if (content instanceof File) {
+         file = (File) content;
+      } else {
+         logger.error("Could not create a File from input! Class: "
+               + content.getClass().getSimpleName() + " Content: " + content.toString());
+         file = null;
+      }
+      if (file == null) {
+         return "";
+      }
+      Base64 enc = new Base64();
+      //the value has to be converted to String; if it is already just take it, if it is not
+      //try different things 
+      try {
+         byte[] bytes = enc.encode(getBytesFromFile(file));
+         CRC32 crc = new CRC32();
+         crc.update(bytes);
+         this.setChecksum("CRC32$" + crc.getValue());
+         this.setFilename(file.getName());
+         this.setEncoder("Base64");
+         encoded = new String(bytes, "UTF-8");
+      } catch (Exception e) {
+         logger.error("An error occurred during encoding: " + e.getLocalizedMessage());
+      }
+      return encoded;
    }
 
 
@@ -1143,8 +771,8 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
 
    @Override
-   public TreeNode getParent() {
-      return this.getAssociatedProperty();
+   public Property getParent() {
+      return this.parent;
    }
 
 
@@ -1156,6 +784,13 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
    @Override
    public String toString() {
-      return this.getContent().toString();
+      String s = "";
+      if (this.getContent() != null)
+         s = s.concat(this.getContent().toString());
+      if (this.getUncertainty() != null && !this.getUncertainty().toString().isEmpty())
+         s = s.concat("+-" + this.getUncertainty().toString());
+      if (this.getUnit() != null)
+         s = s.concat(" " + this.getUnit());
+      return s;
    }
 }
