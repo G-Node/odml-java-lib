@@ -36,12 +36,17 @@ import org.slf4j.*;
  */
 public class Writer implements Serializable {
 
-   private static final long serialVersionUID = 146L;
-   public static Logger      logger           = LoggerFactory.getLogger(Writer.class);
-   private final boolean     asTerminology;
-   private Document          doc;
-   private final File        file;
-   private Section           odmlTree         = null;
+   private static final long             serialVersionUID = 146L;
+   public static Logger                  logger           = LoggerFactory.getLogger(Writer.class);
+   private final boolean                 asTerminology;
+   private Document                      doc;
+   private final File                    file;
+   private Section                       odmlTree         = null;
+
+   private final static SimpleDateFormat dateFormat       = new SimpleDateFormat("yyyy-MM-dd");
+   private final static SimpleDateFormat datetimeFormat   = new SimpleDateFormat(
+                                                                "yyyy-MM-dd hh:mm:ss");
+   private final static SimpleDateFormat timeFormat       = new SimpleDateFormat("hh:mm:ss");
 
 
    /**
@@ -338,7 +343,20 @@ public class Writer implements Serializable {
 
       Element valueElement = new Element("value");
       if (val.getContent() != null && (!val.getContent().toString().isEmpty())) {
-         valueElement.setText(val.getContent().toString());
+         if (val.getContent() instanceof Date) {
+            Date d = (Date) val.getContent();
+            if (val.getType().equalsIgnoreCase("date")) {
+               valueElement.setText(dateFormat.format(d));
+            } else if (val.getType().equalsIgnoreCase("datetime")) {
+               valueElement.setText(datetimeFormat.format(d));
+            } else if (val.getType().equalsIgnoreCase("time")) {
+               valueElement.setText(timeFormat.format(d));
+            } else {
+               valueElement.setText(val.getContent().toString());
+            }
+         } else {
+            valueElement.setText(val.getContent().toString());
+         }
       }
 
       Element typeElement = new Element("type");
