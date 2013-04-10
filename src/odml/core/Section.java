@@ -567,10 +567,16 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return {@link Vector} of {@link Section}s which may be empty.
     */
    public Vector<Section> getRelatedSections(String type) {
-      Vector<Section> sections = new Vector<Section>();
-      Section s = getRelatedSection(type);
-      if (s != null) {
-         sections = s.getParent().getSectionsByType(type);
+      Vector<Section> sections = findSectionsByType(type);
+      if (sections.size() == 0) {
+         Section parent = this.getParent();
+         while (parent != null && parent.level >= 0) {
+            sections = parent.getSectionsByType(type);
+            if (sections.size() != 0) {
+               break;
+            }
+            parent = parent.getParent();
+         }
       }
       return sections;
    }
@@ -646,7 +652,7 @@ public class Section extends Object implements Serializable, TreeNode {
             return false;
          }
       }
-     return true;    
+      return true;    
    }
 
 
@@ -977,26 +983,26 @@ public class Section extends Object implements Serializable, TreeNode {
    public int addProperty(String name, Object value) {
       int index = -1;
       try{
-      if(isPath(name)){
-         SectionPath sp = new SectionPath(name);
-         if(sp.isValid() && sp.addressesProperty()){
-            Property prop = new Property(sp.getPropertyPart(), value);
-            Section s = getSection(name);
-            if(prop != null && s != null){
-               index = s.add(prop);
+         if(isPath(name)){
+            SectionPath sp = new SectionPath(name);
+            if(sp.isValid() && sp.addressesProperty()){
+               Property prop = new Property(sp.getPropertyPart(), value);
+               Section s = getSection(name);
+               if(prop != null && s != null){
+                  index = s.add(prop);
+               }
+               else{
+                  logger.error("An error occurred adding property with path specification: " +name);
+               }
             }
             else{
-               logger.error("An error occurred adding property with path specification: " +name);
+               logger.error("Section.addProperty: " + "specified path is not valid!");
             }
          }
          else{
-            logger.error("Section.addProperty: " + "specified path is not valid!");
+            Property prop = new Property(name, value);
+            index = this.add(prop);
          }
-      }
-      else{
-         Property prop = new Property(name, value);
-         index = this.add(prop);
-      }
       }
       catch (Exception e) {
          logger.error(e.getLocalizedMessage());
@@ -1004,7 +1010,7 @@ public class Section extends Object implements Serializable, TreeNode {
       return index;
    }
 
-   
+
    /**
     * Removes a property matching with its name from the properties that are stored in this section. Removes the first
     * occurrence with this name and does not check for duplicate entries!
@@ -1093,7 +1099,7 @@ public class Section extends Object implements Serializable, TreeNode {
       }
    }
 
-   
+
    /**
     * Returns the first property stored in this section that matches the name. Name matching is case-insensitive. The
     * name can also be a path looking like /section/section/property. Leading "/" means beginning from root, leading
@@ -1439,7 +1445,7 @@ public class Section extends Object implements Serializable, TreeNode {
       return indexOfSection(sectionName, sectionType) != -1;
    }
 
-   
+
    /**
     * Returns whether this section contains a section of the specified name.
     * 
@@ -1456,7 +1462,7 @@ public class Section extends Object implements Serializable, TreeNode {
       return false;
    }
 
-   
+
    /**
     * Returns the index of the first matching {@link Property}. Method compares only the name. 
     * the method is marked @deprecated use indexOfProperty instead.
@@ -1513,8 +1519,8 @@ public class Section extends Object implements Serializable, TreeNode {
       }
       return index;
    }
-   
-   
+
+
    /**
     * Find the index of a subsection that first matches regarding its name.
     * @param sectionName
