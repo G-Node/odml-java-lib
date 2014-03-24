@@ -1270,8 +1270,8 @@ public class Section extends Object implements Serializable, TreeNode {
          }
       }
       if(p == null){
-         this.resolveLink();
-         this.getProperty(name, true);
+         if (this.resolveLink())  // search again if the link was resolved
+             this.getProperty(name, true);
       }
       return p;
    }
