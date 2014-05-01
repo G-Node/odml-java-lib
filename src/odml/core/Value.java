@@ -793,4 +793,78 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          s = s.concat(" " + this.getUnit());
       return s;
    }
+
+
+   
+   
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((checksum == null) ? 0 : checksum.hashCode());
+        result = prime * result + ((content == null) ? 0 : content.hashCode());
+        result = prime * result + ((definition == null) ? 0 : definition.hashCode());
+        result = prime * result + ((encoder == null) ? 0 : encoder.hashCode());
+        result = prime * result + ((filename == null) ? 0 : filename.hashCode());
+        
+        // cannot use parent - would cause infinite loop
+        //result = prime * result + ((parent == null) ? 0 : parent.hashCode());
+        
+        result = prime * result + ((reference == null) ? 0 : reference.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
+        result = prime * result + ((uncertainty == null) ? 0 : uncertainty.hashCode());
+        result = prime * result + ((unit == null) ? 0 : unit.hashCode());
+        return result;
+    }
+    
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        Value other = (Value) obj;
+        if (checksum == null) {
+            if (other.checksum != null) { return false; }
+        } else if (!checksum.equals(other.checksum)) { return false; }
+        if (content == null) {
+            if (other.content != null) { return false; }
+        } else if (!content.equals(other.content)) { return false; }
+        if (definition == null) {
+            if (other.definition != null) { return false; }
+        } else if (!definition.equals(other.definition)) { return false; }
+        if (encoder == null) {
+            if (other.encoder != null) { return false; }
+        } else if (!encoder.equals(other.encoder)) { return false; }
+        if (filename == null) {
+            if (other.filename != null) { return false; }
+        } else if (!filename.equals(other.filename)) { return false; }
+        
+        // cannot use parent - would cause infinite loop
+        /*if (parent == null) {
+            if (other.parent != null) { return false; }
+        } else if (!parent.equals(other.parent)) { return false; }*/
+        
+        if (reference == null) {
+            if (other.reference != null) { return false; }
+        } else if (!reference.equals(other.reference)) { return false; }
+        if (type == null) {
+            if (other.type != null) { return false; }
+        } else if (!type.equals(other.type)) { return false; }
+        if (uncertainty == null) {
+            if (other.uncertainty != null) { return false; }
+        } else if (!uncertainty.equals(other.uncertainty)) { return false; }
+        if (unit == null) {
+            if (other.unit != null) { return false; }
+        } else if (!unit.equals(other.unit)) { return false; }
+        return true;
+    }
+    
+    
 }

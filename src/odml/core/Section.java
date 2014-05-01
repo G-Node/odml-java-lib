@@ -1270,8 +1270,8 @@ public class Section extends Object implements Serializable, TreeNode {
          }
       }
       if(p == null){
-         this.resolveLink();
-         this.getProperty(name, true);
+         if (this.resolveLink())  // search again if the link was resolved
+             this.getProperty(name, true);
       }
       return p;
    }
@@ -2393,4 +2393,105 @@ public class Section extends Object implements Serializable, TreeNode {
    private boolean isPath(String name){
       return name.contains("#") || (name.contains("/") && !(name.indexOf("/") == name.lastIndexOf("/") && name.endsWith("/")));
    }
+
+
+   
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((author == null) ? 0 : author.hashCode());
+        result = prime * result + ((date == null) ? 0 : date.hashCode());
+        result = prime * result + ((definition == null) ? 0 : definition.hashCode());
+        result = prime * result + ((fileUrl == null) ? 0 : fileUrl.hashCode());
+        result = prime * result + ((include == null) ? 0 : include.hashCode());
+        result = prime * result + (isTerminology ? 1231 : 1237);
+        result = prime * result + level;
+        result = prime * result + ((link == null) ? 0 : link.hashCode());
+        result = prime * result + ((mapping == null) ? 0 : mapping.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        
+        // cannot use parent - would cause infinite loop
+        //result = prime * result + ((parent == null) ? 0 : parent.hashCode());
+        
+        result = prime * result + ((properties == null) ? 0 : properties.hashCode());
+        result = prime * result + ((reference == null) ? 0 : reference.hashCode());
+        result = prime * result + ((repositoryURL == null) ? 0 : repositoryURL.hashCode());
+        result = prime * result + ((subsections == null) ? 0 : subsections.hashCode());
+        result = prime * result + ((terminology == null) ? 0 : terminology.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
+        result = prime * result + ((version == null) ? 0 : version.hashCode());
+        return result;
+    }
+    
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        Section other = (Section) obj;
+        if (author == null) {
+            if (other.author != null) { return false; }
+        } else if (!author.equals(other.author)) { return false; }
+        if (date == null) {
+            if (other.date != null) { return false; }
+        } else if (!date.equals(other.date)) { return false; }
+        if (definition == null) {
+            if (other.definition != null) { return false; }
+        } else if (!definition.equals(other.definition)) { return false; }
+        if (fileUrl == null) {
+            if (other.fileUrl != null) { return false; }
+        } else if (!fileUrl.equals(other.fileUrl)) { return false; }
+        if (include == null) {
+            if (other.include != null) { return false; }
+        } else if (!include.equals(other.include)) { return false; }
+        if (isTerminology != other.isTerminology) { return false; }
+        if (level != other.level) { return false; }
+        if (link == null) {
+            if (other.link != null) { return false; }
+        } else if (!link.equals(other.link)) { return false; }
+        if (mapping == null) {
+            if (other.mapping != null) { return false; }
+        } else if (!mapping.equals(other.mapping)) { return false; }
+        if (name == null) {
+            if (other.name != null) { return false; }
+        } else if (!name.equals(other.name)) { return false; }
+        
+        // cannot use parent - would cause infinite loop
+        /*if (parent == null) {
+            if (other.parent != null) { return false; }
+        } else if (!parent.equals(other.parent)) { return false; }*/
+        
+        if (properties == null) {
+            if (other.properties != null) { return false; }
+        } else if (!properties.equals(other.properties)) { return false; }
+        if (reference == null) {
+            if (other.reference != null) { return false; }
+        } else if (!reference.equals(other.reference)) { return false; }
+        if (repositoryURL == null) {
+            if (other.repositoryURL != null) { return false; }
+        } else if (!repositoryURL.equals(other.repositoryURL)) { return false; }
+        if (subsections == null) {
+            if (other.subsections != null) { return false; }
+        } else if (!subsections.equals(other.subsections)) { return false; }
+        if (terminology == null) {
+            if (other.terminology != null) { return false; }
+        } else if (!terminology.equals(other.terminology)) { return false; }
+        if (type == null) {
+            if (other.type != null) { return false; }
+        } else if (!type.equals(other.type)) { return false; }
+        if (version == null) {
+            if (other.version != null) { return false; }
+        } else if (!version.equals(other.version)) { return false; }
+        return true;
+    }
+    
+    
 }

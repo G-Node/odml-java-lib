@@ -2319,4 +2319,65 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    public boolean isLeaf() {
       return false;
    }
+
+
+   
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((definition == null) ? 0 : definition.hashCode());
+        result = prime * result + ((dependency == null) ? 0 : dependency.hashCode());
+        result = prime * result + ((dependencyValue == null) ? 0 : dependencyValue.hashCode());
+        result = prime * result + ((mappingURL == null) ? 0 : mappingURL.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        
+        // cannot use parentSection - would cause infinite loop
+        //result = prime * result + ((parentSection == null) ? 0 : parentSection.hashCode());
+        
+        result = prime * result + ((values == null) ? 0 : values.hashCode());
+        return result;
+    }
+    
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (getClass() != obj.getClass()) { return false; }
+        Property other = (Property) obj;
+        if (definition == null) {
+            if (other.definition != null) { return false; }
+        } else if (!definition.equals(other.definition)) { return false; }
+        if (dependency == null) {
+            if (other.dependency != null) { return false; }
+        } else if (!dependency.equals(other.dependency)) { return false; }
+        if (dependencyValue == null) {
+            if (other.dependencyValue != null) { return false; }
+        } else if (!dependencyValue.equals(other.dependencyValue)) { return false; }
+        if (mappingURL == null) {
+            if (other.mappingURL != null) { return false; }
+        } else if (!mappingURL.equals(other.mappingURL)) { return false; }
+        if (name == null) {
+            if (other.name != null) { return false; }
+        } else if (!name.equals(other.name)) { return false; }
+        
+        // cannot use parentSection - would cause infinite loop
+        /*if (parentSection == null) {
+            if (other.parentSection != null) { return false; }
+        } else if (!parentSection.equals(other.parentSection)) { return false; }*/
+        
+        if (values == null) {
+            if (other.values != null) { return false; }
+        } else if (!values.equals(other.values)) { return false; }
+        return true;
+    }
+    
+    
 }
