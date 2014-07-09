@@ -300,7 +300,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
       setDefinition(definition);
       setDependency(dependency);
       setDependencyValue(dependencyValue);
-      setMapping(mappingURL);
+      setMapping(mapping);
    }
 
 

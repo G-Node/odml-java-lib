@@ -56,6 +56,7 @@ public class SectionPath{
    }
 
    private String sanitizePath(String path){
+	  path = path.trim();
       if (path.endsWith("/")) {
          path = path.substring(0, path.lastIndexOf("/"));
       }
