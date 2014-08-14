@@ -304,7 +304,7 @@ public class Writer implements Serializable {
         return true;
     }
 
-    Map<String, Object> getMap() {
+    public Map<String, Object> getMap() {
         Map<String, Object> self = new HashMap<String, Object>();
         self.put("date", odmlTree.getDocumentDate());
         self.put("author", odmlTree.getDocumentAuthor());
