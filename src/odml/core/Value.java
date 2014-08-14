@@ -17,14 +17,18 @@ package odml.core;
  * You should have received a copy of the GNU Lesser General Public License
  * along with this software.  If not, see <http://www.gnu.org/licenses/>.
  */
+import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.tree.TreeNode;
 import java.io.*;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.CRC32;
-import javax.swing.tree.TreeNode;
-import org.apache.commons.codec.binary.Base64;
-import org.slf4j.*;
 
 /**
  * {@link Value} entities contain the values associated with a {@link Property}.
@@ -865,6 +869,18 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
         } else if (!unit.equals(other.unit)) { return false; }
         return true;
     }
-    
-    
+
+
+    public Map<String, Object> getMap() {
+        Map<String, Object> self = new HashMap<String, Object>();
+        self.put("type", type);
+        self.put("uncertainty", uncertainty);
+        self.put("unit", unit);
+        self.put("reference", reference);
+        self.put("definition", definition);
+        self.put("filename", filename);
+        self.put("encoder", encoder);
+        self.put("checksum", checksum);
+        return self;
+    }
 }

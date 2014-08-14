@@ -304,6 +304,16 @@ public class Writer implements Serializable {
         return true;
     }
 
+    Map<String, Object> getMap() {
+        Map<String, Object> self = new HashMap<String, Object>();
+        self.put("date", odmlTree.getDocumentDate());
+        self.put("author", odmlTree.getDocumentAuthor());
+        self.put("version", odmlTree.getDocumentVersion());
+        self.put("repository", odmlTree.getRepository());
+        self.put("section", odmlTree.getMap());
+        return self;
+    }
+
 
     /**
      * Method to append a section-element to the dom-tree.
