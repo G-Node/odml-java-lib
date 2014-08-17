@@ -2378,6 +2378,18 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
         } else if (!values.equals(other.values)) { return false; }
         return true;
     }
-    
-    
+
+
+    public Map<String, Object> getMap() {
+        Map<String, Object> self = new HashMap<String, Object>();
+        self.put("name", name);
+        ArrayList<Map<String, Object>> _values = new ArrayList<Map<String, Object>>();
+        for (Value value:values) _values.add(value.getMap());
+        self.put("value", _values);
+        self.put("definition", definition);
+        self.put("mapping", mappingURL);
+        self.put("dependency", dependency);
+        self.put("dependencyValue", dependencyValue);
+        return self;
+    }
 }

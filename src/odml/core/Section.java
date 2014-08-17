@@ -13,14 +13,18 @@ package odml.core;
  * You should have received a copy of the GNU Lesser General Public License along with this software. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import javax.swing.*;
-import javax.swing.tree.*;
-import odml.util.TerminologyManager;
 import odml.util.SectionPath;
-import org.slf4j.*;
+import odml.util.TerminologyManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
 
 /**
  * The {@link Section} class defines the odML section, one of the two core elements that can contain odMLProperties - if
@@ -2492,6 +2496,24 @@ public class Section extends Object implements Serializable, TreeNode {
         } else if (!version.equals(other.version)) { return false; }
         return true;
     }
-    
-    
+
+
+    public Map<String, Object> getMap() {
+        Map<String, Object> self = new HashMap<String, Object>();
+        self.put("type", type);
+        self.put("definition", definition);
+        self.put("name", name);
+        self.put("reference", reference);
+        self.put("link", link);
+        self.put("include", include);
+        self.put("repository", repositoryURL);
+        self.put("mapping", mapping);
+        ArrayList<Map<String, Object>> _properties = new ArrayList<Map<String, Object>>();
+        for(Property property:properties) _properties.add(property.getMap());
+        self.put("property", _properties);
+        ArrayList<Map<String, Object>> _sections = new ArrayList<Map<String, Object>>();
+        for (Section section: subsections) _sections.add(section.getMap());
+        self.put("section", _sections);
+        return self;
+    }
 }
