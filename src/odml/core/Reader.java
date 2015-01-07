@@ -13,18 +13,29 @@ package odml.core;
  * You should have received a copy of the GNU Lesser General Public License along with this software. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-import java.io.*;
-import java.net.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.validation.*;
+
 import odml.util.Mapper;
-import org.slf4j.*;
-import org.w3c.dom.*;
-import org.xml.sax.SAXException;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.input.sax.XMLReaderJDOMFactory;
+import org.jdom2.input.sax.XMLReaderXSDFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Vector;
+
+import static java.lang.System.out;
 
 /**
  * The {@link Reader} class reads an xml-file, applies the schema, if wanted and provides the tools to extract the
@@ -44,9 +55,9 @@ public class Reader implements Serializable {
    private final Vector<Section> links            = new Vector<Section>();
    Vector<Section>               includes         = new Vector<Section>();
    private URL                   fileUrl;
-   boolean                       isValid          = true, loadIncludes = false;
+   boolean                       loadIncludes     = false;
    public static int             NO_CONVERSION    = 1, FULL_CONVERSION = 3, LOAD_AND_RESOLVE = 2,
-         NO_VALIDATION = 4, VALIDATE = 5;
+           NO_VALIDATION = 4, VALIDATE = 5;
 
 
    public Reader() {
@@ -102,8 +113,7 @@ public class Reader implements Serializable {
     * tree. Function does not load includes, resolves links or applies mapping information. Behavior of the function
     * can be specified with the option parameter. Returns the root section of the odml tree.
     * 
-    * @param file
-    *            {@link String} the file url.
+    * @param file  {@link String} the file url.
     * @return {@link Section} the root section of the metadata tree stored in the file.
     * 
     * @throws Exception
@@ -115,7 +125,7 @@ public class Reader implements Serializable {
 
 
    /**
-    * Reads a metadata file from the specified url. Funciton behavior can be controlled using the option parameter: <li>
+    * Reads a metadata file from the specified url. Function behavior can be controlled using the option parameter: <li>
     * NO_CONVERSION : 1. Does nothing else but reading the file and returning the odml tree as defined in the file.</li>
     * <li>LOAD_AND_RESOLVE: 2. Load the file and all external information (defined in the include element) and resolve
     * links.</li> <li>FULL_CONVERSION : 3. loads the file, load external information (defined in the include element)
@@ -136,8 +146,8 @@ public class Reader implements Serializable {
 
    /**
     * 
-    * @param file
-    * @param loadOption
+    * @param file a string containing the file name.
+    * @param loadOption int, specifying the actions to take upon loading
     * @return {@link Section} the root section of the file.
     * @throws Exception
     * @throws MalformedURLException
@@ -161,9 +171,8 @@ public class Reader implements Serializable {
    /**
     * Load the file that is identified with the passed {@link URL}.
     * 
-    * @param fileURL
-    *            The URL of the file.
-    * @param option
+    * @param fileURL  The URL of the file.
+    * @param option load option as described in load(String ...)
     * @return {@link Section}: the root section of the loaded file.
     * @throws Exception
     */
@@ -191,29 +200,24 @@ public class Reader implements Serializable {
     * @throws Exception
     */
    public Section load(InputStream stream, int option, boolean validate) throws Exception {
+      boolean isValid = true;
       Section s = null;
 
       Document dom = parseXML(stream);
       if (dom == null) {
          this.root = null;
-         return s;
+         return null;
       }
       logger.info("Parsing succeeded.");
       
       if (validate && schemaLocations != null) {
-         isValid = validateXML(dom);
+         isValid = validateXML(stream);
          if (isValid)
             logger.info("Validation succeeded.");
-      } else if (schemaLocations == null) {
-         validate = false;
-      } else {
-         logger.info("Validation skipped on request.");
       }
       
       if (isValid) {
-         logger.info("Creating odML tree representation...");
          createTree(dom);
-         logger.info("... finished.");
       } else {
          logger.error("Validation failed.");
       }
@@ -237,26 +241,25 @@ public class Reader implements Serializable {
    /**
     * Converts the DOM representation of the metadata-file to the tree like odML structure.
     * 
-    * @param dom
-    *            - {@link Document}: the document to parse
+    * @param dom - {@link Document}: the document to parse
     */
    public void createTree(Document dom) {
       root = new Section();
       if (dom == null) {
          return;
       }
-      Element rootElement = dom.getDocumentElement();
-      String odmlVersion = rootElement.getAttribute("version");
+      Element rootElement = dom.getRootElement();
+      String odmlVersion = rootElement.getAttribute("version").getValue();
       if (Float.parseFloat(odmlVersion) != 1.0) {
          logger.error("Can not handle odmlVersion: " + odmlVersion
                + " stopping further processing!");
          return;
       }
 
-      String author = getDirectChildContent(rootElement, "author");
+      String author = rootElement.getChildText("author");
       root.setDocumentAuthor(author);
       Date date = null;
-      String temp = getDirectChildContent(rootElement, "date");
+      String temp = rootElement.getChildText("date");
       SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
       try {
          date = sdf.parse(temp);
@@ -264,10 +267,10 @@ public class Reader implements Serializable {
          date = null;
       }
       root.setDocumentDate(date);
-      String version = getDirectChildContent(rootElement, "version");
+      String version = rootElement.getChildText("version");
       root.setDocumentVersion(version);
       URL url = null;
-      temp = getDirectChildContent(rootElement, "repository");
+      temp = rootElement.getChildText("repository");
       if (temp != null && !temp.isEmpty()) {
          try {
             url = new URL(temp);
@@ -277,12 +280,10 @@ public class Reader implements Serializable {
       }
       root.setRepository(url);
       root.setFileUrl(this.fileUrl);
-      if (rootElement.getElementsByTagName("section").getLength() > 0) {
-         for (int i = 0; i < rootElement.getElementsByTagName("section").getLength(); i++) {
-            Element domSection = (Element) rootElement.getElementsByTagName("section").item(i);
-            if (domSection.getParentNode().isSameNode(rootElement)) {
-               root.add(parseSection(domSection));
-            }
+
+      for (Element domSection : rootElement.getChildren("section")) {
+         if (rootElement.isAncestor(domSection)) {
+            root.add(parseSection(domSection));
          }
       }
       confirmLinks(root);
@@ -296,7 +297,7 @@ public class Reader implements Serializable {
    /**
     * Parses the xml file and creates the DOM representation of it.
     * 
-    * @return Document - returns the Document (dom) representation of the xml-file or null if an error occured.
+    * @return Document - returns the Document (dom) representation of the xml-file or null if an error occurred.
     * @throws IOException
     */
    private Document parseXML(InputStream stream) {
@@ -305,9 +306,8 @@ public class Reader implements Serializable {
       }
 
       try {
-         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-         DocumentBuilder dbuilder = dbf.newDocumentBuilder();
-         Document dom = dbuilder.parse(stream);
+         SAXBuilder builder = new SAXBuilder();
+         Document doc = builder.build(stream);
          return dom;
       } catch (ParserConfigurationException pce) {
          logger.error("Parsing failed! ", pce);
@@ -319,50 +319,34 @@ public class Reader implements Serializable {
          logger.error("Parsing failed! ", e);
          return null;
       }
+      return doc;
    }
 
 
    /**
     * Validates the the metadata xml-file against a schema and returns true if the file is valid or false if validation
     * fails.
-    * 
+    * @param fileUrl - the URL of the xml file.
     * @return - boolean true or false if validation succeeded or failed, respectively.
     */
-   private boolean validateXML(Document dom) {
-      SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-      Schema schema = null;
-      for (int i = 0; i < schemaLocations.length; i++) {
+   private boolean validateXML(InputStream stream) {
+      for (URL schemaLocation : schemaLocations) {
          try {
-            schema = factory.newSchema(schemaLocations[i]);
+            File xsdfile = new File("schema.xsd");
+            XMLReaderJDOMFactory schemafac = new XMLReaderXSDFactory(xsdfile);
+            SAXBuilder builder = new SAXBuilder(schemafac);
+            Document validdoc = builder.build(stream);
          } catch (Exception e) {
-            if (i < schemaLocations.length - 1) {
-               continue;
-            } else {
-               logger.error("... validation failed. Could not open the schema definitions.", e);
-               return false;
-            }
+            out.println(e.getMessage());
+            return false;
          }
-      }
-      try {
-         Validator validator = schema.newValidator();
-         validator.validate(new DOMSource(dom));
-      } catch (SAXException se) {
-         logger.error("... validation failed! ", se);
-         return false;
-      } catch (IOException ioe) {
-         logger.error("... validation failed! ", ioe);
-         return false;
-      } catch (Exception e) {
-         logger.error("... validation failed! ", e);
-         return false;
       }
       return true;
    }
 
 
    /**
-    * Parses a section of the metadata file and adds a new {@link PropertyTreeNode} to the parentNode. Properties are
-    * stored within the node's userObject as a {@link PropertyTableModel}. Subsections are parsed in a recursive
+    * Parses an xml section of the metadata file and returns it. Subsections are parsed in a recursive
     * manner.
     * 
     * @param domSection
@@ -370,12 +354,12 @@ public class Reader implements Serializable {
     * @return {@link Section}: the Section representation of the dom section
     */
    private Section parseSection(Element domSection) {
-      String type = getDirectChildContent(domSection, "type");
-      String name = getDirectChildContent(domSection, "name");
-      String reference = getDirectChildContent(domSection, "reference");
-      String definition = getDirectChildContent(domSection, "definition");
+      String type = domSection.getChildText("type");
+      String name = domSection.getChildText("name");
+      String reference = domSection.getChildText("reference");
+      String definition = domSection.getChildText("definition");
       URL mapURL = null;
-      String temp = getDirectChildContent(domSection, "mapping");
+      String temp = domSection.getChildText("mapping");
       if (temp != null && !temp.isEmpty()) {
          try {
             mapURL = new URL(temp);
@@ -385,18 +369,18 @@ public class Reader implements Serializable {
       }
 
       URL url = null;
-      temp = getDirectChildContent(domSection, "repository");
+      temp = domSection.getChildText("repository");
       if (temp != null && !temp.isEmpty()) {
          try {
-            url = new URL(getDirectChildContent(domSection, "repository"));
+            url = new URL(domSection.getChildText("repository"));
          } catch (Exception e) {
             url = null;
             logger.error("Reader.parseSection.repository: ", e);
          }
       }
-      String link = getDirectChildContent(domSection, "link");
-      String include = getDirectChildContent(domSection, "include");
-      Section section = null;
+      String link = domSection.getChildText("link");
+      String include = domSection.getChildText("include");
+      Section section;
       try {
          section = new Section(name, type, reference);
          section.setDefinition(definition);
@@ -414,39 +398,14 @@ public class Reader implements Serializable {
          logger.error("Reader.parseSection: exception while creating section: ", e);
          return null;
       }
-
-      NodeList properties = domSection.getElementsByTagName("property");
-      NodeList kids = domSection.getChildNodes();
       Property tempProp;
-      if (properties.getLength() < kids.getLength()) {
-         if (properties.getLength() > 0) {
-            for (int i = 0; i < properties.getLength(); i++) {
-               if (properties.item(i).getParentNode().isSameNode(domSection)) {
-                  tempProp = parseProperty((Element) properties.item(i));
-                  section.add(tempProp);
-                  logger.debug("Property added");
-               }
-            }
-         }
-      } else {
-         for (int i = 0; i < kids.getLength(); i++) {
-            if (kids.item(i).getNodeName().equals("property")) {
-               tempProp = parseProperty((Element) kids.item(i));
-               section.add(tempProp);
-               logger.debug("Property added");
-            }
-         }
+      for (Element element : domSection.getChildren("property")) {
+         section.add(parseProperty(element));
+         logger.debug("Property added");
       }
       // append subsections
-      NodeList sections = domSection.getElementsByTagName("section");
-      if (domSection.getElementsByTagName("section").getLength() > 0) {
-         for (int i = 0; i < sections.getLength(); i++) {
-            if (!sections.item(i).getParentNode().isSameNode(domSection)) {
-               continue;
-            }
-            section.add(parseSection((Element) sections.item(i)));
-            logger.debug("Subsection added");
-         }
+      for (Element element : domSection.getChildren("section")) {
+         section.add(parseSection(element));
       }
       return section;
    }
@@ -455,19 +414,18 @@ public class Reader implements Serializable {
    /**
     * Parses property and creates the odMLProperty representation of it.
     * 
-    * @param domProperty
-    *            - {@link Element}: the Element to parse. (should be a property element)
+    * @param domProperty - {@link Element}: the Element to parse. (should be a property element)
     * @return {@link Property} the {@link Property} representation of this domElement
     */
    private Property parseProperty(Element domProperty) {
-      String name = null;
-      name = getTextValue(domProperty, "name");
-      String dependency = "";
-      String dependencyValue = "";
-      String definition = "";
+      String name;
+      name = domProperty.getChildTextTrim("name");
+      String dependency;
+      String dependencyValue;
+      String definition;
       URL mapURL = null;
 
-      String temp = getDirectChildContent(domProperty, "mapping");
+      String temp = domProperty.getChildText("mapping");
 
       if (temp != null && !temp.isEmpty() && !temp.endsWith("?")) {
          try {
@@ -475,40 +433,26 @@ public class Reader implements Serializable {
          } catch (Exception e) {
             logger.error("odMLReader.parseProperty.mappingURL handling: \n"
                   + " \t> tried to form URL out of: '"
-                  + domProperty.getElementsByTagName("mapping").item(0).getTextContent()
+                  + domProperty.getChildText("mapping")
                   + "'\n\t= mapURL of Property named: " + name, e);
          }
       }
-      definition = getDirectChildContent(domProperty, "definition");
-      dependency = getDirectChildContent(domProperty, "dependency");
-      dependencyValue = getDirectChildContent(domProperty, "dependencyValue");
-      NodeList values = domProperty.getElementsByTagName("value");
-      NodeList kids = domProperty.getChildNodes();
+      definition = domProperty.getChildText("definition");
+      dependency = domProperty.getChildText("dependency");
+      dependencyValue = domProperty.getChildText("dependencyValue");
       Vector<Value> tmpValues = new Vector<Value>();
-      if (values.getLength() < kids.getLength()) {
-         if (values.getLength() > 0) {
-            for (int i = 0; i < values.getLength(); i++) {
-               if (values.item(i).getParentNode().isSameNode(domProperty)) {
-                  tmpValues.add(parseValue((Element) values.item(i)));
-               }
-            }
-         }
-      } else {
-         for (int i = 0; i < kids.getLength(); i++) {
-            if (kids.item(i).getNodeName().equals("value")) {
-               tmpValues.add(parseValue((Element) kids.item(i)));
-            }
-         }
+      for (Element element : domProperty.getChildren("value")) {
+         tmpValues.add(parseValue(element));
       }
 
-      Property property = null;
+      Property property;
       try {
          property = new Property(name, tmpValues, definition, dependency, dependencyValue, mapURL);
-         return property;
-      } catch (Exception e) {
+      } catch (Exception e){
          logger.error("odMLReader.parseProperty: create new prop failed. ", e);
-         return null;
+         property = null;
       }
+      return property;
    }
 
 
@@ -520,7 +464,7 @@ public class Reader implements Serializable {
     * @return {@link Value} the {@link Value} representation of this domElement
     */
    private Value parseValue(Element domValue) {
-      Value toReturn = null;
+      Value value = null;
 
       String content = "";
       String unit = "";
@@ -531,125 +475,26 @@ public class Reader implements Serializable {
       String reference = "";
       String encoder = "";
       String checksum = "";
-      content = domValue.getFirstChild().getNodeValue();
+      content = domValue.getTextTrim();
       if (content == null) {
          content = "";
       }
-      content = content.trim();
-      if (content == null)
-         content = "";
-      unit = getDirectChildContent(domValue, "unit");
-      if (domValue.getElementsByTagName("uncertainty").getLength() > 0) {
-         uncertainty = ((Element) domValue.getElementsByTagName("uncertainty").item(0))
-               .getTextContent();
-      }
-      if (domValue.getElementsByTagName("type").getLength() > 0) {
-         type = ((Element) domValue.getElementsByTagName("type").item(0)).getTextContent();
-      } else {
-         type = "";
-      }
-      if (domValue.getElementsByTagName("filename").getLength() > 0) {
-         filename = ((Element) domValue.getElementsByTagName("filename").item(0))
-               .getTextContent();
-      }
-      if (domValue.getElementsByTagName("definition").getLength() > 0) {
-         definition = ((Element) domValue.getElementsByTagName("definition").item(0))
-               .getTextContent();
-      }
-      if (domValue.getElementsByTagName("reference").getLength() > 0) {
-         reference = ((Element) domValue.getElementsByTagName("reference").item(0))
-               .getTextContent();
-      }
-      if (domValue.getElementsByTagName("encoder").getLength() > 0) {
-         encoder = ((Element) domValue.getElementsByTagName("encoder").item(0)).getTextContent();
-      }
-      if (domValue.getElementsByTagName("checksum").getLength() > 0) {
-         checksum = ((Element) domValue.getElementsByTagName("checksum").item(0)).getTextContent();
-      }
+      unit = domValue.getChildText("unit");
+      uncertainty = domValue.getChildText("uncertainty");
+      type = domValue.getChildText("type");
+      filename = domValue.getChildText("filename");
+      definition = domValue.getChildText("definition");
+      reference = domValue.getChildText("reference");
+      checksum = domValue.getChildText("checksum");
+      encoder = domValue.getChildText("encoder");
       try {
-         toReturn = new Value(content, unit, uncertainty, type, filename, definition, reference,
+         value = new Value(content, unit, uncertainty, type, filename, definition, reference,
                encoder, checksum);
       } catch (Exception e) {
          logger.error("odMLReader.parseValue: create Value failed. ", e);
          return null;
       }
-      return toReturn;
-   }
-
-
-   /**
-    * Returns the value of an element.
-    * 
-    * @param ele
-    *            - {@link Element}: the element of which the TextValue should be read.
-    * @param tagName
-    *            - {@link String}: The tagName.
-    * @return String: the textValue if the tag exists otherwise null.
-    */
-   private String getTextValue(Element ele, String tagName) {
-      if (ele == null) {
-         return null;
-      }
-      String textVal = null;
-      NodeList nl = ele.getElementsByTagName(tagName);
-      if (nl != null && nl.getLength() > 0) {
-         Element el = (Element) nl.item(0);
-         if (el == null) {
-            return null;
-         }
-         if (el.getFirstChild() == null) {
-            return null;
-         }
-         if (el.getFirstChild().getNodeValue() == null) {
-            return null;
-         }
-         textVal = el.getFirstChild().getNodeValue();
-      }
-      return textVal;
-   }
-
-
-   /**
-    * Returns the text content of the first direct element that is named according to the elementName argument. Direct
-    * means that only 1st-level child elements are considered, i.e. those of which the parentNode equals element.
-    * 
-    * @param element
-    *            {@link Element} the parent node.
-    * @param elementName
-    *            {@link String} the name of the searched child element.
-    * @return {@link String} the text content or null.
-    */
-   private String getDirectChildContent(Element element, String elementName) {
-      String content = null;
-      NodeList l = element.getElementsByTagName(elementName);
-      for (int i = 0; i < l.getLength(); i++) {
-         if (l.item(i).getParentNode().isSameNode(element)) {
-            content = l.item(i).getTextContent();
-            return content;
-         }
-      }
-      return content;
-   }
-
-
-   /**
-    * Returns all the text contents of the direct element that is named according to the elementName argument. Direct
-    * means that only 1st-level child elements are considered, i.e. those of which the parentNode equals element.
-    * 
-    * @param element
-    * @param elementName
-    * @return {@link Vector} of {@link String} that my be empty if no match is found.
-    */
-   @SuppressWarnings("unused")
-   private Vector<String> getDirectChildContents(Element element, String elementName) {
-      Vector<String> content = new Vector<String>();
-      NodeList l = element.getElementsByTagName(elementName);
-      for (int i = 0; i < l.getLength(); i++) {
-         if (l.item(i).getParentNode().isEqualNode(element)) {
-            content.add(l.item(i).getTextContent());
-         }
-      }
-      return content;
+      return value;
    }
 
 
@@ -671,13 +516,13 @@ public class Reader implements Serializable {
     *            {@link Section} the root section of the odml - tree.
     */
    private void confirmLinks(Section root) {
-      for (int i = 0; i < links.size(); i++) {
-         if (links.get(i).getSection(links.get(i).getLink()) == null
-               && links.get(i).getType().equals(links.get(i).getSection(links.get(i).getLink()))) {
+      for (Section link : links) {
+         if (link.getSection(link.getLink()) == null
+                 && link.getType().equals(link.getSection(link.getLink()).getType())) {
             logger.error("Reader.confirmLinks: The link stored in section '"
-                  + links.get(i).toString()
-                  + "' could not be confirmed and was removed!");
-            links.get(i).setLink(null, true);
+                    + link.toString()
+                    + "' could not be confirmed and was removed!");
+            link.setLink(null, true);
          }
       }
    }
@@ -692,8 +537,8 @@ public class Reader implements Serializable {
     * section (including subsections and their properties). 
     */
    public void loadIncludes() {
-      for (int i = 0; i < includes.size(); i++) {
-         includes.get(i).loadInclude();
+      for (Section include : includes) {
+         include.loadInclude();
       }
    }
 
