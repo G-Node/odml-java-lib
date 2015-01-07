@@ -13,12 +13,20 @@ package odml.core;
  * You should have received a copy of the GNU Lesser General Public License along with this software. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-import java.io.*;
-import java.net.*;
-import java.text.*;
-import java.util.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.tree.TreeNode;
-import org.slf4j.*;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * The {@link Property} class constitutes the building block of any odML file that actually stores the information. A {@link Property} 
@@ -40,7 +48,7 @@ import org.slf4j.*;
  * @author Jan Grewe, Christine Seitz
  *
  */
-public class Property extends Object implements Serializable, Cloneable, TreeNode {
+public class Property implements Serializable, Cloneable, TreeNode {
 
    protected static final Logger logger           = LoggerFactory.getLogger(Property.class);
    private static final long     serialVersionUID = 147L;
@@ -161,7 +169,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
 
    /**
-    * Constructor for a property with a single value and according further informations. Any of the arguments may be
+    * Constructor for a property with a single value and according further information. Any of the arguments may be
     * null except for the name of the property.
     *
     * @param name
@@ -205,7 +213,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
 
    /**
-    * Constructor for a property with more than one value and the according other informations. Any of the arguments
+    * Constructor for a property with more than one value and the according other information. Any of the arguments
     * may be null except for the name of the property.
     *
     * @param name {@link String} The name of the property.
@@ -214,7 +222,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     * @param unit {@link String}: The unit of the values. 
     * @param uncertainties {@link Vector}<Object> vector of value uncertainties.
     * @param type {@link String} value data type. There is only one type since mixing different types is not allowed.
-    * @param filenames {@link Vector}<Object>:  vector if filenames
+    * @param fileNames {@link Vector}<Object>:  vector of file names
     * @param valueDefinitions {@link Vector}<String>: Vector of value definitions. 
     * @param definition {@link String} The property definition
     * @param dependency {@link String} Property dependence.
@@ -224,7 +232,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     */
    public Property(String name, Vector<Object> values, Vector<String> references, String unit,
                    Vector<Object> uncertainties,
-                   String type, Vector<String> filenames, Vector<String> valueDefinitions,
+                   String type, Vector<String> fileNames, Vector<String> valueDefinitions,
                    String definition,
                    String dependency, String dependencyValue, URL mapping) throws Exception {
       String message = "";
@@ -232,30 +240,28 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
          message = "Could not create property! 'name' is mandatory entry and must not be null or empty!";
       } else if (name.contains("/")) {
          message = "Could not create property! 'name' must not be like a path (e.g. contain '/')!";
-      } else if (values.size() < uncertainties.size() || values.size() < filenames.size()) {
+      } else if (values.size() < uncertainties.size() || values.size() < fileNames.size()) {
          message = "Could not create property! There must not be more errors or definitions than there are values.";
       }
       if (!message.isEmpty()) {
          throw new Exception(message);
       }
       Object tmpUncertainty = null;
-      String tmpFilenames = null;
-      String tmpComment = null;
+      String tmpFileNames = null;
       String tmpReference = null;
 
       Vector<Value> theValues = new Vector<Value>();
       for (int i = 0; i < values.size(); i++) {
          if (uncertainties.size() > 0)
             tmpUncertainty = uncertainties.get(i);
-         if (filenames.size() > 0)
-            tmpFilenames = filenames.get(i);
+         if (fileNames.size() > 0)
+            tmpFileNames = fileNames.get(i);
          if (references.size() > 0)
             tmpReference = references.get(i);
 
          try {
             Value value = new Value(values.get(i), unit, tmpUncertainty, type,
-                  tmpFilenames,
-                  tmpComment, tmpReference);
+                  tmpFileNames, definition, tmpReference);
             theValues.add(value);
          } catch (Exception e) {
             logger.error("Error during creation of value: ", e.getLocalizedMessage());
@@ -271,20 +277,10 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     *
     * @param name {@link String} : the Property name.
     * @param values {@link Vector}<Object>: A Vector of values.
-    * @param unit {@link String} : 
-    * @param uncertainties {@link Vector}<Object>: Uncertainties related to the values.
-    * @param type {@link String}:  
-    * @param 4
-    * Vector<String>
-    * @param definition
-    * @param valueComments
-    * Vector<String>
-    * @param dependency
-    * String
-    * @param dependencyValue
-    * String
-    * @param mapping
-    * {@link URL}
+    * @param definition String the definition of the property
+    * @param dependency String
+    * @param dependencyValue String
+    * @param mapping {@link URL}
     * @throws Exception
     */
    private void initialize(String name, Vector<Value> values, String definition, String dependency,
@@ -294,8 +290,8 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
       }
       this.name = name;
       this.values = values;
-      for (int i = 0; i < this.values.size(); i++) {
-         this.values.get(i).setAssociatedProperty(this);
+      for (Value value : this.values) {
+         value.setAssociatedProperty(this);
       }
       setDefinition(definition);
       setDependency(dependency);
@@ -555,7 +551,6 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     * @param comment
     * {@link String}: the definition of this value. * @return {@link Boolean}: true if the operation
     * succeeded. False if the value is null, or the value already exists in the property.
-    * @throws Exception
     */
    public boolean addValue(Object value, String id, String unit, Object uncertainty, String type,
                            String filename, String comment) {
@@ -710,8 +705,8 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     */
    public Vector<Object> getValues() {
       Vector<Object> toReturn = new Vector<Object>();
-      for (int i = 0; i < this.values.size(); i++) {
-         toReturn.add(this.values.get(i).getContent());
+      for (Value value : this.values) {
+         toReturn.add(value.getContent());
       }
       return toReturn;
    }
@@ -835,7 +830,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    public boolean isEmpty() {
       boolean isEmpty = true;
       if (valueCount() == 0)
-         return isEmpty;
+         return true;
       else {
          for (int i = 0; i < valueCount(); i++) {
             isEmpty = isEmpty & getWholeValue(i).isEmpty();
@@ -935,8 +930,8 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     */
    public Vector<String> getValueReferences() {
       Vector<String> toReturn = new Vector<String>();
-      for (int i = 0; i < values.size(); i++) {
-         toReturn.add(values.get(i).getReference());
+      for (Value value : values) {
+         toReturn.add(value.getReference());
       }
       return toReturn;
    }
@@ -945,8 +940,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    /**
     * Get the id stored for a certain value identified by the value's index.
     *
-    * @param index
-    * {@link Integer}: the value's index.
+    * @param index - {@link Integer}: the value's index.
     * @return {@link String}: the id stored for the value, an empty string in none stored or null if the index is out
     * of bounds.
     */
@@ -1009,8 +1003,8 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     */
    public Vector<Object> getValueUncertainties() {
       Vector<Object> toReturn = new Vector<Object>();
-      for (int i = 0; i < this.values.size(); i++) {
-         toReturn.add(this.values.get(i).getUncertainty());
+      for (Value value : this.values) {
+         toReturn.add(value.getUncertainty());
       }
       return toReturn;
    }
@@ -1042,13 +1036,13 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     */
    public Object getValueUncertainty(int index) {
       try {
-         Object unctr = this.values.get(index).getUncertainty();
-         if (unctr == null) {
+         Object uncertainty = this.values.get(index).getUncertainty();
+         if (uncertainty == null) {
             return null;
-         } else if (unctr.toString().isEmpty()) {
+         } else if (uncertainty.toString().isEmpty()) {
             return null;
          } else {
-            return unctr;
+            return uncertainty;
          }
       } catch (Exception e) {
          logger.error("", e);
@@ -1101,8 +1095,8 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     */
    public Vector<String> getValueDefinitions() {
       Vector<String> toReturn = new Vector<String>();
-      for (int i = 0; i < values.size(); i++) {
-         toReturn.add(values.get(i).getDefinition());
+      for (Value value : values) {
+         toReturn.add(value.getDefinition());
       }
       return toReturn;
    }
@@ -1111,8 +1105,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    /**
     * Get the definition of a certain value identified by its index.
     *
-    * @param index
-    * {@link Integer} the index of the value, respectively its defintion.
+    * @param index - {@link Integer} the index of the value, respectively its definition.
     * @return {@link String}: the value comment if stored, an empty string if not or null if the index is out of
     * bounds.
     */
@@ -1208,18 +1201,18 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
          }
       }
       for (int i = 0; i < otherProperty.valueCount(); i++) {
-         if (this.values.contains(otherProperty.getValue(i))) {
-            mergeValue(this.values.indexOf(otherProperty.getValue(i)), otherProperty, i,
+         if (this.values.contains(otherProperty.getWholeValue(i))) {
+            mergeValue(this.values.indexOf(otherProperty.getWholeValue(i)), otherProperty, i,
                   mergeOption);
          } else {
             if (mergeOption == Section.MERGE_COMBINE) {
                this.addValue(otherProperty.getValue(i), otherProperty.getValueReference(i),
                      otherProperty
-                           .getValueUncertainty(i), otherProperty.getFilename(i), otherProperty
+                           .getValueUncertainty(i), otherProperty.getValueFilename(i), otherProperty
                            .getValueDefinition(i));
             } else if (mergeOption == Section.MERGE_OTHER_OVERRIDES_THIS && this.valueCount() == 1) {
                setValueAt(otherProperty.getValue(), i);
-               mergeValue(this.values.indexOf(otherProperty.getValue(i)), otherProperty, i,
+               mergeValue(this.values.indexOf(otherProperty.getWholeValue(i)), otherProperty, i,
                      mergeOption);
             }
          }
@@ -1253,14 +1246,14 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
          } else {
             if (terminologyProperty.getDependencyValue() != null
                   && !terminologyProperty.getDependencyValue().isEmpty()) {
-               String terminolgyValue = terminologyProperty.getDependencyValue();
+               String terminologyValue = terminologyProperty.getDependencyValue();
                Property dependencyProperty = getParent().getProperty(
                      terminologyProperty.getDependency());
                Vector<Object> values = dependencyProperty.getValues();
-               Iterator<Object> iter = values.iterator();
+               Iterator<Object> iterator = values.iterator();
                boolean match = false;
-               while (iter.hasNext()) {
-                  if (iter.next().toString().equalsIgnoreCase(terminolgyValue)) {
+               while (iterator.hasNext()) {
+                  if (iterator.next().toString().equalsIgnoreCase(terminologyValue)) {
                      match = true;
                      break;
                   }
@@ -1290,17 +1283,13 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
 
    /**
-    * Merges a value of a property and all its appendant elements. Again, information that exists in only one of the
+    * Merges a value of a property and all its appending elements. Again, information that exists in only one of the
     * properties are accepted irrespective of the mergeOption. Only if conflicts arise the mergeOption is relevant.
     *
-    * @param thisValueIndex
-    * {@link Integer} this properties value;
-    * @param otherProperty
-    * {@link Property} the property with which this should be merged
-    * @param otherValueIndex
-    * {@link Integer} the value index in the otherProperty
-    * @param mergeOption
-    * {@link Integer} defines the behavior if a conflict arises, see {@linkplain Property.merge}
+    * @param thisValueIndex - {@link Integer} this properties value;
+    * @param otherProperty - {@link Property} the property with which this should be merged
+    * @param otherValueIndex - {@link Integer} the value index in the otherProperty
+    * @param mergeOption - {@link Integer} defines the behavior if a conflict arises,
     */
    private void mergeValue(int thisValueIndex, Property otherProperty, int otherValueIndex,
                            int mergeOption) {
@@ -1396,7 +1385,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
          logger.warn("Invalid property name:\tgenerating CamelCase by removing blanks");
       }
 
-      String nameRegex = "^[a-zA-Z]{1}.*"; // checking beginning: normal letter, than anything
+      String nameRegex = "^[a-zA-Z].*"; // checking beginning: normal letter, than anything
       if (!name.matches(nameRegex)) {
          name = "P_" + name;
          logger.warn("Invalid property name:\t'p_' added as no leading character found");
@@ -1544,8 +1533,8 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    /**
     * Returns the mimetype of the property. Only working if not more than one value existing!
     *
-    * @return {@link String}: returns the mimetype of a certain propery. Returns an empty String if no mimeType stored
-    * or null if the index is out of range.
+    * @return {@link String}: returns the mime type of a certain property. Returns an empty String if no mime type
+    * stored or null if the index is out of range.
     */
    public String getValueFilename() {
       if (values.size() > 1) {
@@ -1579,7 +1568,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
 
    /**
-    * Returns the checksum of the first value stored in this porperty.
+    * Returns the checksum of the first value stored in this property.
     * 
     * @return String the checksum or null if no checksum is stored or index out of bounds.
     */
@@ -1640,7 +1629,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    /**
     * Sets the mapping information for this property.
     *
-    * @param mappingURL
+    * @param mappingURL a url defining the mapping of this property,
     */
    public void setMapping(String mappingURL) {
       URL url = null;
@@ -1669,10 +1658,9 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     */
    public void setUnit(String unit) {
       if (valueCount() > 1)
-         logger
-               .warn("You ask me to set the unit but there are many values. Changed the units for all values!");
-      for (int i = 0; i < values.size(); i++) {
-         values.get(i).setUnit(unit);
+         logger.warn("You ask me to set the unit but there are many values. Changed the units for all values!");
+      for (Value value : values) {
+         value.setUnit(unit);
       }
    }
 
@@ -1713,7 +1701,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
    /**
     * Set the parent of this property. Parents indicate that this property is only meaningful once the parent property
-    * is specified.Overwirtes old content!
+    * is specified.Overwrites old content!
     *
     * @param dependency
     * {@link String}: the parent of this property
@@ -1727,7 +1715,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
 
    /**
-    * Set the value of the parent property that makes this property meaningful. Overwirtes old content!
+    * Set the value of the parent property that makes this property meaningful. Overwrites old content!
     *
     * @param dependencyValue
     * {@link String}: the parentValue.
@@ -1764,7 +1752,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
 
    /**
-    * Sets the value mimetype of this property.
+    * Sets the value mime type of this property.
     *
     * @param filename
     * {@link String}: the definition.
@@ -2010,8 +1998,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
     */
    @Override
    public String toString() {
-      String info = (this.name);
-      return info;
+      return (this.name);
    }
 
 
@@ -2028,7 +2015,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
 
    /**
-    * Compares this property's value to the given object. Returns
+    * Compares this property's value to the given object.
     *
     * @param aObject
     * {@link Object} the object that
@@ -2047,9 +2034,9 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    /**
     * Compares this Property to another one and returns a match-level
     *
-    * @param anotherProperty
+    * @param anotherProperty the other property.
     * @return {@link Integer} the match level.
-    * @deprecated not implemented yet will return MATCH_ERROR
+    * @deprecated not implemented yet and will return MATCH_ERROR
     */
    @Deprecated
    public int match(Property anotherProperty) {
@@ -2061,9 +2048,10 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
    /**
     * Static method to match two objects
     *
-    * @param anObject
-    * @param type
-    * @param anotherObject
+    * @param anObject one of the objects that should be compared.
+    * @param anotherObject another object.
+    * @param type a string representation of the type the object should represent.
+    *             (eg. a person, date, time, or a float )
     * @return {@link Integer} the match level
     */
    public static int match(Object anObject, Object anotherObject, String type) {
@@ -2272,8 +2260,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
    @Override
    public Enumeration<Value> children() {
-      Enumeration<Value> voo = (this.values).elements();
-      return voo;
+      return (this.values).elements();
    }
 
 
@@ -2285,8 +2272,7 @@ public class Property extends Object implements Serializable, Cloneable, TreeNod
 
    @Override
    public TreeNode getChildAt(int childIndex) {
-      TreeNode value = getWholeValue(childIndex);
-      return value;
+      return getWholeValue(childIndex);
    }
 
 
