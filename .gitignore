@@ -1,5 +1,8 @@
 .classpath
 .project
+.idea
+*.iml
+out/
 bin/
 *.jar
 log/

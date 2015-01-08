@@ -17,14 +17,21 @@ package odml.core;
  * You should have received a copy of the GNU Lesser General Public License
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
+
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.ProcessingInstruction;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
+
 import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.*;
-import org.jdom.*;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 import org.slf4j.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -218,7 +225,12 @@ public class Writer implements Serializable {
          return false;
       }
       if (odmlTree instanceof Section) {
-         return (createDom(odmlTree, asTerminology) && streamToFile(file));
+         try {
+            FileOutputStream stream = new FileOutputStream(file);
+            return (createDom(odmlTree, asTerminology) && write(stream));
+         } catch (Exception e) {
+            System.out.println(e.getMessage());
+         }
       }
       return false;
    }
@@ -540,45 +552,21 @@ public class Writer implements Serializable {
      * @author Jakub Krauz
      */
     private boolean writeToStream(OutputStream stream) {
-        if (doc == null) {
-            logger.error("doc empty");
-            return false;
-        }
-        try {
-            Format frmt = Format.getPrettyFormat().setIndent("  ");
-            XMLOutputter outp = new XMLOutputter(frmt);
-            outp.output(doc, stream);
-        } catch (IOException ie) {
-            logger.error("Write to stream failed: ", ie);
-            return false;
-        }
-        return true;
-    }
-
-
-    /**
-     * Stream the dom tree to file.
-     * 
-     * @return boolean returns whether the operation succeeded or not.
-     */
-    private boolean streamToFile(File newFile) {
-        try {
-            logger.debug("in streamToFile");
-            org.jdom.output.Format frmt = org.jdom.output.Format.getPrettyFormat()
-                    .setIndent("    ");
-            XMLOutputter outp = new XMLOutputter(frmt);
-            FileOutputStream fileStream = new FileOutputStream(newFile);
-            if (doc.equals(null)) {
-                logger.error("doc empty");
-            } else {
-                logger.debug("Zeug in doc: " + doc.toString());
-            }
-            outp.output(doc, fileStream);
-        } catch (IOException ie) {
-            logger.error("StreamToFile failed: ", ie);
-            return false;
-        }
-        logger.info("StreamToFile successfull");
-        return true;
+       if (doc == null) {
+          logger.error("doc empty");
+          return false;
+       }
+       try {
+          logger.debug("in streamToFile");
+          org.jdom2.output.Format frmt = org.jdom2.output.Format.getPrettyFormat().setIndent("    ");
+          XMLOutputter outp = new XMLOutputter();
+          outp.setFormat(Format.getPrettyFormat());
+          outp.output(doc, stream);
+       } catch (IOException ie) {
+          logger.error("StreamToFile failed: ", ie);
+          return false;
+       }
+       logger.info("StreamToFile successfull");
+       return true;
     }
 }
