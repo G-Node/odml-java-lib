@@ -27,12 +27,12 @@ import org.jdom2.output.XMLOutputter;
 import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import org.slf4j.*;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.lang.System.*;
 
 /**
  * The {@link Writer} class provides the tools to write
@@ -43,30 +43,21 @@ import java.util.Map;
  * @author Jan Grewe, Christine Seitz
  * 
  */
-public class Writer implements Serializable {
+public class Writer implements Serializable {  
+   private static final long             serialVersionUID = 146L;
+   private final boolean                 asTerminology;
+   private Document                      doc;
+   private final File                    file;
+   private Section                       odmlTree         = null;
 
-    private static final long serialVersionUID = 146L;
-
-    public static Logger logger = LoggerFactory.getLogger(Writer.class);
-
-    private final boolean asTerminology;
-
-    private Document doc;
-
-    private final File file;  // better solution would be to give the File object as a parameter in the write() method
-                              // or (even better) remove all file-related methods (user can write to file using streams)
-
-    private Section odmlTree = null;
-
-    private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-    private final static SimpleDateFormat datetimeFormat = new SimpleDateFormat(
-            "yyyy-MM-dd hh:mm:ss");
-
-    private final static SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm:ss");
+   private final static SimpleDateFormat dateFormat       = new SimpleDateFormat("yyyy-MM-dd");
+   private final static SimpleDateFormat datetimeFormat   = new SimpleDateFormat(
+           "yyyy-MM-dd hh:mm:ss");
+   private final static SimpleDateFormat timeFormat       = new SimpleDateFormat("hh:mm:ss");
 
 
-    /**
+
+   /**
      * Creates a writer instance. Lets the Wirter write only those properties that have values.
      * 
      * @param rootSection {@link Section} the root Section of the metadata tree.
@@ -154,15 +145,11 @@ public class Writer implements Serializable {
      */
     public boolean write(OutputStream stream) {
         if (odmlTree == null) {
-            logger.error("Writer.write error: there is no metadata to write!");
+            System.out.println("Writer.write error: there is no metadata to write!");
             return false;
         }
-        if (odmlTree instanceof Section) {
-            if (!createDom(odmlTree, asTerminology))
-                return false;
-            return writeToStream(stream);
-        }
-        return false;
+       createDom(odmlTree, asTerminology);
+       return writeToStream(stream);
     }
 
 
@@ -218,204 +205,189 @@ public class Writer implements Serializable {
      */
     @Deprecated
     public boolean write() {
-      if (file == null)
+       if (odmlTree == null) {
+          out.println("Writer.write error: there is no metadata to write!");
           return false;
-      if (odmlTree == null) {
-         logger.error("Writer.write error: there is no metadata to write!");
-         return false;
-      }
-      if (odmlTree instanceof Section) {
-         try {
-            FileOutputStream stream = new FileOutputStream(file);
-            return (createDom(odmlTree, asTerminology) && write(stream));
-         } catch (Exception e) {
-            System.out.println(e.getMessage());
-         }
-      }
-      return false;
+       }
+       try {
+          FileOutputStream stream = new FileOutputStream(file);
+          createDom(odmlTree, asTerminology);
+          return (write(stream));
+       } catch (Exception e) {
+          System.out.println(e.getMessage());
+          return false;
+       }
+    }
+
+   public Map<String, Object> getMap() {
+      Map<String, Object> self = new HashMap<String, Object>();
+      self.put("date", odmlTree.getDocumentDate());
+      self.put("author", odmlTree.getDocumentAuthor());
+      self.put("version", odmlTree.getDocumentVersion());
+      self.put("repository", odmlTree.getRepository());
+      self.put("section", odmlTree.getMap());
+      return self;
    }
 
 
-    /**
-     * 
-     * @param odMLRoot {@link Section}: the section to start the dom creation.
-     * @param asTerminology {@link boolean}: flag to indicate whether Template is used or not
-     * @return {@link boolean}: true if creating Dom successfully, otherwise false
-     */
-    private boolean createDom(Section odMLRoot, boolean asTerminology) {
-        logger.debug("in createDom\twith RootSection");
-        doc = new Document();
-        // create processing instruction the last one added is the preferred one
-        ProcessingInstruction instr = null;
-        ProcessingInstruction altInstr = null;
-        if (asTerminology) {
-            altInstr = new ProcessingInstruction("xml-stylesheet",
-                    "type=\"text/xsl\" href=\"odml.xsl\"");
-            instr = new ProcessingInstruction("xml-stylesheet",
-                    "type=\"text/xsl\" href=\"odmlTerms.xsl\"");
+   /**
+    *
+    * @param odMLRoot {@link Section}: the section to start the dom creation.
+    * @param asTerminology {@link boolean}: flag to indicate whether Template is used or not
+    * @return {@link boolean}: true if creating Dom successfully, otherwise false
+    */
+   private void createDom(Section odMLRoot, boolean asTerminology) {
+      doc = new Document();
+      ProcessingInstruction instr = null;
+      ProcessingInstruction altInstr = null;
+      if (asTerminology) {
+         altInstr = new ProcessingInstruction("xml-stylesheet",
+                 "type=\"text/xsl\" href=\"odml.xsl\"");
+         instr = new ProcessingInstruction("xml-stylesheet",
+                 "type=\"text/xsl\" href=\"odmlTerms.xsl\"");
+      } else {
+         altInstr = new ProcessingInstruction("xml-stylesheet",
+                 "type=\"text/xsl\" href=\"odmlTerms.xsl\"");
+         instr = new ProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"odml.xsl\"");
+      }
+      doc.addContent(instr);
+      doc.addContent(altInstr);
+      Element rootElement = new Element("odML");
+      rootElement.setAttribute("version", "1");
+      doc.setRootElement(rootElement);
 
-        } else {
-            altInstr = new ProcessingInstruction("xml-stylesheet",
-                    "type=\"text/xsl\" href=\"odmlTerms.xsl\"");
-            instr = new ProcessingInstruction("xml-stylesheet",
-                    "type=\"text/xsl\" href=\"odml.xsl\"");
-        }
-        doc.addContent(instr);
-        doc.addContent(altInstr);
-        Element rootElement = new Element("odML");
-        rootElement.setAttribute("version", "1");
-        doc.setRootElement(rootElement);
-        // if the odMLRoot has properties, a dummy root is added to ensure that everything is written
-        Section dummyRoot;
-        if (odMLRoot.propertyCount() != 0) {
-            dummyRoot = new Section();
-            dummyRoot.add(odMLRoot);
-            dummyRoot.setDocumentAuthor(odMLRoot.getDocumentAuthor());
-            dummyRoot.setDocumentDate(odMLRoot.getDocumentDate());
-            dummyRoot.setDocumentVersion(odMLRoot.getDocumentVersion());
-            dummyRoot.setRepository(odMLRoot.getRepository());
-        } else {
-            dummyRoot = odMLRoot;
-        }
-        String author = dummyRoot.getDocumentAuthor();
-        if (author != null) {
-            Element authorElement = new Element("author");
-            authorElement.setText(author);
-            rootElement.addContent(authorElement);
-        }
-        String version = dummyRoot.getDocumentVersion();
-        if (version != null) {
-            Element versionElement = new Element("version");
-            versionElement.setText(version);
-            rootElement.addContent(versionElement);
-        }
-        String dateString = null;
-        Date date = dummyRoot.getDocumentDate();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        if (date != null) {
-            dateString = sdf.format(date);
-        } else {
-            date = new Date(Calendar.getInstance().getTimeInMillis());
-            dateString = sdf.format(date);
-        }
-        if (dateString != null) {
-            Element dateElement = new Element("date");
-            dateElement.setText(dateString);
-            rootElement.addContent(dateElement);
-        }
-        URL repository = dummyRoot.getRepository();
-        if (repository != null) {
-            Element repElement = new Element("repository");
-            repElement.setText(repository.toString());
-            rootElement.addContent(repElement);
-        }
-        for (int i = 0; i < dummyRoot.sectionCount(); i++) {
-            appendSection(rootElement, dummyRoot.getSection(i), asTerminology);
-        }
+      Section dummyRoot;
+      if (odMLRoot.propertyCount() != 0) {
+         dummyRoot = new Section();
+         dummyRoot.add(odMLRoot);
+         dummyRoot.setDocumentAuthor(odMLRoot.getDocumentAuthor());
+         dummyRoot.setDocumentDate(odMLRoot.getDocumentDate());
+         dummyRoot.setDocumentVersion(odMLRoot.getDocumentVersion());
+         dummyRoot.setRepository(odMLRoot.getRepository());
+      } else {
+         dummyRoot = odMLRoot;
+      }
+      String author = dummyRoot.getDocumentAuthor();
+      if (author != null) {
+         Element authorElement = new Element("author");
+         authorElement.setText(author);
+         rootElement.addContent(authorElement);
+      }
+      String version = dummyRoot.getDocumentVersion();
+      if (version != null) {
+         Element versionElement = new Element("version");
+         versionElement.setText(version);
+         rootElement.addContent(versionElement);
+      }
+      String dateString = null;
+      Date date = dummyRoot.getDocumentDate();
+      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+      if (date != null) {
+         dateString = sdf.format(date);
+      } else {
+         date = new Date(Calendar.getInstance().getTimeInMillis());
+         dateString = sdf.format(date);
+      }
+      if (dateString != null) {
+         Element dateElement = new Element("date");
+         dateElement.setText(dateString);
+         rootElement.addContent(dateElement);
+      }
+      URL repository = dummyRoot.getRepository();
+      if (repository != null) {
+         Element repElement = new Element("repository");
+         repElement.setText(repository.toString());
+         rootElement.addContent(repElement);
+      }
+      for (int i = 0; i < dummyRoot.sectionCount(); i++) {
+         appendSection(rootElement, dummyRoot.getSection(i), asTerminology);
+      }
+   }
 
-        return true;
-    }
+   /**
+    * Method to append a section-element to the dom-tree.
+    * @param parent {@link Element}: the parent where the section shall be appended
+    * @param section {@link Section}: the section to append to the parent-element
+    * @param asTemplate {@link boolean}: flag to indicate whether template or not; if template then also writing 
+    * value-information (e.g. unit or type) without having actual value-content
+    */
+   private void appendSection(Element parent, Section section, boolean asTemplate) {
+      Element sectionElement = new Element("section");
 
-    public Map<String, Object> getMap() {
-        Map<String, Object> self = new HashMap<String, Object>();
-        self.put("date", odmlTree.getDocumentDate());
-        self.put("author", odmlTree.getDocumentAuthor());
-        self.put("version", odmlTree.getDocumentVersion());
-        self.put("repository", odmlTree.getRepository());
-        self.put("section", odmlTree.getMap());
-        return self;
-    }
+      Element type = new Element("type");
+      type.setText(section.getType());
+      sectionElement.addContent(type);
 
+      Element name = new Element("name");
+      name.setText(section.getName());
+      sectionElement.addContent(name);
 
-    /**
-     * Method to append a section-element to the dom-tree.
-     * 
-     * @param parent {@link Element}: the parent where the section shall be appended
-     * @param section {@link Section}: the section to append to the parent-element
-     * @param asTemplate {@link boolean}: flag to indicate whether template or not; if template then also writing
-     *        value-information (e.g. unit or type) without having actual value-content
-     */
-    private void appendSection(Element parent, Section section, boolean asTemplate) {
-        logger.debug("in appendSection\twith Section section");
-        Element sectionElement = new Element("section");
+      Element nameDefinition = new Element("definition");
+      nameDefinition.setText(section.getDefinition());
+      sectionElement.addContent(nameDefinition);
 
-        Element type = new Element("type");
-        type.setText(section.getType());
-        sectionElement.addContent(type);
+      Element repository = new Element("repository");
+      URL termUrl = section.getRepository();
+      if (termUrl != null) {
+         repository.setText(termUrl.toString());
+         sectionElement.addContent(repository);
+      }
 
-        Element name = new Element("name");
-        name.setText(section.getName());
-        sectionElement.addContent(name);
+      Element mapping = new Element("mapping");
+      URL mapUrl = section.getMapping();
+      if (mapUrl != null) {
+         mapping.setText(mapUrl.toString());
+         sectionElement.addContent(mapping);
+      }
+      Element link = new Element("link");
+      String sectionLink = section.getLink();
+      if (sectionLink != null) {
+         link.setText(sectionLink);
+         sectionElement.addContent(link);
+      }
+      Element include = new Element("include");
+      String sectionInclude = section.getInclude();
+      if (sectionInclude != null) {
+         include.setText(sectionInclude);
+         sectionElement.addContent(include);
+      }
+      Element reference = new Element("reference");
+      String sectionReference = section.getReference();
+      if (sectionReference != null) {
+         reference.setText(sectionReference);
+         sectionElement.addContent(reference);
+      }
+      // append the properties.
+      for (int i = 0; i < section.propertyCount(); i++) {
+         appendProperty(sectionElement, section.getProperty(i), asTemplate);
+      }
+      // cycle through the subsections
+      for (int i = 0; i < section.sectionCount(); i++) {
+         appendSection(sectionElement, section.getSection(i), asTemplate);
+      }
+      // append to parent
+      parent.addContent(sectionElement);
+   }
 
-        Element nameDefinition = new Element("definition");
-        String definition = section.getDefinition();
-        if (definition != null) {
-            nameDefinition.setText(definition);
-            sectionElement.addContent(nameDefinition);
-        }
+   
 
-        Element repository = new Element("repository");
-        URL termUrl = section.getRepository();
-        if (termUrl != null) {
-            repository.setText(termUrl.toString());
-            sectionElement.addContent(repository);
-        }
-
-        Element mapping = new Element("mapping");
-        URL mapUrl = section.getMapping();
-        if (mapUrl != null) {
-            mapping.setText(mapUrl.toString());
-            sectionElement.addContent(mapping);
-        }
-        Element link = new Element("link");
-        String sectionLink = section.getLink();
-        if (sectionLink != null) {
-            link.setText(sectionLink);
-            sectionElement.addContent(link);
-        }
-        Element include = new Element("include");
-        String sectionInclude = section.getInclude();
-        if (sectionInclude != null) {
-            include.setText(sectionInclude);
-            sectionElement.addContent(include);
-        }
-        Element reference = new Element("reference");
-        String sectionReference = section.getReference();
-        if (sectionReference != null) {
-            reference.setText(sectionReference);
-            sectionElement.addContent(reference);
-        }
-        // append the properties.
-        for (int i = 0; i < section.propertyCount(); i++) {
-            appendProperty(sectionElement, section.getProperty(i), asTemplate);
-        }
-        // cycle through the subsections
-        for (int i = 0; i < section.sectionCount(); i++) {
-            appendSection(sectionElement, section.getSection(i), asTemplate);
-        }
-        // append to parent
-        parent.addContent(sectionElement);
-    }
-
-
-    /**
-     * Appends a property elements to the dom tree. Empty properties (those with no values)
-     * will only be written to file if the file is to become a terminology.
-     * 
-     * @param parent {@link Element}: the parent Element to which the properties belong.
-     * @param prop {@link Property}: the property to append.
-     * @param asTerminology boolean: defines whether the file will be a terminology.
-     */
-    private void appendProperty(Element parent, Property prop, boolean asTerminology) {
-        logger.debug("in appendProperty\twith Property and Terminology");
-        if (!asTerminology) {
-            prop.removeEmptyValues();
-            if (prop.isEmpty()) {
-                logger.warn("Writer.appendProperty: Property " + prop.getName()
-                        + "is empty and will not be written to file!");
-                return;
-            }
-        }
+   /**
+    * Appends a property elements to the dom tree. Empty properties (those with no values) 
+    * will only be written to file if the file is to become a terminology.
+    * 
+    * @param parent {@link Element}: the parent Element to which the properties belong.
+    * @param prop {@link Property}: the property to append.
+    * @param asTerminology boolean: defines whether the file will be a terminology.
+    */
+   private void appendProperty(Element parent, Property prop, boolean asTerminology) {
+      if (!asTerminology) {
+         prop.removeEmptyValues();
+         if (prop.isEmpty()) {
+            out.println("Writer.appendProperty: Property " + prop.getName()
+                  + "is empty and will not be written to file!");
+            return;
+         }
+      }
         Element propertyElement = new Element("property");
         // actually write the property
         Element name = new Element("name");
@@ -463,9 +435,8 @@ public class Writer implements Serializable {
      * Appends a value element to the dom tree.
      * 
      * @param parent {@link Element}: the parent Element to which the values belong.
-     * @param prop {@link Value}: the value to append.
-     * @param terms {@link Terminology}: The terminology that should be used to validate the properties.
-     *        (non-functional so far). BUT: if false: not writing values with empty 'name' (value itself)
+     * @param val {@link Value}: the value to append.
+     * @param asTemplate defines whether to save as template, i.e. empty values are accepted.
      */
     private void appendValue(Element parent, Value val, boolean asTemplate) {
         if (!asTemplate) {
@@ -486,7 +457,7 @@ public class Writer implements Serializable {
                     valueElement.setText(val.getContent().toString());
                 }
             } else {
-                valueElement.setText(val.getContent().toString());
+               valueElement.setText(val.getContent().toString());
             }
         }
 
@@ -500,7 +471,7 @@ public class Writer implements Serializable {
         String unit = val.getUnit();
         if (unit != null && (!unit.isEmpty())) {
             unitElement.setText(unit);
-            valueElement.addContent(unitElement);
+           valueElement.addContent(unitElement);
         }
         Element errorElement = new Element("uncertainty");
         Object uncertainty = val.getUncertainty();
@@ -553,20 +524,21 @@ public class Writer implements Serializable {
      */
     private boolean writeToStream(OutputStream stream) {
        if (doc == null) {
-          logger.error("doc empty");
+          System.out.println("doc empty");
           return false;
        }
        try {
-          logger.debug("in streamToFile");
+          System.out.println("in streamToFile");
           org.jdom2.output.Format frmt = org.jdom2.output.Format.getPrettyFormat().setIndent("    ");
           XMLOutputter outp = new XMLOutputter();
           outp.setFormat(Format.getPrettyFormat());
           outp.output(doc, stream);
        } catch (IOException ie) {
-          logger.error("StreamToFile failed: ", ie);
+          System.out.println("StreamToFile failed: " + ie.getMessage());
           return false;
        }
-       logger.info("StreamToFile successfull");
+       System.out.println("StreamToFile successfull");
        return true;
     }
+
 }
