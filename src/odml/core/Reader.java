@@ -20,8 +20,6 @@ import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaderJDOMFactory;
 import org.jdom2.input.sax.XMLReaderXSDFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
@@ -32,10 +30,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Vector;
 
-import static java.lang.System.out;
 
 /**
  * The {@link Reader} class reads an xml-file, applies the schema, if wanted and provides the tools to extract the
@@ -48,7 +44,6 @@ import static java.lang.System.out;
  */
 public class Reader implements Serializable {
 
-   public static Logger          logger           = LoggerFactory.getLogger(Reader.class);
    private static final long     serialVersionUID = 146L;
    private Section               root;
    private final URL[]           schemaLocations;
@@ -180,11 +175,11 @@ public class Reader implements Serializable {
        this.fileUrl = fileURL;
        try {
            InputStream stream = fileURL.openStream();
-           logger.info("Parsing the xml file: " + fileURL.toString() + "...");
+           System.out.println("Parsing the xml file: " + fileURL.toString() + "...");
            return load(stream, option, validate);
        } catch (IOException e) {
-           logger.error("Could not open file at specified url: " +
-                   fileURL.toString() + ". Verify connection!", e);
+           System.out.println("Could not open file at specified url: " +
+                   fileURL.toString() + ". Verify connection! " + e.getMessage());
            return null;
        }
    }
@@ -201,25 +196,20 @@ public class Reader implements Serializable {
     */
    public Section load(InputStream stream, int option, boolean validate) throws Exception {
       boolean isValid = true;
-      Section s = null;
-
+      Section s;
       Document dom = parseXML(stream);
       if (dom == null) {
          this.root = null;
          return null;
       }
-      logger.info("Parsing succeeded.");
-      
       if (validate && schemaLocations != null) {
          isValid = validateXML(stream);
-         if (isValid)
-            logger.info("Validation succeeded.");
       }
       
       if (isValid) {
          createTree(dom);
       } else {
-         logger.error("Validation failed.");
+         System.out.println("Validation failed.");
       }
       
       if (option == LOAD_AND_RESOLVE || option == FULL_CONVERSION) {
@@ -251,14 +241,14 @@ public class Reader implements Serializable {
       Element rootElement = dom.getRootElement();
       String odmlVersion = rootElement.getAttribute("version").getValue();
       if (Float.parseFloat(odmlVersion) != 1.0) {
-         logger.error("Can not handle odmlVersion: " + odmlVersion
+         System.out.println("Can not handle odmlVersion: " + odmlVersion
                + " stopping further processing!");
          return;
       }
 
       String author = rootElement.getChildText("author");
       root.setDocumentAuthor(author);
-      Date date = null;
+      Date date;
       String temp = rootElement.getChildText("date");
       SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
       try {
@@ -275,7 +265,7 @@ public class Reader implements Serializable {
          try {
             url = new URL(temp);
          } catch (Exception e) {
-            logger.error("Reader.parseSection.repository: ", e);
+            System.out.println("Reader.parseSection.repository: " + e);
          }
       }
       root.setRepository(url);
@@ -287,10 +277,6 @@ public class Reader implements Serializable {
          }
       }
       confirmLinks(root);
-      if (includes.size() > 0 && !loadIncludes) {
-         logger
-               .info("The document includes external files which have not yet been loaded. Call loadIncludes() to load them.");
-      }
    }
 
 
@@ -304,29 +290,24 @@ public class Reader implements Serializable {
       if (stream == null) {
          return null;
       }
-
       try {
          SAXBuilder builder = new SAXBuilder();
          Document doc = builder.build(stream);
-         return dom;
-      } catch (ParserConfigurationException pce) {
-         logger.error("Parsing failed! ", pce);
-         return null;
+         return doc;
       } catch (IOException ioe) {
-         logger.error("Parsing failed! ", ioe);
+         System.out.println("Parsing failed! " + ioe.getMessage());
          return null;
       } catch (Exception e) {
-         logger.error("Parsing failed! ", e);
+         System.out.println(e.getMessage());
          return null;
       }
-      return doc;
    }
 
 
    /**
     * Validates the the metadata xml-file against a schema and returns true if the file is valid or false if validation
     * fails.
-    * @param fileUrl - the URL of the xml file.
+    * @param stream - the input stream.
     * @return - boolean true or false if validation succeeded or failed, respectively.
     */
    private boolean validateXML(InputStream stream) {
@@ -337,7 +318,7 @@ public class Reader implements Serializable {
             SAXBuilder builder = new SAXBuilder(schemafac);
             Document validdoc = builder.build(stream);
          } catch (Exception e) {
-            out.println(e.getMessage());
+            System.out.println(e.getMessage());
             return false;
          }
       }
@@ -349,8 +330,7 @@ public class Reader implements Serializable {
     * Parses an xml section of the metadata file and returns it. Subsections are parsed in a recursive
     * manner.
     * 
-    * @param domSection
-    *            - {@link Element}: the section that is to parse
+    * @param domSection - {@link Element}: the section that is to parse
     * @return {@link Section}: the Section representation of the dom section
     */
    private Section parseSection(Element domSection) {
@@ -364,7 +344,7 @@ public class Reader implements Serializable {
          try {
             mapURL = new URL(temp);
          } catch (Exception e) {
-            logger.error("odMLReader.parseSection.mappingURL handling: ", e);
+            System.out.println("odml.core.Reader.parseSection.mappingURL handling: " + e.getMessage());
          }
       }
 
@@ -375,7 +355,7 @@ public class Reader implements Serializable {
             url = new URL(domSection.getChildText("repository"));
          } catch (Exception e) {
             url = null;
-            logger.error("Reader.parseSection.repository: ", e);
+            System.out.println("Reader.parseSection.repository: " + e.getMessage());
          }
       }
       String link = domSection.getChildText("link");
@@ -395,15 +375,13 @@ public class Reader implements Serializable {
             includes.add(section);
          }
       } catch (Exception e) {
-         logger.error("Reader.parseSection: exception while creating section: ", e);
+         System.out.println("Reader.parseSection: exception while creating section: " + e.getMessage());
          return null;
       }
       Property tempProp;
       for (Element element : domSection.getChildren("property")) {
          section.add(parseProperty(element));
-         logger.debug("Property added");
       }
-      // append subsections
       for (Element element : domSection.getChildren("section")) {
          section.add(parseSection(element));
       }
@@ -431,10 +409,10 @@ public class Reader implements Serializable {
          try {
             mapURL = new URL(temp);
          } catch (Exception e) {
-            logger.error("odMLReader.parseProperty.mappingURL handling: \n"
+            System.out.println("odml.core.Reader.parseProperty.mappingURL handling: \n"
                   + " \t> tried to form URL out of: '"
                   + domProperty.getChildText("mapping")
-                  + "'\n\t= mapURL of Property named: " + name, e);
+                  + "'\n\t= mapURL of Property named: " + name + e.getMessage());
          }
       }
       definition = domProperty.getChildText("definition");
@@ -449,7 +427,7 @@ public class Reader implements Serializable {
       try {
          property = new Property(name, tmpValues, definition, dependency, dependencyValue, mapURL);
       } catch (Exception e){
-         logger.error("odMLReader.parseProperty: create new prop failed. ", e);
+         System.out.println("odml.core.Reader.parseProperty: create new prop failed. " + e.getMessage());
          property = null;
       }
       return property;
@@ -491,7 +469,7 @@ public class Reader implements Serializable {
          value = new Value(content, unit, uncertainty, type, filename, definition, reference,
                encoder, checksum);
       } catch (Exception e) {
-         logger.error("odMLReader.parseValue: create Value failed. ", e);
+         System.out.println("odml.core.Reader.parseValue: create Value failed. " + e.getMessage());
          return null;
       }
       return value;
@@ -519,7 +497,7 @@ public class Reader implements Serializable {
       for (Section link : links) {
          if (link.getSection(link.getLink()) == null
                  && link.getType().equals(link.getSection(link.getLink()).getType())) {
-            logger.error("Reader.confirmLinks: The link stored in section '"
+            System.out.println("Reader.confirmLinks: The link stored in section '"
                     + link.toString()
                     + "' could not be confirmed and was removed!");
             link.setLink(null, true);
