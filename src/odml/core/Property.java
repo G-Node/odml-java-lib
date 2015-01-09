@@ -14,9 +14,6 @@ package odml.core;
  * <http://www.gnu.org/licenses/>.
  */
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.swing.tree.TreeNode;
 import java.io.*;
 import java.net.MalformedURLException;
@@ -50,7 +47,6 @@ import java.util.*;
  */
 public class Property implements Serializable, Cloneable, TreeNode {
 
-   protected static final Logger logger           = LoggerFactory.getLogger(Property.class);
    private static final long     serialVersionUID = 147L;
    private String                name             = "", dependency = "",
          dependencyValue = "", definition = "";
@@ -163,7 +159,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          initialize(name, values, definition, dependency, dependencyValue, mapping);
       } catch (Exception l) {
-         logger.error("Could not create property: ", l.getLocalizedMessage());
+         System.out.println("Could not create property: " + l.getLocalizedMessage());
       }
    }
 
@@ -207,7 +203,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
                valueDefinition, reference));
          initialize(name, theValues, definition, dependency, dependencyValue, mapping);
       } catch (Exception l) {
-         logger.error("Could not create property: ", l.getLocalizedMessage());
+         System.out.println("Could not create property: " + l.getLocalizedMessage());
       }
    }
 
@@ -264,7 +260,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
                   tmpFileNames, definition, tmpReference);
             theValues.add(value);
          } catch (Exception e) {
-            logger.error("Error during creation of value: ", e.getLocalizedMessage());
+            System.out.println("Error during creation of value: " + e.getLocalizedMessage());
          }
       }
       initialize(name, theValues, definition, dependency, dependencyValue, mapping);
@@ -353,7 +349,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
       if (definition != null)
          this.definition = definition;
       else
-         definition = "";
+         this.definition = "";
    }
 
 
@@ -421,7 +417,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          return (myDF.parse(getValue(i).toString())).doubleValue();
       } catch (ParseException e) {
-         logger.error("Value " + i + " can not be converted to float!");
+         System.out.println("Value " + i + " can not be converted to float!");
          return Double.NaN;
       }
    }
@@ -471,7 +467,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          return sdf.parse(getValue(i).toString());
       } catch (Exception e) {
-         logger.error("Value could not be converted to a date entry.");
+         System.out.println("Value could not be converted to a date entry.");
          return null;
       }
    }
@@ -499,7 +495,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          return sdf.parse(getValue(i).toString());
       } catch (Exception e) {
-         logger.error("Value could not be converted to a time entry.");
+         System.out.println("Value could not be converted to a time entry.");
          return null;
       }
    }
@@ -555,7 +551,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    public boolean addValue(Object value, String id, String unit, Object uncertainty, String type,
                            String filename, String comment) {
       if (value == null) {
-         logger.error("! the value to add must not be null or empty!");
+         System.out.println("! the value to add must not be null or empty!");
          return false;
       }
       try {
@@ -565,14 +561,14 @@ public class Property implements Serializable, Cloneable, TreeNode {
          Value toAdd = new Value(value, unit, uncertainty, type, filename, comment, id);
          toAdd.setAssociatedProperty(this);
          if (values.contains(toAdd)) {
-            logger.error("! value to add already existing in property!");
+            System.out.println("! value to add already existing in property!");
             return false;
          }
          values.add(toAdd);
          if (type != null && (!type.isEmpty())) {
             if ((values.get(0).getType() != null) && (!values.get(0).getType().isEmpty())
                   && (!type.equalsIgnoreCase(values.get(0).getType()))) {
-               logger.warn("! type of newly added value (" + type
+               System.out.println("! type of newly added value (" + type
                      + ") differs from the one of the first value "
                      + "of the proprty (" + values.get(0).getType()
                      + ") > should be the same! index of newly "
@@ -583,7 +579,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
             }
          }
       } catch (Exception e) {
-         logger.error("! error trying to initialize value: ", e);
+         System.out.println("! error trying to initialize value: " + e.getMessage());
       }
       return true;
    }
@@ -615,8 +611,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean setValue(Object value) {
       if (this.values.size() > 1) {
-         logger
-               .error("! property has more than one value > index must be specified to know which one shall be set");
+         System.out.println("! property has more than one value > index must be specified to know which one shall be set");
          return false;
       }
       return setValueAt(value, 0);
@@ -635,15 +630,15 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean setValueAt(Object value, int index) {
       if (index < 0 || index >= this.valueCount()) {
-         logger.error("Property.setValueAt: specified index out of range!");
+         System.out.println("Property.setValueAt: specified index out of range!");
          return false;
       }
       try {
          Value toAdd = new Value(value, null);
          this.values.set(index, toAdd);
-         logger.info("Property.setValueAt: successfully set value at index " + index);
+         System.out.println("Property.setValueAt: successfully set value at index " + index);
       } catch (Exception e) {
-         logger.error("Property.setValueAt: An exception occurred! ", e);
+         System.out.println("Property.setValueAt: An exception occurred! " + e.getMessage());
       }
       if (this.name.equalsIgnoreCase("name") && value instanceof String) {
          this.parentSection.setName((String) value);
@@ -674,7 +669,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          if (values.get(i).getContent().equals(value))
             return i;
       }
-      logger.error("! can't find index of specified value!");
+      System.out.println("! can't find index of specified value!");
       return -1;
    }
 
@@ -693,7 +688,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          if (values.get(i).getContent().equals(value))
             return i;
       }
-      logger.error("! can't find index of specified value!");
+      System.out.println("! can't find index of specified value!");
       return -1;
    }
 
@@ -733,7 +728,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          return this.values.get(index).getContent();
       } catch (Exception e) {
-         logger.error("", e);
+         System.out.println(e.getMessage());
          return null;
       }
    }
@@ -760,7 +755,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          return this.values.get(index);
       } catch (Exception e) {
-         logger.error("", e);
+         System.out.println(e.getMessage());
          return null;
       }
    }
@@ -775,7 +770,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean removeValue(Object value) {
       if (value == null) {
-         logger.error("! value for removal must not be null!");
+         System.out.println("! value for removal must not be null!");
          return false;
       }
       int index = -1;
@@ -783,7 +778,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          index = getValueIndex(value);
       }
       if (index < 0) {
-         logger.error("! value for removal not existing!");
+         System.out.println("! value for removal not existing!");
          return false;
       }
       this.values.remove(index);
@@ -800,11 +795,11 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean removeValue(int index) {
       if (this.values.size() <= index) {
-         logger.error("! specified index for removing value out of range!");
+         System.out.println("! specified index for removing value out of range!");
          return false;
       }
       if (index < 0) {
-         logger.error("! specified index for removing value mut be greater than 0 !");
+         System.out.println("! specified index for removing value mut be greater than 0 !");
          return false;
       }
       this.values.remove(index);
@@ -850,8 +845,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean setValueReference(String reference) {
       if (this.values.size() > 1) {
-         logger
-               .error("! property has more than one value > index must be specified to know which id to set!");
+         System.out.println("! property has more than one value > index must be specified to know which id to set!");
          return false;
       }
       setValueReferenceAt(reference, 0);
@@ -903,7 +897,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean setValueReferenceAt(String reference, int index) {
       if (this.values.size() <= index || index < 0) {
-         logger.error("! specified index for settingValueId out of range!");
+         System.out.println("! specified index for settingValueId out of range!");
          return false;
       }
       this.values.get(index).setReference(reference);
@@ -948,12 +942,12 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          String reference = this.values.get(index).getReference();
          if (reference != null && reference.isEmpty()) {
-            logger.error("! no id stored for given value specified by its index!");
+            System.out.println("! no id stored for given value specified by its index!");
             return null;
          }
          return reference;
       } catch (Exception e) {
-         logger.error("! fetching id for given value specified by it's index failed: ", e);
+         System.out.println("! fetching id for given value specified by it's index failed: " + e.getMessage());
          return null;
       }
    }
@@ -969,8 +963,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean setValueUncertainty(Object uncertainty) {
       if (this.values.size() > 1) {
-         logger
-               .error("! property has more than one value > index must be specified to know which uncertainty to set!");
+         System.out.println("! property has more than one value > index must be specified to know which uncertainty to set!");
          return false;
       }
       return setValueUncertaintyAt(uncertainty, 0);
@@ -988,7 +981,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean setValueUncertaintyAt(Object uncertainty, int index) {
       if (this.values.size() <= index || index < 0) {
-         logger.error("! given index for setting uncertainty out of range!");
+         System.out.println("! given index for setting uncertainty out of range!");
          return false;
       }
       this.values.get(index).setUncertainty(uncertainty);
@@ -1018,7 +1011,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public Object getValueUncertainty() {
       if (values.size() > 1) {
-         logger.error("! more than one value existing > index of value must be specified to know "
+         System.out.println("! more than one value existing > index of value must be specified to know "
                + "which uncertainty shall be returned!");
          return null;
       }
@@ -1045,7 +1038,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
             return uncertainty;
          }
       } catch (Exception e) {
-         logger.error("", e);
+         System.out.println(e.getMessage());
          return null;
       }
    }
@@ -1061,8 +1054,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean setValueDefinition(String definition) {
       if (this.values.size() > 1) {
-         logger
-               .error("! property has more than one value > index must be specified to know which valueComment to set!");
+         System.out.println("! property has more than one value > index must be specified to know which valueComment to set!");
          return false;
       }
       return setValueDefinitionAt(definition, 0);
@@ -1080,7 +1072,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean setValueDefinitionAt(String definition, int index) {
       if (this.values.size() <= index || index < 0) {
-         logger.error("! given index for setting valueComment out of range!");
+         System.out.println("! given index for setting valueComment out of range!");
          return false;
       }
       this.values.get(index).setDefinition(definition);
@@ -1113,12 +1105,12 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          String comment = this.values.get(index).getDefinition();
          if (comment != null && comment.isEmpty()) {
-            // logger.error("! no valueComment found for value specified by it's index!");
+            // System.out.println("! no valueComment found for value specified by it's index!");
             return null;
          }
          return comment;
       } catch (Exception e) {
-         logger.error("", e);
+         System.out.println(e.getMessage());
          return null;
       }
    }
@@ -1143,31 +1135,27 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public void merge(Property otherProperty, int mergeOption) {
       if (!this.name.equalsIgnoreCase(otherProperty.getName())) {
-         logger.error("Property.merge error: cannot merge properties of differnt names!");
+         System.out.println("Property.merge error: cannot merge properties of differnt names!");
          return;
       }
       if ((this.getType() != null && otherProperty.getType() != null)
             && !this.getType().equalsIgnoreCase(otherProperty.getType())) {
-         logger
-               .error("Property.merge error: cannot merge properties based with different datatypes!");
+         System.out.println("Property.merge error: cannot merge properties based with different datatypes!");
          return;
       }
       if ((this.getMapping() != null && otherProperty.getMapping() != null)
             && !this.getMapping().sameFile(otherProperty.getMapping())) {
-         logger
-               .error("Property.merge error: cannot merge properties mapping to different properties!");
+         System.out.println("Property.merge error: cannot merge properties mapping to different properties!");
          return;
       }
       if ((this.getDefinition() != null && otherProperty.getDefinition() != null)
             && !this.getDefinition().equalsIgnoreCase(otherProperty.getDefinition())) {
-         logger
-               .error("Property.merge error: cannot merge properties having different nameDefinitions!");
+         System.out.println("Property.merge error: cannot merge properties having different nameDefinitions!");
          return;
       }
       if ((this.getUnit(0) != null && otherProperty.getUnit(0) != null)
             && !this.getUnit(0).equalsIgnoreCase(otherProperty.getUnit(0))) {
-         logger
-               .error("Property.merge error: cannot merge properties having different units! Maybe the next version can...");
+         System.out.println("Property.merge error: cannot merge properties having different units! Maybe the next version can...");
          return;
       }
       // actually merge: first the easy ones, i.e. those that can occur only once
@@ -1229,8 +1217,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    public void validate(Property terminologyProperty) {
       if (definition != null && !definition.isEmpty()) {
          if (!this.definition.equalsIgnoreCase(terminologyProperty.getDefinition())) {
-            logger
-                  .warn("Property: "
+            System.out.println("Property: "
                         + this.getName()
                         + "contains a 'definition' that differs from terminology! Kept original definition!");
          }
@@ -1239,7 +1226,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
             && !terminologyProperty.getDependency().isEmpty()) {
          if (this.getParent() != null
                && !this.getParent().containsProperty(terminologyProperty.getDependency())) {
-            logger.warn("Validation error on Property: " + this.getParent().getPath() + "#"
+            System.out.println("Validation error on Property: " + this.getParent().getPath() + "#"
                   + this.getName() + "! \n Terminology requests a sibling property with the name: "
                   +
                   terminologyProperty.getName() + " which was not found!");
@@ -1259,7 +1246,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
                   }
                }
                if (!match)
-                  logger.warn("Validation error on Property: " + this.getParent().getPath()
+                  System.out.println("Validation error on Property: " + this.getParent().getPath()
                         + "#" + this.getName()
                         + "! \n Terminology requests a sibling property with the name: " +
                         terminologyProperty.getName() + " that contains the value: "
@@ -1382,13 +1369,13 @@ public class Property implements Serializable, Cloneable, TreeNode {
          name = name.substring(0, name.indexOf(" "))
                + name.substring(name.indexOf(" ") + 1, name.indexOf(" ") + 2).toUpperCase()
                + name.substring(name.indexOf(" ") + 2);
-         logger.warn("Invalid property name:\tgenerating CamelCase by removing blanks");
+         System.out.println("Invalid property name:\tgenerating CamelCase by removing blanks");
       }
 
       String nameRegex = "^[a-zA-Z].*"; // checking beginning: normal letter, than anything
       if (!name.matches(nameRegex)) {
          name = "P_" + name;
-         logger.warn("Invalid property name:\t'p_' added as no leading character found");
+         System.out.println("Invalid property name:\t'p_' added as no leading character found");
       }
       return name;
    }
@@ -1469,7 +1456,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          propertyVector.add(mappingURL);
          return propertyVector;
       } catch (Exception e) {
-         logger.error("", e);
+         System.out.println(e.getMessage());
          return null;
       }
    }
@@ -1483,7 +1470,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public String getUnit() {
       if (values.size() > 1) {
-         logger.error("! property '" + this.getName()
+         System.out.println("! property '" + this.getName()
                + "' has more than one value > index must be specified to know which unit shall be"
                + " returned!");
          return null;
@@ -1538,8 +1525,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public String getValueFilename() {
       if (values.size() > 1) {
-         logger
-               .error("! property has more than one value > index for returning filename must be specified");
+         System.out.println("! property has more than one value > index for returning filename must be specified");
          return null;
       }
       return getValueFilename(0);
@@ -1561,7 +1547,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          }
          return filename;
       } catch (Exception e) {
-         logger.error("", e);
+         System.out.println(e.getMessage());
          return null;
       }
    }
@@ -1636,7 +1622,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          url = new URL(mappingURL);
       } catch (MalformedURLException m) {
-         logger.error("Property.setPropertyMapping: ", m);
+         System.out.println("Property.setPropertyMapping: " + m.getMessage());
       }
       this.setMapping(url);
    }
@@ -1658,7 +1644,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public void setUnit(String unit) {
       if (valueCount() > 1)
-         logger.warn("You ask me to set the unit but there are many values. Changed the units for all values!");
+         System.out.println("You ask me to set the unit but there are many values. Changed the units for all values!");
       for (Value value : values) {
          value.setUnit(unit);
       }
@@ -1693,8 +1679,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * {@link String}: the type of data represented by this property.
     */
    public void setType(String type) {
-      for (int i = 0; i < values.size(); i++) {
-         values.get(i).setType(type);
+      for (Value value : values) {
+         value.setType(type);
       }
    }
 
@@ -1737,8 +1723,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean setReference(String reference) {
       if (this.values.size() > 1) {
-         logger
-               .error("! Property has more than one value > index must be specified to know which reference shall be set!");
+         System.out.println("! Property has more than one value > index must be specified to know which reference shall be set!");
          return false;
       }
       return setReferenceAt(reference, 0);
@@ -1806,11 +1791,11 @@ public class Property implements Serializable, Cloneable, TreeNode {
    @Deprecated
    public boolean setDefaultFileNameAt(String filename, int index) {
       if (this.values.size() <= index || index < 0) {
-         logger.error("! index of value for setting filename out of range!");
+         System.out.println("! index of value for setting filename out of range!");
          return false;
       }
       if (!this.values.get(0).getType().equalsIgnoreCase("binary")) {
-         logger.error("! type of property must be binary if filename shall be set!");
+         System.out.println("! type of property must be binary if filename shall be set!");
          return false;
       }
       this.values.get(index).setFilename(filename);
@@ -1831,11 +1816,11 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean setValueFilenameAt(String filename, int index) {
       if (this.values.size() <= index || index < 0) {
-         logger.error("! index of value for setting filename out of range!");
+         System.out.println("! index of value for setting filename out of range!");
          return false;
       }
       if (!this.values.get(0).getType().equalsIgnoreCase("binary")) {
-         logger.error("! type of property must be binary if filename shall be set!");
+         System.out.println("! type of property must be binary if filename shall be set!");
          return false;
       }
       this.values.get(index).setFilename(filename);
@@ -1891,7 +1876,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          File outFile = new File(filename);
          writeBinary(outFile, index);
       } catch (Exception e) {
-         logger.error("could not create File from string: " + filename, e);
+         System.out.println("could not create File from string: " + filename + e.getMessage());
       }
    }
 
@@ -1908,7 +1893,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          File outFile = new File(fileUrl.toURI());
          writeBinary(outFile, 0);
       } catch (Exception e) {
-         logger.error("could not create File from URL: " + fileUrl, e);
+         System.out.println("could not create File from URL: " + fileUrl + e.getMessage());
       }
    }
 
@@ -1926,7 +1911,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          File outFile = new File(fileUrl.toURI());
          writeBinary(outFile, index);
       } catch (Exception e) {
-         logger.error("could not create File from URL: " + fileUrl, e);
+         System.out.println("could not create File from URL: " + fileUrl + e.getMessage());
       }
    }
 
@@ -1943,7 +1928,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          File outFile = new File(fileUri);
          writeBinary(outFile, 0);
       } catch (Exception e) {
-         logger.error("could not create File from the specified URI: " + fileUri, e);
+         System.out.println("could not create File from the specified URI: " + fileUri + e.getMessage());
       }
    }
 
@@ -1961,7 +1946,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          File outFile = new File(fileUri);
          writeBinary(outFile, index);
       } catch (Exception e) {
-         logger.error("could not create File from the specified URI: " + fileUri, e);
+         System.out.println("could not create File from the specified URI: " + fileUri + e.getMessage());
       }
    }
 
@@ -1976,14 +1961,14 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    private void writeBinary(File outFile, int index) throws Exception {
       if (!this.values.get(0).getType().equalsIgnoreCase("binary")) {
-         logger.error("Property value is not of type binary!");
+         System.out.println("Property value is not of type binary!");
          return;
       }
       if (index < 0) {
-         logger.error("!index specified for writing value to disc out of range!");
+         System.out.println("!index specified for writing value to disc out of range!");
          return;
       } else if (index > values.size() - 1) {
-         logger.error("!index specified for writing value to disc out of range!");
+         System.out.println("!index specified for writing value to disc out of range!");
          return;
       }
       if (outFile.exists()) {
@@ -2081,7 +2066,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
                return MATCH_NO;
             }
          } catch (Exception e) {
-            logger.error("", e);
+            System.out.println(e.getMessage());
             return MATCH_ERROR;
          }
       } else if (type.equalsIgnoreCase("float")) {
@@ -2092,7 +2077,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
                return MATCH_NO;
             }
          } catch (Exception e) {
-            logger.error("", e);
+            System.out.println(e.getMessage());
             return MATCH_ERROR;
          }
       } else if (type.equalsIgnoreCase("date")) {
@@ -2103,7 +2088,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
                return MATCH_NO;
             }
          } catch (Exception e) {
-            logger.error("", e);
+            System.out.println(e.getMessage());
             return MATCH_ERROR;
          }
       } else if (type.equalsIgnoreCase("time")) {
@@ -2114,7 +2099,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
                return MATCH_NO;
             }
          } catch (Exception e) {
-            logger.error("", e);
+            System.out.println(e.getMessage());
             return MATCH_ERROR;
          }
       }
@@ -2290,11 +2275,10 @@ public class Property implements Serializable, Cloneable, TreeNode {
             if (this.getWholeValue(j).equals(voo))
                return j;
          }
-         logger.error("wanted TreeNode (of type Value) not existent");
+         System.out.println("wanted TreeNode (of type Value) not existent");
          return -1;
       } else {
-         logger
-               .error("!should not happen as TreeNode type Property can only have childen of TreeNode type Value! "
+         System.out.println("!should not happen as TreeNode type Property can only have childen of TreeNode type Value! "
                      + "Here we have: " + node.getClass());
          return -1;
       }
