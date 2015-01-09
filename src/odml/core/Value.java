@@ -266,7 +266,6 @@ public class Value implements Serializable, Cloneable, TreeNode {
             return null;
          }
       } else if (type.matches("(?i)string") || type.matches("(?i)text")) {
-         System.out.println("type specified:\tstring");
          if (content instanceof String) {
             return content;
          } else if (content instanceof Character) {
@@ -385,7 +384,6 @@ public class Value implements Serializable, Cloneable, TreeNode {
          }
       } else {
          type = "string";
-         System.out.println("type unknown:\thandling as 'string':\tcorrect");
          return content;
       }
       return null;
