@@ -95,7 +95,6 @@ public class Writer implements Serializable {
     *
     * @deprecated Use combination of {@link #Writer(Section)} and {@link #write(OutputStream)} instead.
     */
-   @Deprecated
    public Writer(String filename, Section odmlSection) {
       this(new File(filename), odmlSection);
    }
@@ -134,6 +133,27 @@ public class Writer implements Serializable {
       this.asTerminology = asTerminology;
    }
 
+   /**
+    * Writes the odML serialization to a file with the given name.
+    *
+    * @param fileName {@link String}: the name of the output file
+    * @return {@link Boolean} true if operation was successful, false otherwise.
+    *
+    */
+   public boolean write(String fileName) {
+      if (odmlTree == null) {
+         System.out.println("Writer.write error: there is no metadata to write!");
+         return false;
+      }
+      createDom(odmlTree, asTerminology);
+      try {
+         FileOutputStream stream = new FileOutputStream(fileName);
+         return writeToStream(stream);
+      } catch (FileNotFoundException e) {
+         System.out.println(e.getMessage());
+         return false;
+      }
+   }
 
    /**
     * Writes the odML serialization to the given output stream.
@@ -525,10 +545,10 @@ public class Writer implements Serializable {
          outp.setFormat(Format.getPrettyFormat());
          outp.output(doc, stream);
       } catch (IOException ie) {
-         System.out.println("StreamToFile failed: " + ie.getMessage());
+         System.out.println("Write to file failed: " + ie.getMessage());
          return false;
       }
-      System.out.println("StreamToFile successful");
+      System.out.println("Writing to file successful!");
       return true;
    }
 
