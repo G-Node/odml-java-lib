@@ -15,8 +15,6 @@ package odml.core;
  */
 import odml.util.SectionPath;
 import odml.util.TerminologyManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -41,7 +39,6 @@ import java.util.*;
  */
 public class Section extends Object implements Serializable, TreeNode {
 
-   static Logger             logger                     = LoggerFactory.getLogger(Section.class);
    private static final long serialVersionUID           = 145L;
    public static final int   MERGE_THIS_OVERRIDES_OTHER = 0, MERGE_OTHER_OVERRIDES_THIS = 1,
    MERGE_COMBINE = 2;
@@ -177,12 +174,10 @@ public class Section extends Object implements Serializable, TreeNode {
                   URL repository,
                   URL mappingURL) throws Exception {
       if (type == null) {
-         logger.error("odml.core.Section.initialize causes exception");
-         throw new Exception("Type must not be null!");
+         throw new Exception("odml.core.SectionType must not be null!");
       }
       if (type.isEmpty()) {
-         logger.error("odml.core.Section.initialize causes exception");
-         throw new Exception("Type must not be empty.");
+         throw new Exception("odml.core.Section: Type must not be empty.");
       }
       if (name == null || name.isEmpty()) {
          name = type;
@@ -218,14 +213,10 @@ public class Section extends Object implements Serializable, TreeNode {
       type = type.trim();
       while (type.contains(" ")) {
          type = type.replace(" ", "_").toLowerCase();
-         logger
-         .info("Invalid section type: types must not contain blanks, all blanks were replaced!");
       }
       String nameRegex = "^[a-zA-Z]{1}.*";
       if (!type.matches(nameRegex)) {
          type = "s_" + type;
-         logger.info("Invalid section type: types must start alphabethical! 's_' added as " +
-         "leading character ");
       }
       return type;
    }
@@ -242,7 +233,7 @@ public class Section extends Object implements Serializable, TreeNode {
       name = name.trim();
       while (name.contains("/")) {
          name = name.replace("/", "-");
-         logger.warn("Invalid section name:\treplacing slashes '/' by '-'");
+         System.out.println("Invalid section name:\treplacing slashes '/' by '-'");
       }
       return name;
    }
@@ -260,21 +251,20 @@ public class Section extends Object implements Serializable, TreeNode {
       if (this.terminology.getDefinition() != null && (!this.terminology.getDefinition().isEmpty())) {
          if (this.getDefinition() == null || (this.getDefinition().isEmpty())) {
             this.setDefinition(this.terminology.getDefinition());
-            logger.info("Section definintion updated with terminology information!");
          } else if (!this.terminology.getDefinition().equalsIgnoreCase(this.getDefinition())) {
-            logger.warn("Section definition deviates from the definition in the terminology! "
-                  + "No changes applied. Please double check to avoid conflicts!");
+            System.out.println("Section definition deviates from the definition in the terminology! "
+                    + "No changes applied. Please double check to avoid conflicts!");
          }
       }
       if (this.terminology.getMapping() != null
             && (!this.terminology.getMapping().toString().isEmpty())) {
          if (this.getMapping() == null || (this.getMapping().toString().isEmpty())) {
             this.setMapping(this.terminology.getMapping());
-            logger.info("mappingURL set to one used in terminology");
+            System.out.println("mappingURL set to one used in terminology");
          } else if (!this.terminology.getMapping().toString().equalsIgnoreCase(
                this.getMapping().toString())) {
-            logger.warn("Section mapping different from the one specified in terminology! "
-                  + "No changes applied. Please double check to avoid conflicts!");
+            System.out.println("Section mapping different from the one specified in terminology! "
+                    + "No changes applied. Please double check to avoid conflicts!");
          }
       }
       if (this.terminology.getRepository() != null
@@ -282,15 +272,12 @@ public class Section extends Object implements Serializable, TreeNode {
          if (this.getRepository() == null
                || (this.getRepository().toString().isEmpty())) {
             this.setRepository(this.terminology.getRepository());
-            logger.info("Section repository information updated with terminology information!");
+            System.out.println("Section repository information updated with terminology information!");
          }
       }
    }
 
-
-   // *****************************************************************
-   // ************** formerly RootSection basics ***********
-   // *****************************************************************
+   
    /**
     * Adds a new subsection to this section.
     * 
@@ -303,8 +290,7 @@ public class Section extends Object implements Serializable, TreeNode {
       int index = -1;
       if (section != null) {
          if (this.containsSection(section.name, section.type)) {
-            logger
-            .warn("There already exists a section with that name! Will append an index to the name!");
+            System.out.println("There already exists a section with that name! Will append an index to the name!");
             section.setName(section.getName() + this.getSectionsByType(section.getType()).size());
          }
          section.setParent(this);
@@ -340,23 +326,7 @@ public class Section extends Object implements Serializable, TreeNode {
       }
       return types;
    }
-
-
-   //   /**
-   //    * Returns a section specified by it's path from the root (beginning with '/') or from the current section
-   //    * (beginning directly with the subsection-name)
-   //    * 
-   //    * @param pathOfSections
-   //    *            {@link String}: path to the wanted section
-   //    * @return {@Section} - returns the section specified by the given path
-   //    */
-   //   private Section getSectionViaPath(String pathOfSections) {
-   //      String path = sanitizePath(pathOfSections,SECTION_PATH);
-   //      Section sectionSpecifiedByPath = getActualSectionSpecifiedByPath(path, false);
-   //      return sectionSpecifiedByPath;
-   //   }
-
-
+   
    /**
     * Returns a subsection as defined by the index.
     * 
@@ -368,7 +338,7 @@ public class Section extends Object implements Serializable, TreeNode {
       if (index < subsections.size()) {
          return subsections.get(index);
       } else {
-         logger.error("Section: Index exceeds number of subsections.");
+         System.out.println("Section: Index exceeds number of subsections.");
          return null;
       }
    }
@@ -387,7 +357,7 @@ public class Section extends Object implements Serializable, TreeNode {
       if(isPath(name)){
          SectionPath sp = new SectionPath(name);
          if( !sp.isValid()){
-            logger.error("Section.getSection: provided path is invalid!");
+            System.out.println("Section.getSection: provided path is invalid!");
             return null;  
          }
          if(sp.isAbsolute()){
@@ -409,7 +379,7 @@ public class Section extends Object implements Serializable, TreeNode {
             }
          }
       }
-      logger.error("Section.getSection(): could not locate section: " + name + " in the tree!");
+      System.out.println("Section.getSection(): could not locate section: " + name + " in the tree!");
       return null;
    }
 
@@ -441,7 +411,7 @@ public class Section extends Object implements Serializable, TreeNode {
       if (temp.size() > 0){
          found = getSectionsByType(type).get(0);
          if (temp.size() > 1) {
-            logger.warn("Section.getSectionByType: more than one subsection " +
+            System.out.println("Section.getSectionByType: more than one subsection " +
             "of this type exists > returning first match!");
          }
       }
@@ -617,7 +587,7 @@ public class Section extends Object implements Serializable, TreeNode {
          subsections.removeElementAt(index);
          return true;
       } catch (ArrayIndexOutOfBoundsException a) {
-         logger.error("Invalid index! Index '" + index + "' exceeds the bounds of Section array.");
+         System.out.println("Invalid index! Index '" + index + "' exceeds the bounds of Section array.");
          return false;
       }
    }
@@ -652,7 +622,7 @@ public class Section extends Object implements Serializable, TreeNode {
          if(index > 0)
             this.subsections.remove(index);
          else{
-            logger.error("Section.removeSection(): Cannot remove section ("+name+")!");
+            System.out.println("Section.removeSection(): Cannot remove section ("+name+")!");
             return false;
          }
       }
@@ -687,11 +657,11 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public boolean setType(String type) {
       if (type == null) {
-         logger.error("Section.setType: type must not be null");
+         System.out.println("Section.setType: type must not be null");
          return false;
       }
       if (type.isEmpty()) {
-         logger.error("Section.setType: type must not be empty");
+         System.out.println("Section.setType: type must not be empty");
          return false;
       }
       this.type = type;
@@ -708,17 +678,17 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public boolean setName(String name) {
       if (name == null) {
-         logger.error("Section.setName: name must not be null");
+         System.out.println("Section.setName: name must not be null");
          return false;
       }
       if (name.isEmpty()) {
-         logger.error("Section.setName: name must not be empty");
+         System.out.println("Section.setName: name must not be empty");
          return false;
       }
       if (containsProperty("name")
             && !this.getProperty("name").getName().equalsIgnoreCase(this.name)) {
-         logger
-         .error("Section.setName: provided name is in conflict with the one provided by the 'name' property! No change done!");
+         System.out.println("Section.setName: provided name is in conflict with the one provided by " +
+                 "the 'name' property! No change done!");
          return false;
       }
 
@@ -782,7 +752,7 @@ public class Section extends Object implements Serializable, TreeNode {
          this.repositoryURL = tempUrl;
       } catch (Exception e) {
          this.repositoryURL = null;
-         logger.error("An error occurred when setting the repository: ", e);
+         System.out.println("An error occurred when setting the repository: " + e.getMessage());
       }
    }
 
@@ -890,7 +860,7 @@ public class Section extends Object implements Serializable, TreeNode {
          if (linkedSection != null) {
             linkedSection.resolveLink();
          } else {
-            logger.error("Section.resolveLink: could not find referenced section!");
+            System.out.println("Section.resolveLink: could not find referenced section!");
             return false;
          }
          this.merge(getSection(this.link), MERGE_THIS_OVERRIDES_OTHER);
@@ -921,8 +891,7 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public int add(Property property) {
       if (this.isRoot() && this.type == null) {
-         logger
-         .error("! property must not be added to the root section (level == 0 && type == null)!");
+         System.out.println("! property must not be added to the root section (level == 0 && type == null)!");
          return -1;
       }
       if (property == null) {
@@ -931,7 +900,7 @@ public class Section extends Object implements Serializable, TreeNode {
       int index = indexOfProperty(property.getName());
       if (index > -1) {
          if (properties.get(index).equals(property)) {
-            logger.error("! nothing added as identical property already existing"
+            System.out.println("! nothing added as identical property already existing"
                   + "\n\tproperty details: "
                   + property.toString());
             return index;
@@ -942,11 +911,10 @@ public class Section extends Object implements Serializable, TreeNode {
          properties.add(property);
          property.setParent(this);
       }
-      // override section name when "name" property is added
+
       if (property.getName().equalsIgnoreCase("name")) {
          this.setName(property.getValue(0).toString());
-         logger
-         .info("Section.addProperty: New Property overrides the section name. Section name was replaced!");
+         System.out.println("Section.addProperty: New Property overrides the section name. Section name was replaced!");
       }
       return propertyCount() - 1;
    }
@@ -967,7 +935,7 @@ public class Section extends Object implements Serializable, TreeNode {
       assert property != null : "Property must not be null!";
       Section parent = getSection(path);
       if (parent == null) {
-         logger.error("!path somehow wrong, no parent for adding porperty found! (path '" + path
+         System.out.println("!path somehow wrong, no parent for adding porperty found! (path '" + path
                + "')");
          return -1;
       }
@@ -996,11 +964,11 @@ public class Section extends Object implements Serializable, TreeNode {
                   index = s.add(prop);
                }
                else{
-                  logger.error("An error occurred adding property with path specification: " +name);
+                  System.out.println("An error occurred adding property with path specification: " +name);
                }
             }
             else{
-               logger.error("Section.addProperty: " + "specified path is not valid!");
+               System.out.println("Section.addProperty: " + "specified path is not valid!");
             }
          }
          else{
@@ -1009,7 +977,7 @@ public class Section extends Object implements Serializable, TreeNode {
          }
       }
       catch (Exception e) {
-         logger.error(e.getLocalizedMessage());
+         System.out.println(e.getLocalizedMessage());
       }
       return index;
    }
@@ -1033,7 +1001,7 @@ public class Section extends Object implements Serializable, TreeNode {
                result = s.removeProperty(sp.getPropertyPart());
          }
          else{
-            logger.error("Specified path is invalid or does not address a property.");
+            System.out.println("Specified path is invalid or does not address a property.");
          }
       }
       else{
@@ -1098,7 +1066,7 @@ public class Section extends Object implements Serializable, TreeNode {
       if (index < properties.size()) {
          return properties.get(index);
       } else {
-         logger.error("Index exceeds number of properties.");
+         System.out.println("Index exceeds number of properties.");
          return null;
       }
    }
@@ -1260,7 +1228,7 @@ public class Section extends Object implements Serializable, TreeNode {
             p = getSection(name).getProperty(sp.getPropertyPart());
          }
          else{
-            logger.error("Section.getProperty: specified path is not valid or does not specify a property!");
+            System.out.println("Section.getProperty: specified path is not valid or does not specify a property!");
             return p;
          }
       }
@@ -1344,22 +1312,21 @@ public class Section extends Object implements Serializable, TreeNode {
          return;
       }
       if (mergeOption < 0 || mergeOption > MERGE_COMBINE) {
-         logger.error("Section.merge error: invalid mergeOption!");
+         System.out.println("Section.merge error: invalid mergeOption!");
          return;
       }
       if (!this.type.equalsIgnoreCase(otherSection.getType())) {
-         logger.error("Section.merge error: cannot merge sections of differnt types!");
+         System.out.println("Section.merge error: cannot merge sections of differnt types!");
          return;
       }
       if ((this.getRepository() != null && otherSection.getRepository() != null)
             && !this.getRepository().sameFile(otherSection.getRepository())) {
-         logger
-         .error("Section.merge error: cannot merge sections based on different terminologies!");
+         System.out.println("Section.merge error: cannot merge sections based on different terminologies!");
          return;
       }
       if ((this.getMapping() != null && otherSection.getMapping() != null)
             && !this.mapping.sameFile(otherSection.getMapping())) {
-         logger.error("Section.merge error: cannot merge sections mapping to different sections!");
+         System.out.println("Section.merge error: cannot merge sections mapping to different sections!");
          return;
       }
       for (int i = 0; i < otherSection.propertyCount(); i++) {
@@ -1367,10 +1334,10 @@ public class Section extends Object implements Serializable, TreeNode {
          try {
             temp = otherSection.getProperty(i).copy();
          } catch (Exception e) {
-            logger.error("", e);
+            System.out.println(e.getMessage());
          }
          if (temp == null) {
-            logger.error("Section.merge error: cloning Property failed.");
+            System.out.println("Section.merge error: cloning Property failed.");
             continue;
          }
          int index = this.contains(temp);
@@ -1385,10 +1352,10 @@ public class Section extends Object implements Serializable, TreeNode {
          try {
             temp = otherSection.getSection(i).copy();
          } catch (Exception e) {
-            logger.error("Copying 'otherSection' failed!", e);
+            System.out.println("Copying 'otherSection' failed!" + e.getMessage());
          }
          if (temp == null) {
-            logger.error("Section.merge error: cloning section failed.");
+            System.out.println("Section.merge error: cloning section failed.");
             continue;
          }
          int index = this.indexOfSection(temp);
@@ -1619,7 +1586,7 @@ public class Section extends Object implements Serializable, TreeNode {
       try {
          url = new URL(mapping);
       } catch (MalformedURLException m) {
-         logger.error("getSectionMapping: ", m);
+         System.out.println("getSectionMapping: " + m.getMessage());
       }
       this.setMapping(url);
    }
@@ -1666,7 +1633,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * Validate the whole metadata tree against the terminologies.
     */
    public void validateTree() {
-      logger.info("Starting validation ...");
+      System.out.println("Starting validation ...");
       getRootSection().validateRecursively();
    }
 
@@ -1685,7 +1652,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * 
     */
    public void validate() {
-      logger.info("Validating section " + this.getPath()
+      System.out.println("Validating section " + this.getPath()
             + " against terminology located in repository "
             + findRepositoryURL().toString());
       findTerminology();
@@ -1714,7 +1681,7 @@ public class Section extends Object implements Serializable, TreeNode {
          terminology = TerminologyManager.instance().loadTerminology(getRepository(), this.type);
       }
       if (this.terminology == null) {
-         logger.warn("Validation of section: " + this.getPath()
+         System.out.println("Validation of section: " + this.getPath()
                + " aborted! Could not locate a terminology equivalent!");
          success = false;
       }
@@ -1735,7 +1702,7 @@ public class Section extends Object implements Serializable, TreeNode {
       for (int i = 0; i < root.sectionCount(); i++) {
          root.getSection(i).optimize();
       }
-      logger.info("optimization done");
+      System.out.println("optimization done");
    }
 
 
@@ -1955,7 +1922,7 @@ public class Section extends Object implements Serializable, TreeNode {
    @Override
    public TreeNode getChildAt(int arg0) {
       if (arg0 < 0 || arg0 > this.getChildCount()) {
-         logger.error("index out of range! must be within 0 and " + this.getChildCount());
+         System.out.println("index out of range! must be within 0 and " + this.getChildCount());
          return null;
       }
       if (arg0 < this.sectionCount()) {
@@ -1990,7 +1957,7 @@ public class Section extends Object implements Serializable, TreeNode {
          }
          return -1;
       } else {
-         logger.error("!should not happen as TreeNode can only be Section or Property! "
+         System.out.println("!should not happen as TreeNode can only be Section or Property! "
                + "Here we have: "
                + arg0.getClass());
          return -1;
@@ -2050,21 +2017,20 @@ public class Section extends Object implements Serializable, TreeNode {
       } else {
 
          if (!link.startsWith("/")) {
-            logger
-            .warn("Section.setLink: A link must be given as an abolute path in the tree, i.e. start with '/'.");
+            System.out.println("Section.setLink: A link must be given as an absolute path " +
+                    "in the tree, i.e. start with '/'.");
             link = "/" + link;
          }
          Section temp = this.getSection(link);
          if (temp == null) {
-            logger
-            .error("Section.setLink: The link is invalid. Referenced section does not exist. Link: "
-                  + link);
+            System.out.println("Section.setLink: The link is invalid. Referenced section does not exist. Link: "
+                    + link);
             return;
          }
          if (!temp.getType().equalsIgnoreCase(this.type)) {
-            logger.error("Section.setLink: The link (" + link
-                  + ")is invalid! Section types (this: " + this.type
-                  + "," + " link: " + temp.getType() + ")do not match!");
+            System.out.println("Section.setLink: The link (" + link
+                    + ")is invalid! Section types (this: " + this.type
+                    + "," + " link: " + temp.getType() + ")do not match!");
             return;
          }
          this.link = link;
@@ -2112,8 +2078,7 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public void setDocumentAuthor(String author) {
       if (!this.isRoot()) {
-         logger
-         .warn("Author information is only allowed in Root sections. Otherwise it will be ignored.");
+         System.out.println("Author information is only allowed in Root sections. Otherwise it will be ignored.");
       }
       this.author = author;
    }
@@ -2137,8 +2102,7 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public void setDocumentVersion(String version) {
       if (!this.isRoot()) {
-         logger
-         .warn("Version information is only allowed in Root sections. Otherwise it will be ignored.");
+         System.out.println("Version information is only allowed in Root sections. Otherwise it will be ignored.");
       }
       this.version = version;
    }
@@ -2163,8 +2127,7 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public void setDocumentDate(Date date) {
       if (!this.isRoot()) {
-         logger
-         .warn("Version information is only allowed in Root sections. Otherwise it will be ignored.");
+         System.out.println("Version information is only allowed in Root sections. Otherwise it will be ignored.");
       }
       this.date = date;
    }
@@ -2213,7 +2176,7 @@ public class Section extends Object implements Serializable, TreeNode {
       if(s == null){
          Vector<Section> typeMatches = temp.findSectionsByType(this.getType());
          if(typeMatches.size() > 1){
-            logger.error("Section.locateIncludeSection: Include statement is ambiguous!");
+            System.out.println("Section.locateIncludeSection: Include statement is ambiguous!");
          }
          else{
             s = typeMatches.firstElement();
@@ -2229,8 +2192,8 @@ public class Section extends Object implements Serializable, TreeNode {
          Reader r = new Reader();
          includeRoot = r.load(fileUrl, Reader.NO_CONVERSION, false);
       } catch (Exception e) {
-         logger.error("Section.loadIncludeFile: Could not read file from the include location: "
-               + fileUrl);
+         System.out.println("Section.loadIncludeFile: Could not read file from the include location: "
+                 + fileUrl);
       }
       return includeRoot;
    }
@@ -2253,7 +2216,7 @@ public class Section extends Object implements Serializable, TreeNode {
             url = new File(new File(thisFile.getParent()), urlPart).toURI().toURL();
          }
          catch (Exception e) {
-            logger.error("Section.getIncludeURL: Could not locate the file referenced with the include information!");
+            System.out.println("Section.getIncludeURL: Could not locate the file referenced with the include information!");
          }
       }
       return url;
