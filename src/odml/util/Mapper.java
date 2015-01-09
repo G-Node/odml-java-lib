@@ -13,11 +13,13 @@ package odml.util;
  * You should have received a copy of the GNU Lesser General Public License along with this software. If not, see
  * <http://www.gnu.org/licenses/>.
  */
+
+import odml.core.Property;
+import odml.core.Section;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
-import odml.core.*;
-import org.slf4j.*;
 
 /**
  * The {@link Mapper} controls the mapping procedure. Mapping information can be given for {@link Property} and
@@ -32,7 +34,6 @@ import org.slf4j.*;
  */
 public class Mapper {
 
-   static Logger                         logger     = LoggerFactory.getLogger(Mapper.class);
    private Section                       original   = null, mapped = null;
    private final HashMap<String, String> forwardMap = new HashMap<String, String>();
    private final HashMap<String, String> reverseMap = new HashMap<String, String>();
@@ -56,7 +57,7 @@ public class Mapper {
     */
    public Section map() {
       if (original.getRepository() == null || original.getRepository().toString().isEmpty()) {
-         logger.error("Cannot perform mapping procedure on section " + original.toString() +
+         System.out.println("Cannot perform mapping procedure on section " + original.toString() +
                "! No repository for terminologies specified!");
       }
       try {
@@ -169,8 +170,7 @@ public class Mapper {
                dest.setName(origin.getName());
                dest.setReference(origin.getReference());
             } else {// error, not unique, raise an error
-               logger
-                     .error("\tMapper.mapSection(): cannot uniquely map section: "
+               System.out.println("\tMapper.mapSection(): cannot uniquely map section: "
                            + origin.getName()
                            + ". Section skipped! Extend the desired section type to the mapping url as reference (#someType)");
                dest = null;
@@ -241,54 +241,32 @@ public class Mapper {
          String destType = null;
          String mapName = null;
          if (ref == null || ref.isEmpty()) {// mapping has no reference part
-            logger
-                  .warn("Property mapping does not containt reference information! Just appending to current section!");
+            System.out.println("Property mapping does not containt reference information! Just appending to current section!");
             parentDest.add(myCopy);
          } else if (!ref.contains(":")) {// there is a reference part but no
             // section type
             mapName = ref;
-            logger
-                  .warn("Property.mapProperty: reference part of mapping does not indicate the type of destination section! Please change!");
+            System.out.println("Property.mapProperty: reference part of mapping does not indicate the type of destination section! Please change!");
             Section temp = TerminologyManager.instance().loadTerminology(p.getMapping(), null); // load the
             // terminology
 
-            if (temp.getSection(0).getProperty(mapName) != null)// check if
-               // terminology
-               // contains
-               // a
-               // matching
-               // property,
-               // change
-               // name
+            if (temp.getSection(0).getProperty(mapName) != null)
                myCopy.setName(mapName);
             else
                // otherwise, keep it
-               logger
-                     .warn("Property.mapProperty: terminology does not contain a property with the name specidied in the mapping!");
+               System.out.println("Property.mapProperty: terminology does not contain a property with the name specidied in the mapping!");
 
-            if (temp.sectionCount() > 1) {// there is more than one section
-               // type defined in the
-               // terminology --> no unique
-               // assignment possible
-               logger
-                     .error("Property.mapProperty: Could not uniquely map the property due to missing section type in reference part of mapping url.");
+            if (temp.sectionCount() > 1) {
+               // there is more than one section type defined in the terminology --> not unique assignment possible
+               System.out.println("Property.mapProperty: Could not uniquely map the property due to missing section type in reference part of mapping url.");
             } else {// only one type: assuming that this will be the target
                destType = temp.getSection(0).getType();
-               if (parentDest.getType().equalsIgnoreCase(destType)) {// if
-                  // the
-                  // destination
-                  // type
-                  // matches
-                  // the
-                  // terminology
-                  // type,
-                  // add
-                  // the
-                  // property
+               if (parentDest.getType().equalsIgnoreCase(destType)) {
+               // if the destination type matches the terminology type, add the property
                   parentDest.add(myCopy);// add to destination section
                } else if (parentDest.getSectionsByType(destType).size() > 0) {
                   if (parentDest.getSectionsByType(destType).size() > 1)
-                     logger.error("Cannot uniquely assign property: " + p.getName()
+                     System.out.println("Cannot uniquely assign property: " + p.getName()
                            + " in section: "
                            + p.getParent().getPath());
                   else {
@@ -296,7 +274,7 @@ public class Mapper {
                   }
                } else if (parentDest.getParent().getSectionByType(destType) != null) {
                   if (parentDest.getParent().getSectionsByType(destType).size() > 1)
-                     logger.warn("Cannot uniquely assign property: " + p.getName()
+                     System.out.println("Cannot uniquely assign property: " + p.getName()
                            + " in section: "
                            + p.getParent().getPath());
                   else {// check if there are multiple dependencies,
@@ -340,8 +318,7 @@ public class Mapper {
             if (termSection.getProperty(mapName) != null)
                myCopy.setName(mapName);
             else
-               logger
-                     .warn("Property.mapProperty: terminology does not contain a property with the name specified in the mapping!");
+               System.out.println("Property.mapProperty: terminology does not contain a property with the name specified in the mapping!");
             // figure out the right destination
             if (parentDest.getType().equalsIgnoreCase(type)) { // if it is
                // the
@@ -353,14 +330,14 @@ public class Mapper {
                parentDest.add(myCopy);
             } else if (parentDest.getSectionsByType(type).size() > 0) {
                if (parentDest.getSectionsByType(type).size() > 1)
-                  logger.error("Cannot uniquely assign property: " + p.getName() + " in section: "
+                  System.out.println("Cannot uniquely assign property: " + p.getName() + " in section: "
                         + p.getParent().getPath());
                else {
                   parentDest.getSectionByType(type).add(myCopy);
                }
             } else if (parentDest.getParent().getSectionByType(type) != null) {
                if (parentDest.getParent().getSectionsByType(type).size() > 1)
-                  logger.warn("Cannot uniquely assign property: " + p.getName() + " in section: "
+                  System.out.println("Cannot uniquely assign property: " + p.getName() + " in section: "
                         + p.getParent().getPath());
                else {// check if there are unique or multiple dependencies
                   Section destSection = parentDest.getParent().getSectionByType(type);
@@ -380,7 +357,7 @@ public class Mapper {
                   temp.add(myCopy);
                   parentDest.getParent().add(temp);
                } else {
-                  logger.error("Property.mapProperty: could not find section of type: " + type
+                  System.out.println("Property.mapProperty: could not find section of type: " + type
                         + " in the mapped terminology!");
                }
             }
