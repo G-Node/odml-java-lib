@@ -13,18 +13,19 @@ package odml.util;
  * You should have received a copy of the GNU Lesser General Public License along with this software. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-import static java.lang.System.out;
+
+import odml.core.Reader;
+import odml.core.Section;
+
 import java.io.*;
 import java.net.URL;
-import java.util.*;
-import odml.core.*;
-import odml.core.Reader;
-import org.slf4j.LoggerFactory;
+import java.util.HashMap;
+import java.util.Properties;
+
+import static java.lang.System.out;
 
 public class TerminologyManager {
 
-   public static org.slf4j.Logger         logger             = LoggerFactory
-                                                                   .getLogger(TerminologyManager.class);
    private static TerminologyManager      instance           = null;
    private static final String            TERMINOLOGIES_FILE = System.getProperty("user.home")
                                                                    + System
@@ -112,7 +113,7 @@ public class TerminologyManager {
          URL u = new URL(url);
          s = loadTerminology(u, type);
       } catch (Exception e) {
-         logger.error("invalid url");
+         System.out.println("invalid url");
       }
       return s;
    }
