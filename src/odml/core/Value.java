@@ -18,8 +18,6 @@ package odml.core;
  * along with this software.  If not, see <http://www.gnu.org/licenses/>.
  */
 import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.tree.TreeNode;
 import java.io.*;
@@ -49,9 +47,8 @@ import java.util.zip.CRC32;
  * @author Jan Grewe, Christine Seitz
  *
  */
-public class Value extends Object implements Serializable, Cloneable, TreeNode {
+public class Value implements Serializable, Cloneable, TreeNode {
 
-   static Logger                         logger           = LoggerFactory.getLogger(Value.class);
    private static final long             serialVersionUID = 147L;
    private String                        unit             = null, type = null, reference = null;
    private Object                        content, uncertainty;
@@ -64,12 +61,11 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    private final static String           regExNTuple      = "(?i)[0-9]{1,};[0-9]{1,}";
 
 
-   //*****************************************************************
-   //**************				constructors			***********	
-   //*****************************************************************
    /**
-    * @param content
-    * @param unit
+    * Creates a new Value instance.
+    *
+    * @param content The actual value of the Value entity.
+    * @param unit The unit of this value.
     * @throws Exception
     */
    protected Value(Object content, String unit) throws Exception {
@@ -78,10 +74,11 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
 
    /**
-    * 
-    * @param content
-    * @param unit
-    * @param uncertainty
+    * Creates a new Value instance.
+    *
+    * @param content The actual value of the Value entity.
+    * @param unit The value's unit.
+    * @param uncertainty The value's unvertainty
     * @throws Exception
     */
    protected Value(Object content, String unit, Object uncertainty) throws Exception {
@@ -90,11 +87,12 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
 
 
    /**
-    * 
-    * @param content
-    * @param unit
-    * @param uncertainty
-    * @param type
+    * Creates a new Value instance.
+    *
+    * @param content The actual value of the Value entity.
+    * @param unit The value's unit.
+    * @param uncertainty The value's uncertainty.
+    * @param type The data type of the value.
     * @throws Exception
     */
    protected Value(Object content, String unit, Object uncertainty, String type) throws Exception {
@@ -165,7 +163,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
             this.uncertainty = uncertainty;
          } catch (Exception e) {
             this.uncertainty = "";
-            logger.error("", e);
+            System.out.println(e.getMessage());
          }
       }
       if (filename != null && !filename.isEmpty()) {
@@ -236,7 +234,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
     */
    public static Object checkDatatype(Object content, String type) {
       if (content == null || content.toString().isEmpty()) {
-         logger.info("Found empty content!!!");
+         System.out.println("Found empty content!!!");
          return null;
       }
       if (type.matches("(?i)int.*")) {
@@ -253,7 +251,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          } else if (content instanceof Number) {
             return ((Number) content).intValue();
          } else {
-            logger.error("Cannot convert value of class " + content.getClass().getSimpleName()
+            System.out.println("Cannot convert value of class " + content.getClass().getSimpleName()
                   + " to requested type: " + type);
             return null;
          }
@@ -263,18 +261,18 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          } else if (content instanceof java.lang.String) { // float could be masked as string
             return Float.parseFloat((String) content);
          } else {
-            logger.error("Cannot convert value of class " + content.getClass().getSimpleName()
+            System.out.println("Cannot convert value of class " + content.getClass().getSimpleName()
                   + " to requested type " + type);
             return null;
          }
       } else if (type.matches("(?i)string") || type.matches("(?i)text")) {
-         logger.debug("type specified:\tstring");
+         System.out.println("type specified:\tstring");
          if (content instanceof String) {
             return content;
          } else if (content instanceof Character) {
             return ((Character) content).toString();
          } else {
-            logger.error("Error converting content of class: "
+            System.out.println("Error converting content of class: "
                   + content.getClass().getSimpleName() + " to requested type: " + type);
             return null;
          }
@@ -282,29 +280,27 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          if (content instanceof String && ((String) content).matches(regExNTuple)) {
             return content;
          } else {
-            logger.error("Value does not match the n-tuple definition (regExp: "
+            System.out.println("Value does not match the n-tuple definition (regExp: "
                   + regExNTuple + ")!");
             return null;
          }
       } else if (type.matches("(?i)date")) {
          if (content instanceof java.util.Date) {
             try {
-               Date date = dateFormat.parse(dateFormat.format(content));
-               return date;
+               return dateFormat.parse(dateFormat.format(content));
             } catch (Exception e) {
-               logger.error(e.getMessage());
+               System.out.println(e.getMessage());
             }
          } else if (content instanceof java.lang.String) {
             try {
-               Date date = dateFormat.parse((String) content);
-               return date;
+               return dateFormat.parse((String) content);
             } catch (Exception e) {
-               logger.error("Cannot convert passed String : " + content
+               System.out.println("Cannot convert passed String : " + content
                      + " to a date value!");
                return null;
             }
          } else {
-            logger.error("Cannot convert passed object of class: "
+            System.out.println("Cannot convert passed object of class: "
                   + content.getClass().getSimpleName()
                   + " to a date value!");
             return null;
@@ -312,20 +308,18 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       } else if (type.matches("(?i)time")) {
          if (content instanceof java.util.Date) {
             try {
-               Date date = timeFormat.parse(timeFormat.format(content));
-               return date;
+               return timeFormat.parse(timeFormat.format(content));
             } catch (Exception e) {
-               logger.error(e.getMessage());
+               System.out.println(e.getMessage());
             }
          } else if (content instanceof java.lang.String) {
             try {
-               Date date = timeFormat.parse((String) content);
-               return date;
+               return timeFormat.parse((String) content);
             } catch (Exception e) {
-               logger.error(e.getLocalizedMessage());
+               System.out.println(e.getLocalizedMessage());
             }
          } else {
-            logger.error("Cannot convert passed object of class: "
+            System.out.println("Cannot convert passed object of class: "
                   + content.getClass().getSimpleName()
                   + " to a time value!");
             return null;
@@ -333,20 +327,18 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       } else if (type.matches("(?i)datetime")) {
          if (content instanceof java.util.Date) {
             try {
-               Date date = datetimeFormat.parse(datetimeFormat.format(content));
-               return date;
+               return datetimeFormat.parse(datetimeFormat.format(content));
             } catch (Exception e) {
-               logger.error(e.getLocalizedMessage());
+               System.out.println(e.getLocalizedMessage());
             }
          } else if (content instanceof java.lang.String) {
             try {
-               Date date = datetimeFormat.parse((String) content);
-               return date;
+               return datetimeFormat.parse((String) content);
             } catch (Exception e) {
-               logger.error(e.getLocalizedMessage());
+               System.out.println(e.getLocalizedMessage());
             }
          } else {
-            logger.error("Cannot convert passed object of class: "
+            System.out.println("Cannot convert passed object of class: "
                   + content.getClass().getSimpleName()
                   + " to a datetime value!");
             return null;
@@ -357,7 +349,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          } else if (content instanceof java.lang.String) {
             return Boolean.parseBoolean((String) content);
          } else {
-            logger.error("Cannot convert object of class: "
+            System.out.println("Cannot convert object of class: "
                   + content.getClass().getSimpleName() + " to a " + type + ": value!");
             return null;
          }
@@ -366,13 +358,12 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
             return content;
          } else if (content instanceof java.lang.String) {
             try {
-               URL parsedUrl = new URL((String) content);
-               return parsedUrl;
+               return new URL((String) content);
             } catch (MalformedURLException e) {
-               logger.error(e.getLocalizedMessage());
+               System.out.println(e.getLocalizedMessage());
             }
          } else {
-            logger.error("Could not convert " + content.getClass().getSimpleName()
+            System.out.println("Could not convert " + content.getClass().getSimpleName()
                   + " to required type: " + type);
             return null;
          }
@@ -381,20 +372,20 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
                || content instanceof URL || content instanceof URI) {
             return content;
          } else {
-            logger.error("Binary (String), File, URL, or URI content expected, "
+            System.out.println("Binary (String), File, URL, or URI content expected, "
                   + content.getClass().getSimpleName() + " found!");
             return null;
          }
       } else if (type.matches("(?i)person")) {
          if (!(content instanceof java.lang.String)) {
-            logger.error("Expect a person to be of class expected, not " + content.getClass());
+            System.out.println("Expect a person to be of class expected, not " + content.getClass());
             return null;
          } else {
             return content;
          }
       } else {
          type = "string";
-         logger.warn("type unknown:\thandling as 'string':\tcorrect");
+         System.out.println("type unknown:\thandling as 'string':\tcorrect");
          return content;
       }
       return null;
@@ -409,15 +400,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
     */
    protected static String inferDatatypeFromString(String content) {
       content = content.trim();
-      //      String regExDate = "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))";
-      ////      String regExDateGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2}";
-      //      String regExTime = "(([01][0-9])|([2][0-4])):(([0-5][0-9])|([6][0])):(([0-5][0-9])|([6][0]))"; // for time
-      ////      String regExTimeGeneral = "[0-9]{2}:[0-9]{2}:[0-9]{2}";
-      //      String regExInt = "^[+-]?[0-9]+$";
-      //      String regExFloat = "^[+-]?[0-9]*\\.[0-9]+$";
-      //      String regExBool = "(true)|(false)|1|0";
-      //      String regExDatetimeGeneral = "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}";
-
       HashMap<String, String> regExpMap = new HashMap<String, String>();
       regExpMap.put("date",
             "[0-9]{4}-(((([0][13-9])|([1][0-2]))-(([0-2][0-9])|([3][01])))|(([0][2]-[0-2][0-9])))");
@@ -428,9 +410,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       regExpMap.put("float", "^[+-]?[0-9]*\\.[0-9]+$");
       regExpMap.put("boolean", "(true)|(false)|1|0");
       regExpMap.put("n-tuple", regExNTuple);
-      Iterator<String> iter = regExpMap.keySet().iterator();
-      while (iter.hasNext()) {
-         String key = iter.next();
+      for (String key : regExpMap.keySet()) {
          if (content.toLowerCase().matches(regExpMap.get(key)))
             return key;
       }
@@ -485,7 +465,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       try {
          os = new FileOutputStream(outFile);
       } catch (Exception e) {
-         logger.error("", e);
+         System.out.println(e.getMessage());
          throw e;
       }
       Base64 base = new Base64();
@@ -496,16 +476,11 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   //****************************************************************
-   //*****					getter & setter					**********
-   //****************************************************************
-   // associated property (so to say dad in tree)
    protected void setAssociatedProperty(Property property) {
       this.parent = property;
    }
 
 
-   // value
    protected void setContent(Object content) {
       this.content = content;
    }
@@ -516,7 +491,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   // unit
    protected void setUnit(String unit) {
       this.unit = unit;
    }
@@ -527,7 +501,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   // uncertainty
    protected void setUncertainty(Object uncertainty) {
       this.uncertainty = uncertainty;
    }
@@ -538,7 +511,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   // type
    protected void setType(String type) {
       this.type = type;
    }
@@ -549,7 +521,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   // Filename
    protected void setFilename(String filename) {
       this.filename = filename;
    }
@@ -560,7 +531,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   // definition
    protected void setDefinition(String comment) {
       this.definition = comment;
    }
@@ -571,7 +541,6 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    }
 
 
-   // reference
    protected void setReference(String reference) {
       this.reference = reference;
    }
@@ -632,7 +601,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
    public void validate(Property terminologyProperty) {
       if (this.type != null && !this.type.isEmpty()) {
          if (!this.type.equalsIgnoreCase(terminologyProperty.getType())) {
-            logger.warn("Value type (" + this.type
+            System.out.println("Value type (" + this.type
                   + ") does not match the one given in the terminology("
                   + terminologyProperty.getType()
                   + ")! To guarantee interoperability please ckeck. However, kept provided type.");
@@ -641,17 +610,16 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          try {
             checkDatatype(this.content, terminologyProperty.getType());
             this.setType(terminologyProperty.getType());
-            logger.info("Added type information to value.");
+            System.out.println("Added type information to value.");
          } catch (Exception e) {
-            logger
-                  .warn("Value is not compatible with the type information the terminology suggests ("
+            System.out.println("Value is not compatible with the type information the terminology suggests ("
                         + terminologyProperty.getType()
                         + "). Did not change anything, but please check");
          }
       }
       if (this.unit != null && !this.unit.isEmpty()) {
          if (!this.unit.equalsIgnoreCase(terminologyProperty.getUnit(0))) {
-            logger.warn("Value unit (" + this.unit
+            System.out.println("Value unit (" + this.unit
                   + ") does not match the one given in the terminology("
                   + terminologyProperty.getUnit()
                   + ")! To guarantee interoperability please ckeck. However, kept provided unit.");
@@ -659,7 +627,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       } else {
          if (terminologyProperty.getUnit() != null && !terminologyProperty.getUnit(0).isEmpty()) {
             this.setUnit(terminologyProperty.getUnit(0));
-            logger.info("Added unit " + terminologyProperty.getUnit() + " information to value.");
+            System.out.println("Added unit " + terminologyProperty.getUnit() + " information to value.");
          }
       }
    }
@@ -689,7 +657,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       if (content == null) {
          return null;
       }
-      logger.info("Encoding content: " + content.toString());
+      System.out.println("Encoding content: " + content.toString());
       String encoded = null;
       File file = null;
       if (content instanceof String) {
@@ -703,20 +671,20 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          try {
             file = new File(((URL) content).toURI());
          } catch (Exception e) {
-            logger.error("Could not create a file from the specified URL: " + content.toString());
+            System.out.println("Could not create a file from the specified URL: " + content.toString());
             file = null;
          }
       } else if (content instanceof URI) {
          try {
             file = new File((URI) content);
          } catch (Exception e) {
-            logger.error("Could not create a file from the specified URI: " + content.toString());
+            System.out.println("Could not create a file from the specified URI: " + content.toString());
             file = null;
          }
       } else if (content instanceof File) {
          file = (File) content;
       } else {
-         logger.error("Could not create a File from input! Class: "
+         System.out.println("Could not create a File from input! Class: "
                + content.getClass().getSimpleName() + " Content: " + content.toString());
          file = null;
       }
@@ -735,7 +703,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
          this.setEncoder("Base64");
          encoded = new String(bytes, "UTF-8");
       } catch (Exception e) {
-         logger.error("An error occurred during encoding: " + e.getLocalizedMessage());
+         System.out.println("An error occurred during encoding: " + e.getLocalizedMessage());
       }
       return encoded;
    }
@@ -792,7 +760,7 @@ public class Value extends Object implements Serializable, Cloneable, TreeNode {
       if (this.getContent() != null)
          s = s.concat(this.getContent().toString());
       if (this.getUncertainty() != null && !this.getUncertainty().toString().isEmpty())
-         s = s.concat("+-" + this.getUncertainty().toString());
+         s = s.concat(" +- " + this.getUncertainty().toString());
       if (this.getUnit() != null)
          s = s.concat(" " + this.getUnit());
       return s;
