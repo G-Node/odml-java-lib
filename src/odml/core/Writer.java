@@ -74,14 +74,14 @@ public class Writer implements Serializable {
     * write also those properties that have no values as is usually the case for
     * terminologies.
     *
-    * @param rootSection {@link Section}: the rootSection of the odml metadata tree.
+    * @param odmlSection {@link Section}: the odmlSection of the odml metadata tree.
     * @param asTerminology {@link Boolean}: if true also emtpy properties (no value) are written in the serialization,
     *        otherwise only non-emty properties are processed.
     *
     * @author Jakub Krauz
     */
-   public Writer(Section rootSection, boolean asTerminology) {
-      this.odmlTree = rootSection;
+   public Writer(Section odmlSection, boolean asTerminology) {
+      this.odmlTree = odmlSection;
       this.asTerminology = asTerminology;
       this.file = null;
    }
@@ -91,13 +91,13 @@ public class Writer implements Serializable {
     * Creates a writer instance. Lets the Wirter write only those properties that have values.
     *
     * @param filename {@link String} the full name of the destination file (including path).
-    * @param rootSection {@link Section} the root Section of the metadata tree.
+    * @param odmlSection {@link Section} the root Section of the metadata tree.
     *
     * @deprecated Use combination of {@link #Writer(Section)} and {@link #write(OutputStream)} instead.
     */
    @Deprecated
-   public Writer(String filename, Section rootSection) {
-      this(new File(filename), rootSection);
+   public Writer(String filename, Section odmlSection) {
+      this(new File(filename), odmlSection);
    }
 
 
@@ -105,13 +105,13 @@ public class Writer implements Serializable {
     * Creates a Writer-instance. Writes only non-empty properties into the metadata files.
     *
     * @param file {@link File} the File into which the metadata should be written.
-    * @param rootSection {@link Section}: the rootSection of the odml metadata tree.
+    * @param odmlSection {@link Section}: the rootSection of the odml metadata tree.
     *
     * @deprecated Use combination of {@link #Writer(Section)} and {@link #write(OutputStream)} instead.
     */
    @Deprecated
-   public Writer(File file, Section rootSection) {
-      this(file, rootSection, false);
+   public Writer(File file, Section odmlSection) {
+      this(file, odmlSection, false);
    }
 
 
@@ -121,16 +121,16 @@ public class Writer implements Serializable {
     * terminologies.
     *
     * @param file {@link File} the File into which the metadata should be written.
-    * @param rootSection {@link Section}: the rootSection of the odml metadata tree.
+    * @param odmlSection {@link Section}: the rootSection of the odml metadata tree.
     * @param asTerminology {@link Boolean}: if true also emtpy properties (no value) are written, otherwise
     *        only non-emty properties are written to disc.
     *
     * @deprecated Use combination of {@link #Writer(Section, boolean)} and {@link #write(OutputStream)} instead.
     */
    @Deprecated
-   public Writer(File file, Section rootSection, boolean asTerminology) {
+   public Writer(File file, Section odmlSection, boolean asTerminology) {
       this.file = file;
-      this.odmlTree = rootSection;
+      this.odmlTree = odmlSection;
       this.asTerminology = asTerminology;
    }
 
@@ -232,40 +232,40 @@ public class Writer implements Serializable {
 
    /**
     *
-    * @param odMLRoot {@link Section}: the section to start the dom creation.
+    * @param rootSection {@link Section}: the section to start the dom creation.
     * @param asTerminology {@link boolean}: flag to indicate whether Template is used or not
     * @return {@link boolean}: true if creating Dom successfully, otherwise false
     */
-   private void createDom(Section odMLRoot, boolean asTerminology) {
+   private void createDom(Section rootSection, boolean asTerminology) {
       doc = new Document();
-      ProcessingInstruction instr = null;
-      ProcessingInstruction altInstr = null;
+      ProcessingInstruction instruction = null;
+      ProcessingInstruction alternativeInstruction = null;
       if (asTerminology) {
-         altInstr = new ProcessingInstruction("xml-stylesheet",
+         alternativeInstruction = new ProcessingInstruction("xml-stylesheet",
                  "type=\"text/xsl\" href=\"odml.xsl\"");
-         instr = new ProcessingInstruction("xml-stylesheet",
+         instruction = new ProcessingInstruction("xml-stylesheet",
                  "type=\"text/xsl\" href=\"odmlTerms.xsl\"");
       } else {
-         altInstr = new ProcessingInstruction("xml-stylesheet",
+         alternativeInstruction = new ProcessingInstruction("xml-stylesheet",
                  "type=\"text/xsl\" href=\"odmlTerms.xsl\"");
-         instr = new ProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"odml.xsl\"");
+         instruction = new ProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"odml.xsl\"");
       }
-      doc.addContent(instr);
-      doc.addContent(altInstr);
+      doc.addContent(instruction);
+      doc.addContent(alternativeInstruction);
       Element rootElement = new Element("odML");
       rootElement.setAttribute("version", "1");
       doc.setRootElement(rootElement);
 
       Section dummyRoot;
-      if (odMLRoot.propertyCount() != 0) {
+      if (rootSection.propertyCount() != 0) {
          dummyRoot = new Section();
-         dummyRoot.add(odMLRoot);
-         dummyRoot.setDocumentAuthor(odMLRoot.getDocumentAuthor());
-         dummyRoot.setDocumentDate(odMLRoot.getDocumentDate());
-         dummyRoot.setDocumentVersion(odMLRoot.getDocumentVersion());
-         dummyRoot.setRepository(odMLRoot.getRepository());
+         dummyRoot.add(rootSection);
+         dummyRoot.setDocumentAuthor(rootSection.getDocumentAuthor());
+         dummyRoot.setDocumentDate(rootSection.getDocumentDate());
+         dummyRoot.setDocumentVersion(rootSection.getDocumentVersion());
+         dummyRoot.setRepository(rootSection.getRepository());
       } else {
-         dummyRoot = odMLRoot;
+         dummyRoot = rootSection;
       }
       String author = dummyRoot.getDocumentAuthor();
       if (author != null) {
@@ -371,14 +371,14 @@ public class Writer implements Serializable {
     * will only be written to file if the file is to become a terminology.
     *
     * @param parent {@link Element}: the parent Element to which the properties belong.
-    * @param prop {@link Property}: the property to append.
+    * @param property {@link Property}: the property to append.
     * @param asTerminology boolean: defines whether the file will be a terminology.
     */
-   private void appendProperty(Element parent, Property prop, boolean asTerminology) {
+   private void appendProperty(Element parent, Property property, boolean asTerminology) {
       if (!asTerminology) {
-         prop.removeEmptyValues();
-         if (prop.isEmpty()) {
-            out.println("Writer.appendProperty: Property " + prop.getName()
+         property.removeEmptyValues();
+         if (property.isEmpty()) {
+            out.println("Writer.appendProperty: Property " + property.getName()
                     + "is empty and will not be written to file!");
             return;
          }
@@ -386,38 +386,38 @@ public class Writer implements Serializable {
       Element propertyElement = new Element("property");
 
       Element name = new Element("name");
-      name.setText(prop.getName());
+      name.setText(property.getName());
       propertyElement.addContent(name);
 
       Element nameDefinition = new Element("definition");
-      String nameDef = prop.getDefinition();
+      String nameDef = property.getDefinition();
       if (nameDef != null && !nameDef.isEmpty()) {
          nameDefinition.setText(nameDef);
          propertyElement.addContent(nameDefinition);
       }
       Element dependency = new Element("dependency");
-      String dep = prop.getDependency();
+      String dep = property.getDependency();
       if (dep != null && !dep.isEmpty()) {
          dependency.setText(dep);
          propertyElement.addContent(dependency);
       }
 
       Element dependencyValue = new Element("dependencyValue");
-      String depVal = prop.getDependencyValue();
+      String depVal = property.getDependencyValue();
       if (depVal != null && !depVal.isEmpty()) {
          dependencyValue.setText(depVal);
          propertyElement.addContent(dependencyValue);
       }
 
       Element mapping = new Element("mapping");
-      URL mapURL = prop.getMapping();
+      URL mapURL = property.getMapping();
       if (mapURL != null) {
          mapping.setText(mapURL.toString());
          propertyElement.addContent(mapping);
       }
 
-      for (int i = 0; i < prop.valueCount(); i++) {
-         appendValue(propertyElement, prop.getWholeValue(i), asTerminology);
+      for (int i = 0; i < property.valueCount(); i++) {
+         appendValue(propertyElement, property.getWholeValue(i), asTerminology);
       }
 
       parent.addContent(propertyElement);
@@ -428,76 +428,76 @@ public class Writer implements Serializable {
     * Appends a value element to the dom tree.
     *
     * @param parent {@link Element}: the parent Element to which the values belong.
-    * @param val {@link Value}: the value to append.
+    * @param value {@link Value}: the value to append.
     * @param asTemplate defines whether to save as template, i.e. empty values are accepted.
     */
-   private void appendValue(Element parent, Value val, boolean asTemplate) {
+   private void appendValue(Element parent, Value value, boolean asTemplate) {
       if (!asTemplate) {
-         if (val.getContent() == null || val.getContent().toString().isEmpty()) { return; }
+         if (value.getContent() == null || value.getContent().toString().isEmpty()) { return; }
       }
 
       Element valueElement = new Element("value");
-      if (val.getContent() != null && (!val.getContent().toString().isEmpty())) {
-         if (val.getContent() instanceof Date) {
-            Date d = (Date) val.getContent();
-            if (val.getType().equalsIgnoreCase("date")) {
+      if (value.getContent() != null && (!value.getContent().toString().isEmpty())) {
+         if (value.getContent() instanceof Date) {
+            Date d = (Date) value.getContent();
+            if (value.getType().equalsIgnoreCase("date")) {
                valueElement.setText(dateFormat.format(d));
-            } else if (val.getType().equalsIgnoreCase("datetime")) {
+            } else if (value.getType().equalsIgnoreCase("datetime")) {
                valueElement.setText(datetimeFormat.format(d));
-            } else if (val.getType().equalsIgnoreCase("time")) {
+            } else if (value.getType().equalsIgnoreCase("time")) {
                valueElement.setText(timeFormat.format(d));
             } else {
-               valueElement.setText(val.getContent().toString());
+               valueElement.setText(value.getContent().toString());
             }
          } else {
-            valueElement.setText(val.getContent().toString());
+            valueElement.setText(value.getContent().toString());
          }
       }
 
       Element typeElement = new Element("type");
-      String type = val.getType();
+      String type = value.getType();
       if (type != null && (!type.isEmpty())) {
          typeElement.setText(type);
          valueElement.addContent(typeElement);
       }
       Element unitElement = new Element("unit");
-      String unit = val.getUnit();
+      String unit = value.getUnit();
       if (unit != null && (!unit.isEmpty())) {
          unitElement.setText(unit);
          valueElement.addContent(unitElement);
       }
       Element errorElement = new Element("uncertainty");
-      Object uncertainty = val.getUncertainty();
+      Object uncertainty = value.getUncertainty();
       if (uncertainty != null && (!uncertainty.toString().isEmpty())) {
          errorElement.setText(uncertainty.toString());
          valueElement.addContent(errorElement);
       }
       Element filenameElement = new Element("filename");
-      String filename = val.getFilename();
+      String filename = value.getFilename();
       if (filename != null && (!filename.isEmpty())) {
          filenameElement.setText(filename);
          valueElement.addContent(filenameElement);
       }
       Element defElement = new Element("definition");
-      String valueDefinition = val.getDefinition();
+      String valueDefinition = value.getDefinition();
       if (valueDefinition != null && (!valueDefinition.isEmpty())) {
          defElement.setText(valueDefinition);
          valueElement.addContent(defElement);
       }
       Element idElement = new Element("reference");
-      String id = val.getReference();
+      String id = value.getReference();
       if (id != null && (!id.isEmpty())) {
          idElement.setText(id);
          valueElement.addContent(idElement);
       }
       Element encoderElement = new Element("encoder");
-      String encoder = val.getEncoder();
+      String encoder = value.getEncoder();
       if (encoder != null && (!encoder.isEmpty())) {
          encoderElement.setText(encoder);
          valueElement.addContent(encoderElement);
       }
       Element checksumElement = new Element("checksum");
-      String checksum = val.getChecksum();
+      String checksum = value.getChecksum();
       if (checksum != null && (!checksum.isEmpty())) {
          checksumElement.setText(checksum);
          valueElement.addContent(checksumElement);
@@ -516,11 +516,10 @@ public class Writer implements Serializable {
     */
    private boolean writeToStream(OutputStream stream) {
       if (doc == null) {
-         System.out.println("doc empty");
+         System.out.println("Writing to Stream failed, document is empty!");
          return false;
       }
       try {
-         System.out.println("in streamToFile");
          org.jdom2.output.Format frmt = org.jdom2.output.Format.getPrettyFormat().setIndent("    ");
          XMLOutputter outp = new XMLOutputter();
          outp.setFormat(Format.getPrettyFormat());
