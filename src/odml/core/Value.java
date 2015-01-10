@@ -58,7 +58,11 @@ public class Value implements Serializable, Cloneable, TreeNode {
    private final static SimpleDateFormat datetimeFormat   = new SimpleDateFormat(
                                                                 "yyyy-MM-dd hh:mm:ss");
    private final static SimpleDateFormat timeFormat       = new SimpleDateFormat("hh:mm:ss");
-   private final static String           regExNTuple      = "(?i)[0-9]{1,};[0-9]{1,}";
+   private final static String           regExNTuple;
+
+   static {
+      regExNTuple = "(?i)[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?;[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?";
+   }
 
 
    /**
@@ -103,6 +107,7 @@ public class Value implements Serializable, Cloneable, TreeNode {
    /**
     * Creates a Value from a Vector containing the value data in the following sequence:
     * "content","unit","uncertainty","type","fileName","definition","reference"
+    *
     * @param data {@link Vector} of Objects that contains the data in the sequence as the {@link Value}
     * @throws Exception 
     */
@@ -115,14 +120,15 @@ public class Value implements Serializable, Cloneable, TreeNode {
 
    /**
     * Constructor for a Value containing all possible information. Any of the arguments
-    * may be null except for Object value and it's unit.
-    * @param content
-    * @param unit
-    * @param uncertainty
-    * @param type
-    * @param filename
-    * @param definition
-    * @param reference
+    * may be null except for Object value.
+    *
+    * @param content The actual value of the Value entity.
+    * @param unit The value's unit, if applicable.
+    * @param uncertainty The value's uncertainty, if any
+    * @param type The values data type.
+    * @param filename In case of binary content the original file name.
+    * @param definition A textual definition of the value.
+    * @param reference If the value references an external entity, its url goes here.
     * @throws Exception
     */
    protected Value(Object content, String unit, Object uncertainty, String type, String filename,
@@ -192,8 +198,7 @@ public class Value implements Serializable, Cloneable, TreeNode {
     * @return {@link Boolean}: true if value is empty, false otherwise.
     */
    public boolean isEmpty() {
-      return (content == null)
-            || (content != null && content instanceof String && ((String) content).isEmpty());
+      return (content == null) || (content instanceof String && ((String) content).isEmpty());
    }
 
 
@@ -217,8 +222,6 @@ public class Value implements Serializable, Cloneable, TreeNode {
          return "url";
       } else if (value instanceof File) {
          return "binary";
-      } else if (value instanceof Date) {
-         return "date";
       } else if (value instanceof String) {
          return inferDatatypeFromString(value.toString());
       }
@@ -252,7 +255,7 @@ public class Value implements Serializable, Cloneable, TreeNode {
             return ((Number) content).intValue();
          } else {
             System.out.println("Cannot convert value of class " + content.getClass().getSimpleName()
-                  + " to requested type: " + type);
+                    + " to requested type: " + type);
             return null;
          }
       } else if (type.matches("(?i)float.*")) {
@@ -262,17 +265,17 @@ public class Value implements Serializable, Cloneable, TreeNode {
             return Float.parseFloat((String) content);
          } else {
             System.out.println("Cannot convert value of class " + content.getClass().getSimpleName()
-                  + " to requested type " + type);
+                    + " to requested type " + type);
             return null;
          }
       } else if (type.matches("(?i)string") || type.matches("(?i)text")) {
          if (content instanceof String) {
             return content;
          } else if (content instanceof Character) {
-            return ((Character) content).toString();
+            return content.toString();
          } else {
             System.out.println("Error converting content of class: "
-                  + content.getClass().getSimpleName() + " to requested type: " + type);
+                    + content.getClass().getSimpleName() + " to requested type: " + type);
             return null;
          }
       } else if (type.matches("(?i)n-tuple")) {
@@ -280,111 +283,116 @@ public class Value implements Serializable, Cloneable, TreeNode {
             return content;
          } else {
             System.out.println("Value does not match the n-tuple definition (regExp: "
-                  + regExNTuple + ")!");
+                    + regExNTuple + ")!");
             return null;
          }
-      } else if (type.matches("(?i)date")) {
-         if (content instanceof java.util.Date) {
-            try {
-               return dateFormat.parse(dateFormat.format(content));
-            } catch (Exception e) {
-               System.out.println(e.getMessage());
+      } else {
+         if (type.matches("(?i)date")) {
+            if (content instanceof Date) {
+               try {
+                  return dateFormat.parse(dateFormat.format(content));
+               } catch (Exception e) {
+                  System.out.println(e.getMessage());
+               }
+            } else if (content instanceof String) {
+               try {
+                  return dateFormat.parse((String) content);
+               } catch (Exception e) {
+                  System.out.println("Cannot convert passed String : " + content
+                          + " to a date value!");
+                  return null;
+               }
+            } else {
+               System.out.println("Cannot convert passed object of class: "
+                       + content.getClass().getSimpleName()
+                       + " to a date value!");
+               return null;
             }
-         } else if (content instanceof java.lang.String) {
-            try {
-               return dateFormat.parse((String) content);
-            } catch (Exception e) {
-               System.out.println("Cannot convert passed String : " + content
-                     + " to a date value!");
+         } else if (type.matches("(?i)time")) {
+            if (content instanceof Date) {
+               try {
+                  return timeFormat.parse(timeFormat.format(content));
+               } catch (Exception e) {
+                  System.out.println(e.getMessage());
+               }
+            } else if (content instanceof String) {
+               try {
+                  return timeFormat.parse((String) content);
+               } catch (Exception e) {
+                  System.out.println(e.getLocalizedMessage());
+               }
+            } else {
+               System.out.println("Cannot convert passed object of class: "
+                       + content.getClass().getSimpleName()
+                       + " to a time value!");
+               return null;
+            }
+         } else if (type.matches("(?i)datetime")) {
+            if (content instanceof Date) {
+               try {
+                  return datetimeFormat.parse(datetimeFormat.format(content));
+               } catch (Exception e) {
+                  System.out.println(e.getLocalizedMessage());
+               }
+            } else if (content instanceof String) {
+               try {
+                  return datetimeFormat.parse((String) content);
+               } catch (Exception e) {
+                  System.out.println(e.getLocalizedMessage());
+               }
+            } else {
+               System.out.println("Cannot convert passed object of class: "
+                       + content.getClass().getSimpleName()
+                       + " to a datetime value!");
+               return null;
+            }
+         } else if (type.matches("(?i)bool.*")) {
+            if (content instanceof Boolean) {
+               return content;
+            } else if (content instanceof String) {
+               return Boolean.parseBoolean((String) content);
+            } else {
+               System.out.println("Cannot convert object of class: "
+                       + content.getClass().getSimpleName() + " to a " + type + ": value!");
+               return null;
+            }
+         } else if (type.matches("(?i)URL")) {
+            if (content instanceof URL) {
+               return content;
+            } else if (content instanceof String) {
+               try {
+                  return new URL((String) content);
+               } catch (MalformedURLException e) {
+                  System.out.println(e.getLocalizedMessage());
+               }
+            } else {
+               System.out.println("Could not convert " + content.getClass().getSimpleName()
+                       + " to required type: " + type);
                return null;
             }
          } else {
-            System.out.println("Cannot convert passed object of class: "
-                  + content.getClass().getSimpleName()
-                  + " to a date value!");
-            return null;
-         }
-      } else if (type.matches("(?i)time")) {
-         if (content instanceof java.util.Date) {
-            try {
-               return timeFormat.parse(timeFormat.format(content));
-            } catch (Exception e) {
-               System.out.println(e.getMessage());
+            if (type.matches("(?i)binary")) {
+               if (content instanceof String || content instanceof File
+                       || content instanceof URL || content instanceof URI) {
+                  return content;
+               } else {
+                  System.out.println("Binary (String), File, URL, or URI content expected, "
+                          + content.getClass().getSimpleName() + " found!");
+                  return null;
+               }
+            } else {
+               if (type.matches("(?i)person")) {
+                  if (!(content instanceof String)) {
+                     System.out.println("Expect a person to be of class expected, not " + content.getClass());
+                     return null;
+                  } else {
+                     return content;
+                  }
+               } else {
+                  return content;
+               }
             }
-         } else if (content instanceof java.lang.String) {
-            try {
-               return timeFormat.parse((String) content);
-            } catch (Exception e) {
-               System.out.println(e.getLocalizedMessage());
-            }
-         } else {
-            System.out.println("Cannot convert passed object of class: "
-                  + content.getClass().getSimpleName()
-                  + " to a time value!");
-            return null;
          }
-      } else if (type.matches("(?i)datetime")) {
-         if (content instanceof java.util.Date) {
-            try {
-               return datetimeFormat.parse(datetimeFormat.format(content));
-            } catch (Exception e) {
-               System.out.println(e.getLocalizedMessage());
-            }
-         } else if (content instanceof java.lang.String) {
-            try {
-               return datetimeFormat.parse((String) content);
-            } catch (Exception e) {
-               System.out.println(e.getLocalizedMessage());
-            }
-         } else {
-            System.out.println("Cannot convert passed object of class: "
-                  + content.getClass().getSimpleName()
-                  + " to a datetime value!");
-            return null;
-         }
-      } else if (type.matches("(?i)bool.*")) {
-         if (content instanceof java.lang.Boolean) {
-            return content;
-         } else if (content instanceof java.lang.String) {
-            return Boolean.parseBoolean((String) content);
-         } else {
-            System.out.println("Cannot convert object of class: "
-                  + content.getClass().getSimpleName() + " to a " + type + ": value!");
-            return null;
-         }
-      } else if (type.matches("(?i)URL")) {
-         if (content instanceof java.net.URL) {
-            return content;
-         } else if (content instanceof java.lang.String) {
-            try {
-               return new URL((String) content);
-            } catch (MalformedURLException e) {
-               System.out.println(e.getLocalizedMessage());
-            }
-         } else {
-            System.out.println("Could not convert " + content.getClass().getSimpleName()
-                  + " to required type: " + type);
-            return null;
-         }
-      } else if (type.matches("(?i)binary")) {
-         if (content instanceof java.lang.String || content instanceof File
-               || content instanceof URL || content instanceof URI) {
-            return content;
-         } else {
-            System.out.println("Binary (String), File, URL, or URI content expected, "
-                  + content.getClass().getSimpleName() + " found!");
-            return null;
-         }
-      } else if (type.matches("(?i)person")) {
-         if (!(content instanceof java.lang.String)) {
-            System.out.println("Expect a person to be of class expected, not " + content.getClass());
-            return null;
-         } else {
-            return content;
-         }
-      } else {
-         type = "string";
-         return content;
       }
       return null;
    }
@@ -436,7 +444,7 @@ public class Value implements Serializable, Cloneable, TreeNode {
       byte[] bytes = new byte[(int) length];
       //Read in the bytes
       int offset = 0;
-      int numRead = 0;
+      int numRead;
       while (offset < bytes.length &&
             (numRead = in.read(bytes, offset, bytes.length - offset)) >= 0) {
          offset += numRead;
@@ -459,7 +467,7 @@ public class Value implements Serializable, Cloneable, TreeNode {
       if (outFile == null) {
          throw new Exception("Argument outFile not specified!");
       }
-      FileOutputStream os = null;
+      FileOutputStream os;
       try {
          os = new FileOutputStream(outFile);
       } catch (Exception e) {
@@ -600,9 +608,9 @@ public class Value implements Serializable, Cloneable, TreeNode {
       if (this.type != null && !this.type.isEmpty()) {
          if (!this.type.equalsIgnoreCase(terminologyProperty.getType())) {
             System.out.println("Value type (" + this.type
-                  + ") does not match the one given in the terminology("
-                  + terminologyProperty.getType()
-                  + ")! To guarantee interoperability please ckeck. However, kept provided type.");
+                    + ") does not match the one given in the terminology("
+                    + terminologyProperty.getType()
+                    + ")! To guarantee interoperability please ckeck. However, kept provided type.");
          }
       } else {
          try {
@@ -611,16 +619,16 @@ public class Value implements Serializable, Cloneable, TreeNode {
             System.out.println("Added type information to value.");
          } catch (Exception e) {
             System.out.println("Value is not compatible with the type information the terminology suggests ("
-                        + terminologyProperty.getType()
-                        + "). Did not change anything, but please check");
+                    + terminologyProperty.getType()
+                    + "). Did not change anything, but please check");
          }
       }
       if (this.unit != null && !this.unit.isEmpty()) {
          if (!this.unit.equalsIgnoreCase(terminologyProperty.getUnit(0))) {
             System.out.println("Value unit (" + this.unit
-                  + ") does not match the one given in the terminology("
-                  + terminologyProperty.getUnit()
-                  + ")! To guarantee interoperability please ckeck. However, kept provided unit.");
+                    + ") does not match the one given in the terminology("
+                    + terminologyProperty.getUnit()
+                    + ")! To guarantee interoperability please ckeck. However, kept provided unit.");
          }
       } else {
          if (terminologyProperty.getUnit() != null && !terminologyProperty.getUnit(0).isEmpty()) {
@@ -632,24 +640,22 @@ public class Value implements Serializable, Cloneable, TreeNode {
 
 
    /**
-    * TODO
+    *
     * Compares the content of two values and returns whether they are equal. So far this
     * concerns only the value content. Not type,definition etc.
-    * @param other
+    * @param other - The Value with which this should be compared.
     * @return {@link Boolean} <b>true</b> if the content of two values matches, <b>false</b> otherwise.
     */
    public boolean isEqual(Value other) {
-      if (this.content.toString() != other.content.toString()) {
-         return false;
-      }
-      return true;
+      return this.content.toString().equals(other.content.toString());
    }
 
 
    /**
     * Base64 encodes the content if it represents either a File, URL, URI, or String that can be converted to a file.
-    * @param content
-    * @return
+    *
+    * @param content - the content that should be encoded.
+    * @return encoded content as {@link String}
     */
    private String encodeContent(Object content) {
       if (content == null) {
@@ -657,7 +663,7 @@ public class Value implements Serializable, Cloneable, TreeNode {
       }
       System.out.println("Encoding content: " + content.toString());
       String encoded = null;
-      File file = null;
+      File file;
       if (content instanceof String) {
          try {
             URI uri = new URI((String) content);
@@ -683,7 +689,7 @@ public class Value implements Serializable, Cloneable, TreeNode {
          file = (File) content;
       } else {
          System.out.println("Could not create a File from input! Class: "
-               + content.getClass().getSimpleName() + " Content: " + content.toString());
+                 + content.getClass().getSimpleName() + " Content: " + content.toString());
          file = null;
       }
       if (file == null) {
