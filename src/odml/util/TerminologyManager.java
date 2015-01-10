@@ -237,6 +237,7 @@ public class TerminologyManager {
          try {
             localTerminologies.store(new FileOutputStream(userFile), COMMENT);
          } catch (IOException e) {
+            System.out.println(e.getMessage());
          }
       }
    }

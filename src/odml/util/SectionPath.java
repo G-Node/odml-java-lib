@@ -14,7 +14,6 @@ package odml.util;
  */
 
 public class SectionPath{
-   private String sectionPart = ""; 
    private String nextSection = "";
    private String restPath = "";
    private String propertyPart = "";
@@ -64,6 +63,7 @@ public class SectionPath{
    }
 
    private void splitPath(String path) {
+      String sectionPart;
       if(path.contains("#")){
          sectionPart = path.substring(0,path.lastIndexOf("#"));
          propertyPart = path.substring(path.indexOf("#")+1);
@@ -71,8 +71,8 @@ public class SectionPath{
       else 
          sectionPart = path;
       if(sectionPart.contains("/")){
-         nextSection = sectionPart.substring(0,sectionPart.indexOf("/"));
-         restPath = sectionPart.substring(sectionPart.indexOf("/")+1);
+         nextSection = sectionPart.substring(0, sectionPart.indexOf("/"));
+         restPath = sectionPart.substring(sectionPart.indexOf("/") + 1);
       }
       else
          nextSection = sectionPart;
