@@ -1174,19 +1174,18 @@ public class Property implements Serializable, Cloneable, TreeNode {
       if (this.getDependency() == null) {
          this.setDependency(otherProperty.getDependency());
       } else {
-         if (mergeOption == Section.MERGE_OTHER_OVERRIDES_THIS
-               && (otherProperty.getDependency() != null || otherProperty.getDependency().isEmpty())) {
-            this.setDependency(otherProperty.getDependency());
-         }
+         if (!(otherProperty.getDependency() == null || otherProperty.getDependency().isEmpty()))
+            if (mergeOption == Section.MERGE_OTHER_OVERRIDES_THIS) {
+               this.setDependency(otherProperty.getDependency());
+            }
       }
       if (this.getDependencyValue() == null) {
          this.setDependencyValue(otherProperty.getDependencyValue());
       } else {
-         if (mergeOption == Section.MERGE_OTHER_OVERRIDES_THIS
-               && (otherProperty.getDependencyValue() != null || otherProperty.getDependency()
-                     .isEmpty())) {
-            this.setDependency(otherProperty.getDependency());
-         }
+         if (!(otherProperty.getDependencyValue() == null || otherProperty.getDependencyValue().isEmpty()))
+            if (mergeOption == Section.MERGE_OTHER_OVERRIDES_THIS) {
+               this.setDependencyValue(otherProperty.getDependencyValue());
+            }
       }
       for (int i = 0; i < otherProperty.valueCount(); i++) {
          if (this.values.contains(otherProperty.getWholeValue(i))) {
@@ -1232,9 +1231,9 @@ public class Property implements Serializable, Cloneable, TreeNode {
                   terminologyProperty.getName() + " which was not found!");
          } else {
             if (terminologyProperty.getDependencyValue() != null
-                  && !terminologyProperty.getDependencyValue().isEmpty()) {
+                  && !terminologyProperty.getDependencyValue().isEmpty() && this.getParent() != null) {
                String terminologyValue = terminologyProperty.getDependencyValue();
-               Property dependencyProperty = getParent().getProperty(
+               Property dependencyProperty = this.getParent().getProperty(
                      terminologyProperty.getDependency());
                Vector<Object> values = dependencyProperty.getValues();
                Iterator<Object> iterator = values.iterator();
@@ -1342,8 +1341,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
                      thisValueIndex);
             }
             if (this.getValueFilename(thisValueIndex) == null) {
-               this
-                     .setValueFilenameAt(otherProperty.getValueFilename(otherValueIndex),
+               this.setValueFilenameAt(otherProperty.getValueFilename(otherValueIndex),
                            thisValueIndex);
             }
             if (this.getValueReference(thisValueIndex) == null) {
@@ -2082,7 +2080,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          }
       } else if (type.equalsIgnoreCase("date")) {
          try {
-            if (((java.sql.Date) anObject).equals(anotherObject)) {
+            if ((anObject).equals(anotherObject)) {
                return MATCH_EXACT;
             } else {
                return MATCH_NO;
@@ -2093,7 +2091,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
          }
       } else if (type.equalsIgnoreCase("time")) {
          try {
-            if (((java.sql.Time) anObject).equals(anotherObject)) {
+            if ((anObject).equals(anotherObject)) {
                return MATCH_EXACT;
             } else {
                return MATCH_NO;
