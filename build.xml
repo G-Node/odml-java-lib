@@ -6,7 +6,7 @@
   <property name="javadoc.dir" value="${build.dir}/doc"/>
   
   <path id="classpath">
-    <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    <fileset dir="${lib.dir}" includes="*.jar **/*.jar"/>
   </path>
 
   <target name="clean">
@@ -27,7 +27,7 @@
   
   <target name="javadoc">
      <mkdir dir="${javadoc.dir}"/>
-    <javadoc access="protected" author="true" classpath="${lib.dir}/commons-codec-1.5/commons-codec-1.5.jar:${lib.dir}/jdom.jar:${lib.dir}/apache-log4j-1.2.15/log4j-1.2.15.jar" destdir="${javadoc.dir}" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="odml.util,odml.core" source="1.6" sourcepath="${src.dir}" splitindex="true" use="true" version="true"/>
+    <javadoc access="protected" author="true" classpath="${lib.dir}/commons-codec-1.5/commons-codec-1.5.jar:${lib.dir}/jdom-2.0.5.jar:" destdir="${javadoc.dir}" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="odml.util,odml.core" source="1.7" sourcepath="${src.dir}" splitindex="true" use="true" version="true"/>
    </target>
   
   <target name="jar">
