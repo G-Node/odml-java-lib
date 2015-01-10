@@ -21,12 +21,10 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.input.sax.XMLReaderJDOMFactory;
 import org.jdom2.input.sax.XMLReaderXSDFactory;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -110,9 +108,8 @@ public class Reader implements Serializable {
     * @return {@link Section} the root section of the metadata tree stored in the file.
     * 
     * @throws Exception
-    * @throws MalformedURLException
     */
-   public Section load(String file) throws MalformedURLException, Exception {
+   public Section load(String file) throws Exception {
       return load(file, NO_CONVERSION, false);
    }
 
@@ -127,12 +124,11 @@ public class Reader implements Serializable {
     * @param file
     *            {@link String} the url of the metadata file.
     * @param option
-    *            {@link Integer} the reding options.
+    *            {@link Integer} the reading options.
     * @return Section the root section of the metadata tree stored in the file.
-    * @throws MalformedURLException
     * @throws Exception
     */
-   public Section load(String file, int option) throws MalformedURLException, Exception {
+   public Section load(String file, int option) throws Exception {
       return load(file, option, false);
    }
 
@@ -143,11 +139,9 @@ public class Reader implements Serializable {
     * @param loadOption int, specifying the actions to take upon loading
     * @return {@link Section} the root section of the file.
     * @throws Exception
-    * @throws MalformedURLException
     */
-   public Section load(String file, int loadOption, boolean validate) throws MalformedURLException,
-         Exception {
-      URL url = null;
+   public Section load(String file, int loadOption, boolean validate) throws Exception {
+      URL url;
       try {
          url = new URL(file);
       } catch (Exception e) {
@@ -187,8 +181,8 @@ public class Reader implements Serializable {
     * Load the odML document from the given input stream.
     * 
     * @param stream the input stream
-    * @param option
-    * @param validate
+    * @param option defines the behaviour during load. See load(String, int) method
+    * @param validate defines whether the file should be validated against a schema.
     * @return {@link Section}: the root section of the loaded file.
     * @throws Exception
     */
@@ -280,9 +274,8 @@ public class Reader implements Serializable {
 
    /**
     * Parses the xml file and creates the DOM representation of it.
-    * 
+    * @param stream - an {@link java.io.InputStream}
     * @return Document - returns the Document (dom) representation of the xml-file or null if an error occurred.
-    * @throws IOException
     */
    private Document parseXML(InputStream stream) {
       if (stream == null) {
@@ -290,8 +283,7 @@ public class Reader implements Serializable {
       }
       try {
          SAXBuilder builder = new SAXBuilder();
-         Document doc = builder.build(stream);
-         return doc;
+         return builder.build(stream);
       } catch (IOException ioe) {
          System.out.println("Parsing failed! " + ioe.getMessage());
          return null;
@@ -440,17 +432,17 @@ public class Reader implements Serializable {
     * @return {@link Value} the {@link Value} representation of this domElement
     */
    private Value parseValue(Element domValue) {
-      Value value = null;
+      Value value;
 
-      String content = "";
-      String unit = "";
-      Object uncertainty = null;
-      String type = "";
-      String filename = "";
-      String definition = "";
-      String reference = "";
-      String encoder = "";
-      String checksum = "";
+      String content;
+      String unit;
+      Object uncertainty;
+      String type;
+      String filename;
+      String definition;
+      String reference;
+      String encoder;
+      String checksum;
       content = domValue.getTextTrim();
       if (content == null) {
          content = "";
