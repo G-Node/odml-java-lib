@@ -40,7 +40,7 @@ import static java.lang.System.*;
  *
  * @since 08.2009
  *
- * @author Jan Grewe, Christine Seitz
+ * @author Jan Grewe, Christine Seitz, Jakub Krauz
  *
  */
 public class Writer implements Serializable {
@@ -62,7 +62,6 @@ public class Writer implements Serializable {
     *
     * @param rootSection {@link Section} the root Section of the metadata tree.
     *
-    * @author Jakub Krauz
     */
    public Writer(Section rootSection) {
       this(rootSection, false);
@@ -78,7 +77,6 @@ public class Writer implements Serializable {
     * @param asTerminology {@link Boolean}: if true also emtpy properties (no value) are written in the serialization,
     *        otherwise only non-emty properties are processed.
     *
-    * @author Jakub Krauz
     */
    public Writer(Section odmlSection, boolean asTerminology) {
       this.odmlTree = odmlSection;
@@ -161,7 +159,6 @@ public class Writer implements Serializable {
     * @param stream {@link OutputStream}: output stream to which to write the document
     * @return {@link Boolean} true if operation was successful, false otherwise.
     *
-    * @author Jakub Krauz
     */
    public boolean write(OutputStream stream) {
       if (odmlTree == null) {
@@ -183,7 +180,6 @@ public class Writer implements Serializable {
     * @param validate {@link Boolean}: validates the metadata against the terminologies.
     * @return {@link Boolean}: true if writing succeeded, false otherwise.
     *
-    * @author Jakub Krauz
     */
    public boolean write(OutputStream stream, boolean optimize, boolean validate) {
       if (optimize)
@@ -532,7 +528,6 @@ public class Writer implements Serializable {
     * @param stream the output stream
     * @return true if the dom tree was successfully written to the stream, false otherwise
     *
-    * @author Jakub Krauz
     */
    private boolean writeToStream(OutputStream stream) {
       if (doc == null) {

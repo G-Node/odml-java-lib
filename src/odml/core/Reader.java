@@ -39,8 +39,8 @@ import java.util.Vector;
  * 
  * @since 08.2009
  * 
- * @author Jan Grewe, Christine Seitz
- * 
+ * @author Jan Grewe, Christine Seitz, Jakub Krauz
+ *
  */
 public class Reader implements Serializable {
 
@@ -79,7 +79,6 @@ public class Reader implements Serializable {
     * @return {@link Section} the root section of the metadata tree loaded from the input stream
     * @throws Exception
     * 
-    * @author Jakub Krauz
     */
    public Section load(InputStream stream) throws Exception {
        return load(stream, false);
@@ -96,7 +95,6 @@ public class Reader implements Serializable {
     * @return {@link Section} the root section of the metadata tree loaded from the input stream
     * @throws Exception
     * 
-    * @author Jakub Krauz
     */
    public Section load(InputStream stream, boolean validate) throws Exception {
        return load(stream, NO_CONVERSION, validate);
@@ -175,11 +173,11 @@ public class Reader implements Serializable {
        this.fileUrl = fileURL;
        try {
            InputStream stream = fileURL.openStream();
-           System.out.println("Parsing the xml file: " + fileURL.toString() + "...");
+          System.out.println("Parsing the xml file: " + fileURL.toString() + "...");
            return load(stream, option, validate);
        } catch (IOException e) {
-           System.out.println("Could not open file at specified url: " +
-                   fileURL.toString() + ". Verify connection! " + e.getMessage());
+          System.out.println("Could not open file at specified url: " +
+                  fileURL.toString() + ". Verify connection! " + e.getMessage());
            return null;
        }
    }
@@ -242,7 +240,7 @@ public class Reader implements Serializable {
       String odmlVersion = rootElement.getAttribute("version").getValue();
       if (Float.parseFloat(odmlVersion) != 1.0) {
          System.out.println("Can not handle odmlVersion: " + odmlVersion
-               + " stopping further processing!");
+                 + " stopping further processing!");
          return;
       }
 
@@ -410,9 +408,9 @@ public class Reader implements Serializable {
             mapURL = new URL(temp);
          } catch (Exception e) {
             System.out.println("odml.core.Reader.parseProperty.mappingURL handling: \n"
-                  + " \t> tried to form URL out of: '"
-                  + domProperty.getChildText("mapping")
-                  + "'\n\t= mapURL of Property named: " + name + e.getMessage());
+                    + " \t> tried to form URL out of: '"
+                    + domProperty.getChildText("mapping")
+                    + "'\n\t= mapURL of Property named: " + name + e.getMessage());
          }
       }
       definition = domProperty.getChildText("definition");
