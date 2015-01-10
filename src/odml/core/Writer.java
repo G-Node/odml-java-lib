@@ -51,14 +51,13 @@ public class Writer implements Serializable {
    private Section                       odmlTree         = null;
 
    private final static SimpleDateFormat dateFormat       = new SimpleDateFormat("yyyy-MM-dd");
-   private final static SimpleDateFormat datetimeFormat   = new SimpleDateFormat(
-           "yyyy-MM-dd hh:mm:ss");
+   private final static SimpleDateFormat datetimeFormat   = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
    private final static SimpleDateFormat timeFormat       = new SimpleDateFormat("hh:mm:ss");
 
 
 
    /**
-    * Creates a writer instance. Lets the Wirter write only those properties that have values.
+    * Creates a writer instance. Lets the Writer write only those properties that have values.
     *
     * @param rootSection {@link Section} the root Section of the metadata tree.
     *
@@ -74,8 +73,8 @@ public class Writer implements Serializable {
     * terminologies.
     *
     * @param odmlSection {@link Section}: the odmlSection of the odml metadata tree.
-    * @param asTerminology {@link Boolean}: if true also emtpy properties (no value) are written in the serialization,
-    *        otherwise only non-emty properties are processed.
+    * @param asTerminology {@link Boolean}: if true also empty properties (no value) are written in the serialization,
+    *        otherwise only non-empty properties are processed.
     *
     */
    public Writer(Section odmlSection, boolean asTerminology) {
@@ -86,7 +85,7 @@ public class Writer implements Serializable {
 
 
    /**
-    * Creates a writer instance. Lets the Wirter write only those properties that have values.
+    * Creates a writer instance. Lets the Writer write only those properties that have values.
     *
     * @param filename {@link String} the full name of the destination file (including path).
     * @param odmlSection {@link Section} the root Section of the metadata tree.
@@ -119,8 +118,8 @@ public class Writer implements Serializable {
     *
     * @param file {@link File} the File into which the metadata should be written.
     * @param odmlSection {@link Section}: the rootSection of the odml metadata tree.
-    * @param asTerminology {@link Boolean}: if true also emtpy properties (no value) are written, otherwise
-    *        only non-emty properties are written to disc.
+    * @param asTerminology {@link Boolean}: if true also empty properties (no value) are written, otherwise
+    *        only non-empty properties are written to disc.
     *
     * @deprecated Use combination of {@link #Writer(Section, boolean)} and {@link #write(OutputStream)} instead.
     */
@@ -247,15 +246,16 @@ public class Writer implements Serializable {
 
 
    /**
+    * Creates the Dom document from the section.
     *
     * @param rootSection {@link Section}: the section to start the dom creation.
     * @param asTerminology {@link boolean}: flag to indicate whether Template is used or not
-    * @return {@link boolean}: true if creating Dom successfully, otherwise false
+    *
     */
    private void createDom(Section rootSection, boolean asTerminology) {
       doc = new Document();
-      ProcessingInstruction instruction = null;
-      ProcessingInstruction alternativeInstruction = null;
+      ProcessingInstruction instruction;
+      ProcessingInstruction alternativeInstruction;
       if (asTerminology) {
          alternativeInstruction = new ProcessingInstruction("xml-stylesheet",
                  "type=\"text/xsl\" href=\"odml.xsl\"");
@@ -295,7 +295,7 @@ public class Writer implements Serializable {
          versionElement.setText(version);
          rootElement.addContent(versionElement);
       }
-      String dateString = null;
+      String dateString;
       Date date = dummyRoot.getDocumentDate();
       SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
       if (date != null) {
@@ -535,10 +535,10 @@ public class Writer implements Serializable {
          return false;
       }
       try {
-         org.jdom2.output.Format frmt = org.jdom2.output.Format.getPrettyFormat().setIndent("    ");
-         XMLOutputter outp = new XMLOutputter();
-         outp.setFormat(Format.getPrettyFormat());
-         outp.output(doc, stream);
+         org.jdom2.output.Format format = org.jdom2.output.Format.getPrettyFormat().setIndent("    ");
+         XMLOutputter outputter = new XMLOutputter();
+         outputter.setFormat(Format.getPrettyFormat());
+         outputter.output(doc, stream);
       } catch (IOException ie) {
          System.out.println("Write to file failed: " + ie.getMessage());
          return false;
