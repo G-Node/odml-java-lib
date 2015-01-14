@@ -25,6 +25,8 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -319,6 +321,34 @@ public class Writer implements Serializable {
          appendSection(rootElement, dummyRoot.getSection(i), asTerminology);
       }
    }
+
+   /**
+   /**
+    * Returns the value of a field specified by the field name. Assuming a getter pattern like getFieldName
+    *
+    * @param entity - {@link java.lang.Object} the entity
+    * @param fieldName - {@link java.lang.String} the field name
+    * @return Object the value or null.
+    */
+   private Object getFieldValue(Object entity, String fieldName) {
+      for (Method method : entity.getClass().getDeclaredMethods()) {
+         if (method.getName().toLowerCase().equals(("get" + fieldName).toLowerCase())) {
+            try {
+               return method.invoke(entity);
+            } catch (IllegalAccessException e) {
+               System.out.println("Could not invoke method: " + method.getName() + "on entity " +
+                       entity.getClass().toString());
+            } catch (InvocationTargetException e) {
+               System.out.println("Could not invoke method: " + method.getName() + "on entity " +
+                       entity.getClass().toString());
+            }
+         }
+      }
+      System.out.println("Could not find method " + "get" + fieldName + " in entity of type " +
+              entity.getClass().toString() + " !");
+      return null;
+   }
+
 
    /**
     * Method to append a section-element to the dom-tree.
