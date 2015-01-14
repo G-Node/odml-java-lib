@@ -323,6 +323,23 @@ public class Writer implements Serializable {
    }
 
    /**
+    * Add a new {@link org.jdom2.Element} to a parent Element. If content is not null or empty the toString method is
+    * invoked to store the content.
+    *
+    * @param parent - {@link org.jdom2.Element} the parent Element.
+    * @param name - {@link java.lang.String} the new elements name.
+    * @param content - {@link java.util.Objects} the content.
+    */
+   private void addElement(Element parent, String name, Object content) {
+      if (content == null || content.toString().isEmpty()) {
+         return;
+      }
+      Element element = new Element(name);
+      element.setText(content.toString());
+      parent.addContent(element);
+   }
+
+
    /**
     * Returns the value of a field specified by the field name. Assuming a getter pattern like getFieldName
     *
