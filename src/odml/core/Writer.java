@@ -407,42 +407,12 @@ public class Writer implements Serializable {
          }
       }
       Element propertyElement = new Element("property");
-
-      Element name = new Element("name");
-      name.setText(property.getName());
-      propertyElement.addContent(name);
-
-      Element nameDefinition = new Element("definition");
-      String nameDef = property.getDefinition();
-      if (nameDef != null && !nameDef.isEmpty()) {
-         nameDefinition.setText(nameDef);
-         propertyElement.addContent(nameDefinition);
+      for (String property_field : property_fields) {
+         addElement(propertyElement, property_field, getFieldValue(property, property_field));
       }
-      Element dependency = new Element("dependency");
-      String dep = property.getDependency();
-      if (dep != null && !dep.isEmpty()) {
-         dependency.setText(dep);
-         propertyElement.addContent(dependency);
-      }
-
-      Element dependencyValue = new Element("dependencyValue");
-      String depVal = property.getDependencyValue();
-      if (depVal != null && !depVal.isEmpty()) {
-         dependencyValue.setText(depVal);
-         propertyElement.addContent(dependencyValue);
-      }
-
-      Element mapping = new Element("mapping");
-      URL mapURL = property.getMapping();
-      if (mapURL != null) {
-         mapping.setText(mapURL.toString());
-         propertyElement.addContent(mapping);
-      }
-
       for (int i = 0; i < property.valueCount(); i++) {
          appendValue(propertyElement, property.getWholeValue(i), asTerminology);
       }
-
       parent.addContent(propertyElement);
    }
 
