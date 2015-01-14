@@ -376,49 +376,8 @@ public class Writer implements Serializable {
     */
    private void appendSection(Element parent, Section section, boolean asTemplate) {
       Element sectionElement = new Element("section");
-
-      Element type = new Element("type");
-      type.setText(section.getType());
-      sectionElement.addContent(type);
-
-      Element name = new Element("name");
-      name.setText(section.getName());
-      sectionElement.addContent(name);
-
-      Element nameDefinition = new Element("definition");
-      nameDefinition.setText(section.getDefinition());
-      sectionElement.addContent(nameDefinition);
-
-      Element repository = new Element("repository");
-      URL termUrl = section.getRepository();
-      if (termUrl != null) {
-         repository.setText(termUrl.toString());
-         sectionElement.addContent(repository);
-      }
-
-      Element mapping = new Element("mapping");
-      URL mapUrl = section.getMapping();
-      if (mapUrl != null) {
-         mapping.setText(mapUrl.toString());
-         sectionElement.addContent(mapping);
-      }
-      Element link = new Element("link");
-      String sectionLink = section.getLink();
-      if (sectionLink != null) {
-         link.setText(sectionLink);
-         sectionElement.addContent(link);
-      }
-      Element include = new Element("include");
-      String sectionInclude = section.getInclude();
-      if (sectionInclude != null) {
-         include.setText(sectionInclude);
-         sectionElement.addContent(include);
-      }
-      Element reference = new Element("reference");
-      String sectionReference = section.getReference();
-      if (sectionReference != null) {
-         reference.setText(sectionReference);
-         sectionElement.addContent(reference);
+      for (String section_field : section_fields) {
+         addElement(sectionElement, section_field, getFieldValue(section, section_field));
       }
       for (int i = 0; i < section.propertyCount(); i++) {
          appendProperty(sectionElement, section.getProperty(i), asTemplate);
@@ -428,7 +387,6 @@ public class Writer implements Serializable {
       }
       parent.addContent(sectionElement);
    }
-
 
 
    /**
