@@ -27,10 +27,7 @@ import org.jdom2.output.XMLOutputter;
 import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.System.*;
 
@@ -54,7 +51,12 @@ public class Writer implements Serializable {
    private final static SimpleDateFormat datetimeFormat   = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
    private final static SimpleDateFormat timeFormat       = new SimpleDateFormat("hh:mm:ss");
 
+   private String[] section_fields = {"type","name", "definition", "repository", "mapping", "link",
+           "include", "reference" };
+   private String[] property_fields = {"name", "definition", "dependency", "dependencyValue", "mapping"};
 
+   private String[] value_fields = {"type", "unit", "uncertainty", "definition", "reference", "filename", "encoder",
+           "checksum"};
 
    /**
     * Creates a writer instance. Lets the Writer write only those properties that have values.
