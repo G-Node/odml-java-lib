@@ -57,8 +57,8 @@ public class Writer implements Serializable {
            "include", "reference" };
    private String[] property_fields = {"name", "definition", "dependency", "dependencyValue", "mapping"};
 
-   private String[] value_fields = {"type", "unit", "uncertainty", "definition", "reference", "filename", "encoder",
-           "checksum"};
+   private String[] value_fields = {"content", "type", "unit", "uncertainty", "definition", "reference",
+           "filename", "encoder", "checksum"};
 
    /**
     * Creates a writer instance. Lets the Writer write only those properties that have values.
@@ -428,72 +428,21 @@ public class Writer implements Serializable {
       if (!asTemplate) {
          if (value.getContent() == null || value.getContent().toString().isEmpty()) { return; }
       }
-
       Element valueElement = new Element("value");
-      if (value.getContent() != null && (!value.getContent().toString().isEmpty())) {
-         if (value.getContent() instanceof Date) {
-            Date d = (Date) value.getContent();
+      for (String value_field : value_fields) {
+         Object content = getFieldValue(value, value_field);
+         if (content instanceof Date) {
             if (value.getType().equalsIgnoreCase("date")) {
-               valueElement.setText(dateFormat.format(d));
+               content = dateFormat.format(content);
             } else if (value.getType().equalsIgnoreCase("datetime")) {
-               valueElement.setText(datetimeFormat.format(d));
+               content = datetimeFormat.format(content);
             } else if (value.getType().equalsIgnoreCase("time")) {
-               valueElement.setText(timeFormat.format(d));
+               content = timeFormat.format(content);
             } else {
-               valueElement.setText(value.getContent().toString());
+               content = datetimeFormat.format(content);
             }
-         } else {
-            valueElement.setText(value.getContent().toString());
          }
-      }
-
-      Element typeElement = new Element("type");
-      String type = value.getType();
-      if (type != null && (!type.isEmpty())) {
-         typeElement.setText(type);
-         valueElement.addContent(typeElement);
-      }
-      Element unitElement = new Element("unit");
-      String unit = value.getUnit();
-      if (unit != null && (!unit.isEmpty())) {
-         unitElement.setText(unit);
-         valueElement.addContent(unitElement);
-      }
-      Element errorElement = new Element("uncertainty");
-      Object uncertainty = value.getUncertainty();
-      if (uncertainty != null && (!uncertainty.toString().isEmpty())) {
-         errorElement.setText(uncertainty.toString());
-         valueElement.addContent(errorElement);
-      }
-      Element filenameElement = new Element("filename");
-      String filename = value.getFilename();
-      if (filename != null && (!filename.isEmpty())) {
-         filenameElement.setText(filename);
-         valueElement.addContent(filenameElement);
-      }
-      Element defElement = new Element("definition");
-      String valueDefinition = value.getDefinition();
-      if (valueDefinition != null && (!valueDefinition.isEmpty())) {
-         defElement.setText(valueDefinition);
-         valueElement.addContent(defElement);
-      }
-      Element idElement = new Element("reference");
-      String id = value.getReference();
-      if (id != null && (!id.isEmpty())) {
-         idElement.setText(id);
-         valueElement.addContent(idElement);
-      }
-      Element encoderElement = new Element("encoder");
-      String encoder = value.getEncoder();
-      if (encoder != null && (!encoder.isEmpty())) {
-         encoderElement.setText(encoder);
-         valueElement.addContent(encoderElement);
-      }
-      Element checksumElement = new Element("checksum");
-      String checksum = value.getChecksum();
-      if (checksum != null && (!checksum.isEmpty())) {
-         checksumElement.setText(checksum);
-         valueElement.addContent(checksumElement);
+         addElement(valueElement, value_field, content);
       }
       parent.addContent(valueElement);
    }
