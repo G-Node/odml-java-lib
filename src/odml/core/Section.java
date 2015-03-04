@@ -240,10 +240,8 @@ public class Section extends Object implements Serializable, TreeNode {
 
 
    /**
-    * checking if the ordinarySection is consistent to the given terminology section in aspects of definition,
-    * dependencyURLs, mappingURL, terminologyURL, synonyms If not taking the info of the ordinary section and logging a
-    * warning
-    * 
+    * checking if this Section is consistent with the definition in the terminology. It checks the definition,
+    * dependencyURLs, mappingURL, terminologyURL.
     */
    private void validateSection() {
       if (this.terminology == null)
@@ -274,6 +272,9 @@ public class Section extends Object implements Serializable, TreeNode {
             this.setRepository(this.terminology.getRepository());
             System.out.println("Section repository information updated with terminology information!");
          }
+      }
+      if (this.getProperty("name") != null) {
+         System.out.println("Warning: Section " + this.name + " contains a *name* property. Possible ambiguity with section name?");
       }
    }
 
