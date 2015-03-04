@@ -636,7 +636,6 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          Value toAdd = new Value(value, null);
          this.values.set(index, toAdd);
-         System.out.println("Property.setValueAt: successfully set value at index " + index);
       } catch (Exception e) {
          System.out.println("Property.setValueAt: An exception occurred! " + e.getMessage());
       }
@@ -669,7 +668,6 @@ public class Property implements Serializable, Cloneable, TreeNode {
          if (values.get(i).getContent().equals(value))
             return i;
       }
-      System.out.println("! can't find index of specified value!");
       return -1;
    }
 
@@ -685,10 +683,9 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public int getValueIndex(Object value, int index) {
       for (int i = index; i < values.size(); i++) {
-         if (values.get(i).getContent().equals(value))
-            return i;
+          if (values.get(i).getContent().equals(value))
+              return i;
       }
-      System.out.println("! can't find index of specified value!");
       return -1;
    }
 
@@ -770,7 +767,6 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean removeValue(Object value) {
       if (value == null) {
-         System.out.println("! value for removal must not be null!");
          return false;
       }
       int index = -1;
@@ -778,7 +774,6 @@ public class Property implements Serializable, Cloneable, TreeNode {
          index = getValueIndex(value);
       }
       if (index < 0) {
-         System.out.println("! value for removal not existing!");
          return false;
       }
       this.values.remove(index);
@@ -795,11 +790,9 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public boolean removeValue(int index) {
       if (this.values.size() <= index) {
-         System.out.println("! specified index for removing value out of range!");
          return false;
       }
       if (index < 0) {
-         System.out.println("! specified index for removing value mut be greater than 0 !");
          return false;
       }
       this.values.remove(index);
@@ -942,7 +935,6 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          String reference = this.values.get(index).getReference();
          if (reference != null && reference.isEmpty()) {
-            System.out.println("! no id stored for given value specified by its index!");
             return null;
          }
          return reference;
@@ -1105,7 +1097,6 @@ public class Property implements Serializable, Cloneable, TreeNode {
       try {
          String comment = this.values.get(index).getDefinition();
          if (comment != null && comment.isEmpty()) {
-            // System.out.println("! no valueComment found for value specified by it's index!");
             return null;
          }
          return comment;
@@ -1135,12 +1126,12 @@ public class Property implements Serializable, Cloneable, TreeNode {
     */
    public void merge(Property otherProperty, int mergeOption) {
       if (!this.name.equalsIgnoreCase(otherProperty.getName())) {
-         System.out.println("Property.merge error: cannot merge properties of differnt names!");
+         System.out.println("Property.merge error: cannot merge properties of different names!");
          return;
       }
       if ((this.getType() != null && otherProperty.getType() != null)
             && !this.getType().equalsIgnoreCase(otherProperty.getType())) {
-         System.out.println("Property.merge error: cannot merge properties based with different datatypes!");
+         System.out.println("Property.merge error: cannot merge properties based with different data types!");
          return;
       }
       if ((this.getMapping() != null && otherProperty.getMapping() != null)
@@ -1373,7 +1364,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
       String nameRegex = "^[a-zA-Z].*"; // checking beginning: normal letter, than anything
       if (!name.matches(nameRegex)) {
          name = "P_" + name;
-         System.out.println("Invalid property name:\t'p_' added as no leading character found");
+         System.out.println("Invalid property name:\t'p_' prefix added.");
       }
       return name;
    }
@@ -1643,8 +1634,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    public void setUnit(String unit) {
       if (valueCount() > 1)
          System.out.println("You ask me to set the unit but there are many values. Changed the units for all values!");
-      for (Value value : values) {
-         value.setUnit(unit);
+         for (Value value : values) {
+             value.setUnit(unit);
       }
    }
 
