@@ -911,11 +911,6 @@ public class Section extends Object implements Serializable, TreeNode {
          properties.add(property);
          property.setParent(this);
       }
-
-      if (property.getName().equalsIgnoreCase("name")) {
-         this.setName(property.getValue(0).toString());
-         System.out.println("Section.addProperty: New Property overrides the section name. Section name was replaced!");
-      }
       return propertyCount() - 1;
    }
 
@@ -935,7 +930,7 @@ public class Section extends Object implements Serializable, TreeNode {
       assert property != null : "Property must not be null!";
       Section parent = getSection(path);
       if (parent == null) {
-         System.out.println("!path somehow wrong, no parent for adding porperty found! (path '" + path
+         System.out.println("!path somehow wrong, no parent for adding property found! (path '" + path
                + "')");
          return -1;
       }
