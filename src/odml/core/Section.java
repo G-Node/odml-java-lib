@@ -678,21 +678,10 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return {@link Boolean} whether or not the operation succeeded.
     */
    public boolean setName(String name) {
-      if (name == null) {
-         System.out.println("Section.setName: name must not be null");
+      if (name == null || name.isEmpty()) {
+         System.out.println("Section.setName: name must not be null or empty");
          return false;
       }
-      if (name.isEmpty()) {
-         System.out.println("Section.setName: name must not be empty");
-         return false;
-      }
-      if (containsProperty("name")
-            && !this.getProperty("name").getName().equalsIgnoreCase(this.name)) {
-         System.out.println("Section.setName: provided name is in conflict with the one provided by " +
-                 "the 'name' property! No change done!");
-         return false;
-      }
-
       this.name = name;
       return true;
    }
