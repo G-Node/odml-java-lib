@@ -240,10 +240,8 @@ public class Section extends Object implements Serializable, TreeNode {
 
 
    /**
-    * checking if the ordinarySection is consistent to the given terminology section in aspects of definition,
-    * dependencyURLs, mappingURL, terminologyURL, synonyms If not taking the info of the ordinary section and logging a
-    * warning
-    * 
+    * checking if this Section is consistent with the definition in the terminology. It checks the definition,
+    * dependencyURLs, mappingURL, terminologyURL.
     */
    private void validateSection() {
       if (this.terminology == null)
@@ -274,6 +272,9 @@ public class Section extends Object implements Serializable, TreeNode {
             this.setRepository(this.terminology.getRepository());
             System.out.println("Section repository information updated with terminology information!");
          }
+      }
+      if (this.getProperty("name") != null) {
+         System.out.println("Warning: Section " + this.name + " contains a *name* property. Possible ambiguity with section name?");
       }
    }
 
@@ -677,21 +678,10 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return {@link Boolean} whether or not the operation succeeded.
     */
    public boolean setName(String name) {
-      if (name == null) {
-         System.out.println("Section.setName: name must not be null");
+      if (name == null || name.isEmpty()) {
+         System.out.println("Section.setName: name must not be null or empty");
          return false;
       }
-      if (name.isEmpty()) {
-         System.out.println("Section.setName: name must not be empty");
-         return false;
-      }
-      if (containsProperty("name")
-            && !this.getProperty("name").getName().equalsIgnoreCase(this.name)) {
-         System.out.println("Section.setName: provided name is in conflict with the one provided by " +
-                 "the 'name' property! No change done!");
-         return false;
-      }
-
       this.name = name;
       return true;
    }
@@ -911,11 +901,6 @@ public class Section extends Object implements Serializable, TreeNode {
          properties.add(property);
          property.setParent(this);
       }
-
-      if (property.getName().equalsIgnoreCase("name")) {
-         this.setName(property.getValue(0).toString());
-         System.out.println("Section.addProperty: New Property overrides the section name. Section name was replaced!");
-      }
       return propertyCount() - 1;
    }
 
@@ -935,7 +920,7 @@ public class Section extends Object implements Serializable, TreeNode {
       assert property != null : "Property must not be null!";
       Section parent = getSection(path);
       if (parent == null) {
-         System.out.println("!path somehow wrong, no parent for adding porperty found! (path '" + path
+         System.out.println("!path somehow wrong, no parent for adding property found! (path '" + path
                + "')");
          return -1;
       }
