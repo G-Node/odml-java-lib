@@ -411,10 +411,6 @@ public class Section extends Object implements Serializable, TreeNode {
       Vector<Section> temp = getSectionsByType(type);
       if (temp.size() > 0){
          found = getSectionsByType(type).get(0);
-         if (temp.size() > 1) {
-            System.out.println("Section.getSectionByType: more than one subsection " +
-            "of this type exists > returning first match!");
-         }
       }
       return found;
    }
@@ -430,14 +426,14 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public Vector<Section> getSectionsByType(String type) {
       Vector<Section> temp = new Vector<Section>();
-      for (int i = 0; i < subsections.size(); i++) {
-         String subsectionType = subsections.get(i).getType();
-         if (subsectionType.equalsIgnoreCase(type) || (subsectionType.contains("/") && 
-               subsectionType.substring(0, subsectionType.indexOf("/")).equalsIgnoreCase(
-                     type))) {
-            temp.add(subsections.get(i));
-         }
-      }
+       for (Section subsection : subsections) {
+           String subsectionType = subsection.getType();
+           if (subsectionType.equalsIgnoreCase(type) || (subsectionType.contains("/") &&
+                   subsectionType.substring(0, subsectionType.indexOf("/")).equalsIgnoreCase(
+                           type))) {
+               temp.add(subsection);
+           }
+       }
       return temp;
    }
 
@@ -618,14 +614,13 @@ public class Section extends Object implements Serializable, TreeNode {
          Section s = getSection(name);
          s.getParent().removeSection(this);
       }
-      else{
-         int index = indexOfSection(name);
-         if(index > 0)
-            this.subsections.remove(index);
-         else{
-            System.out.println("Section.removeSection(): Cannot remove section ("+name+")!");
-            return false;
-         }
+      else {
+        int index = indexOfSection(name);
+        if (index > 0) {
+          this.subsections.remove(index);
+        } else {
+          return false;
+        }
       }
       return true;    
    }
@@ -657,12 +652,8 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return - boolean: returns true if successful or false if not.
     */
    public boolean setType(String type) {
-      if (type == null) {
+      if (type == null || type.isEmpty()) {
          System.out.println("Section.setType: type must not be null");
-         return false;
-      }
-      if (type.isEmpty()) {
-         System.out.println("Section.setType: type must not be empty");
          return false;
       }
       this.type = type;
@@ -738,8 +729,7 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public void setRepository(String url) {
       try {
-         URL tempUrl = new URL(url);
-         this.repositoryURL = tempUrl;
+          this.repositoryURL = new URL(url);
       } catch (Exception e) {
          this.repositoryURL = null;
          System.out.println("An error occurred when setting the repository: " + e.getMessage());
@@ -804,13 +794,13 @@ public class Section extends Object implements Serializable, TreeNode {
       Vector<Section> temp = new Vector<Section>();
       Section root = this.getRootSection();
       Vector<Section> candidates = root.findSectionsByType(this.type);
-      for (int i = 0; i < candidates.size(); i++) {
-         if (candidates.get(i).isLinked()) {
-            if (candidates.get(i).getLinkedSection().equals(this)) {
-               temp.add(candidates.get(i));
-            }
-         }
-      }
+       for (Section candidate : candidates) {
+           if (candidate.isLinked()) {
+               if (candidate.getLinkedSection().equals(this)) {
+                   temp.add(candidate);
+               }
+           }
+       }
       return temp;
    }
 
@@ -831,7 +821,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return {@link Boolean}: the linked section
     */
    public Section getLinkedSection() {
-      Section temp = null;
+      Section temp;
       temp = getSection(this.link);
       return temp;
    }
@@ -920,7 +910,7 @@ public class Section extends Object implements Serializable, TreeNode {
       assert property != null : "Property must not be null!";
       Section parent = getSection(path);
       if (parent == null) {
-         System.out.println("!path somehow wrong, no parent for adding property found! (path '" + path
+         System.out.println("!path is wrong! No valid parent found! (path '" + path
                + "')");
          return -1;
       }
@@ -945,7 +935,7 @@ public class Section extends Object implements Serializable, TreeNode {
             if(sp.isValid() && sp.addressesProperty()){
                Property prop = new Property(sp.getPropertyPart(), value);
                Section s = getSection(name);
-               if(prop != null && s != null){
+               if(s != null){
                   index = s.add(prop);
                }
                else{
@@ -1218,13 +1208,11 @@ public class Section extends Object implements Serializable, TreeNode {
          }
       }
       else{
-         Iterator<Property> iter = properties.iterator();
-         while(iter.hasNext()){
-            Property temp = iter.next();
-            if(temp.getName().equalsIgnoreCase(name)){
-               p = temp;
-            }
-         }
+          for (Property temp : properties) {
+              if (temp.getName().equalsIgnoreCase(name)) {
+                  p = temp;
+              }
+          }
       }
       if(p == null){
          if (this.resolveLink())  // search again if the link was resolved
@@ -1250,11 +1238,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return {@link Boolean}: true if this.terminology != null, false otherwise
     */
    public boolean hasTerminology() {
-      if (this.terminology == null)
-         return false;
-      else {
-         return true;
-      }
+       return this.terminology != null;
    }
 
 
@@ -1264,7 +1248,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return {@link URL}: the URL of the terminology may be null.
     */
    public URL getRepository() {
-      URL url = null;
+      URL url;
       if (this.repositoryURL == null && this.parent != null) {
          url = parent.getRepository();
       } else
@@ -1409,12 +1393,11 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return boolean 
     */
    public boolean containsSection(String name){
-      Iterator<Section> iter = subsections.iterator();
-      while (iter.hasNext()){
-         if(iter.next().getName().equalsIgnoreCase(name)){
-            return true;
-         }
-      }
+       for (Section subsection : subsections) {
+           if (subsection.getName().equalsIgnoreCase(name)) {
+               return true;
+           }
+       }
       return false;
    }
 
@@ -1591,8 +1574,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return {@link URL} the mappingURL
     */
    public URL getMapping() {
-      URL url = this.mapping;
-      return url;
+       return this.mapping;
    }
 
 
@@ -1697,9 +1679,9 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    private void optimize() {
       Vector<Section> ref = this.getLinkingSections();
-      for (int i = 0; i < ref.size(); i++) {
-         ref.get(i).optimize();
-      }
+       for (Section aRef : ref) {
+           aRef.optimize();
+       }
       if (this.isLinked()) {
          compareToLink();
       }
@@ -1920,8 +1902,7 @@ public class Section extends Object implements Serializable, TreeNode {
 
    @Override
    public int getChildCount() {
-      int secAndPropCnt = this.sectionCount() + this.propertyCount();
-      return secAndPropCnt;
+       return this.sectionCount() + this.propertyCount();
    }
 
 
@@ -2249,7 +2230,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * @return {@link Section} the root section.
     */
    public Section getRootSection() {
-      Section root = null;
+      Section root;
       if (this.getParent()== null) {
          root = this;
       } else {
