@@ -25,12 +25,11 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.System.*;
 
@@ -54,7 +53,12 @@ public class Writer implements Serializable {
    private final static SimpleDateFormat datetimeFormat   = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
    private final static SimpleDateFormat timeFormat       = new SimpleDateFormat("hh:mm:ss");
 
+   private String[] section_fields = {"type","name", "definition", "repository", "mapping", "link",
+           "include", "reference" };
+   private String[] property_fields = {"name", "definition", "dependency", "dependencyValue", "mapping"};
 
+   private String[] value_fields = {"content", "type", "unit", "uncertainty", "definition", "reference",
+           "filename", "encoder", "checksum"};
 
    /**
     * Creates a writer instance. Lets the Writer write only those properties that have values.
@@ -319,6 +323,51 @@ public class Writer implements Serializable {
    }
 
    /**
+    * Add a new {@link org.jdom2.Element} to a parent Element. If content is not null or empty the toString method is
+    * invoked to store the content.
+    *
+    * @param parent - {@link org.jdom2.Element} the parent Element.
+    * @param name - {@link java.lang.String} the new elements name.
+    * @param content - {@link java.util.Objects} the content.
+    */
+   private void addElement(Element parent, String name, Object content) {
+      if (content == null || content.toString().isEmpty()) {
+         return;
+      }
+      Element element = new Element(name);
+      element.setText(content.toString());
+      parent.addContent(element);
+   }
+
+
+   /**
+    * Returns the value of a field specified by the field name. Assuming a getter pattern like getFieldName
+    *
+    * @param entity - {@link java.lang.Object} the entity
+    * @param fieldName - {@link java.lang.String} the field name
+    * @return Object the value or null.
+    */
+   private Object getFieldValue(Object entity, String fieldName) {
+      for (Method method : entity.getClass().getDeclaredMethods()) {
+         if (method.getName().toLowerCase().equals(("get" + fieldName).toLowerCase())) {
+            try {
+               return method.invoke(entity);
+            } catch (IllegalAccessException e) {
+               System.out.println("Could not invoke method: " + method.getName() + "on entity " +
+                       entity.getClass().toString());
+            } catch (InvocationTargetException e) {
+               System.out.println("Could not invoke method: " + method.getName() + "on entity " +
+                       entity.getClass().toString());
+            }
+         }
+      }
+      System.out.println("Could not find method " + "get" + fieldName + " in entity of type " +
+              entity.getClass().toString() + " !");
+      return null;
+   }
+
+
+   /**
     * Method to append a section-element to the dom-tree.
     * @param parent {@link Element}: the parent where the section shall be appended
     * @param section {@link Section}: the section to append to the parent-element
@@ -327,49 +376,8 @@ public class Writer implements Serializable {
     */
    private void appendSection(Element parent, Section section, boolean asTemplate) {
       Element sectionElement = new Element("section");
-
-      Element type = new Element("type");
-      type.setText(section.getType());
-      sectionElement.addContent(type);
-
-      Element name = new Element("name");
-      name.setText(section.getName());
-      sectionElement.addContent(name);
-
-      Element nameDefinition = new Element("definition");
-      nameDefinition.setText(section.getDefinition());
-      sectionElement.addContent(nameDefinition);
-
-      Element repository = new Element("repository");
-      URL termUrl = section.getRepository();
-      if (termUrl != null) {
-         repository.setText(termUrl.toString());
-         sectionElement.addContent(repository);
-      }
-
-      Element mapping = new Element("mapping");
-      URL mapUrl = section.getMapping();
-      if (mapUrl != null) {
-         mapping.setText(mapUrl.toString());
-         sectionElement.addContent(mapping);
-      }
-      Element link = new Element("link");
-      String sectionLink = section.getLink();
-      if (sectionLink != null) {
-         link.setText(sectionLink);
-         sectionElement.addContent(link);
-      }
-      Element include = new Element("include");
-      String sectionInclude = section.getInclude();
-      if (sectionInclude != null) {
-         include.setText(sectionInclude);
-         sectionElement.addContent(include);
-      }
-      Element reference = new Element("reference");
-      String sectionReference = section.getReference();
-      if (sectionReference != null) {
-         reference.setText(sectionReference);
-         sectionElement.addContent(reference);
+      for (String section_field : section_fields) {
+         addElement(sectionElement, section_field, getFieldValue(section, section_field));
       }
       for (int i = 0; i < section.propertyCount(); i++) {
          appendProperty(sectionElement, section.getProperty(i), asTemplate);
@@ -379,7 +387,6 @@ public class Writer implements Serializable {
       }
       parent.addContent(sectionElement);
    }
-
 
 
    /**
@@ -400,42 +407,12 @@ public class Writer implements Serializable {
          }
       }
       Element propertyElement = new Element("property");
-
-      Element name = new Element("name");
-      name.setText(property.getName());
-      propertyElement.addContent(name);
-
-      Element nameDefinition = new Element("definition");
-      String nameDef = property.getDefinition();
-      if (nameDef != null && !nameDef.isEmpty()) {
-         nameDefinition.setText(nameDef);
-         propertyElement.addContent(nameDefinition);
+      for (String property_field : property_fields) {
+         addElement(propertyElement, property_field, getFieldValue(property, property_field));
       }
-      Element dependency = new Element("dependency");
-      String dep = property.getDependency();
-      if (dep != null && !dep.isEmpty()) {
-         dependency.setText(dep);
-         propertyElement.addContent(dependency);
-      }
-
-      Element dependencyValue = new Element("dependencyValue");
-      String depVal = property.getDependencyValue();
-      if (depVal != null && !depVal.isEmpty()) {
-         dependencyValue.setText(depVal);
-         propertyElement.addContent(dependencyValue);
-      }
-
-      Element mapping = new Element("mapping");
-      URL mapURL = property.getMapping();
-      if (mapURL != null) {
-         mapping.setText(mapURL.toString());
-         propertyElement.addContent(mapping);
-      }
-
       for (int i = 0; i < property.valueCount(); i++) {
          appendValue(propertyElement, property.getWholeValue(i), asTerminology);
       }
-
       parent.addContent(propertyElement);
    }
 
@@ -451,72 +428,21 @@ public class Writer implements Serializable {
       if (!asTemplate) {
          if (value.getContent() == null || value.getContent().toString().isEmpty()) { return; }
       }
-
       Element valueElement = new Element("value");
-      if (value.getContent() != null && (!value.getContent().toString().isEmpty())) {
-         if (value.getContent() instanceof Date) {
-            Date d = (Date) value.getContent();
+      for (String value_field : value_fields) {
+         Object content = getFieldValue(value, value_field);
+         if (content instanceof Date) {
             if (value.getType().equalsIgnoreCase("date")) {
-               valueElement.setText(dateFormat.format(d));
+               content = dateFormat.format(content);
             } else if (value.getType().equalsIgnoreCase("datetime")) {
-               valueElement.setText(datetimeFormat.format(d));
+               content = datetimeFormat.format(content);
             } else if (value.getType().equalsIgnoreCase("time")) {
-               valueElement.setText(timeFormat.format(d));
+               content = timeFormat.format(content);
             } else {
-               valueElement.setText(value.getContent().toString());
+               content = datetimeFormat.format(content);
             }
-         } else {
-            valueElement.setText(value.getContent().toString());
          }
-      }
-
-      Element typeElement = new Element("type");
-      String type = value.getType();
-      if (type != null && (!type.isEmpty())) {
-         typeElement.setText(type);
-         valueElement.addContent(typeElement);
-      }
-      Element unitElement = new Element("unit");
-      String unit = value.getUnit();
-      if (unit != null && (!unit.isEmpty())) {
-         unitElement.setText(unit);
-         valueElement.addContent(unitElement);
-      }
-      Element errorElement = new Element("uncertainty");
-      Object uncertainty = value.getUncertainty();
-      if (uncertainty != null && (!uncertainty.toString().isEmpty())) {
-         errorElement.setText(uncertainty.toString());
-         valueElement.addContent(errorElement);
-      }
-      Element filenameElement = new Element("filename");
-      String filename = value.getFilename();
-      if (filename != null && (!filename.isEmpty())) {
-         filenameElement.setText(filename);
-         valueElement.addContent(filenameElement);
-      }
-      Element defElement = new Element("definition");
-      String valueDefinition = value.getDefinition();
-      if (valueDefinition != null && (!valueDefinition.isEmpty())) {
-         defElement.setText(valueDefinition);
-         valueElement.addContent(defElement);
-      }
-      Element idElement = new Element("reference");
-      String id = value.getReference();
-      if (id != null && (!id.isEmpty())) {
-         idElement.setText(id);
-         valueElement.addContent(idElement);
-      }
-      Element encoderElement = new Element("encoder");
-      String encoder = value.getEncoder();
-      if (encoder != null && (!encoder.isEmpty())) {
-         encoderElement.setText(encoder);
-         valueElement.addContent(encoderElement);
-      }
-      Element checksumElement = new Element("checksum");
-      String checksum = value.getChecksum();
-      if (checksum != null && (!checksum.isEmpty())) {
-         checksumElement.setText(checksum);
-         valueElement.addContent(checksumElement);
+         addElement(valueElement, value_field, content);
       }
       parent.addContent(valueElement);
    }

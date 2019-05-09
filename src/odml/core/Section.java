@@ -1480,7 +1480,6 @@ public class Section extends Object implements Serializable, TreeNode {
     */
    public Section copy() throws IOException, ClassNotFoundException {
       File tempFile = File.createTempFile("section", ".ser");
-      tempFile.deleteOnExit();
       ObjectOutputStream objOut = new ObjectOutputStream(new BufferedOutputStream(
             new FileOutputStream(tempFile)));
       objOut.writeObject(this);
@@ -1491,6 +1490,7 @@ public class Section extends Object implements Serializable, TreeNode {
       Section copy = (Section) objIn.readObject();
       objIn.close();
       copy.setParent(null);
+      tempFile.delete();
       return copy;
    }
 
