@@ -30,9 +30,9 @@ public class Tutorial {
          System.out.println("odml javalib Tutorial: section01");
          System.out.println();
          System.out.println("Create a simple tree...");
-
          System.out.println("Create a section: Section s = new Section(\"myFirstSection\",\"recording\");...");
          s = new Section("myFirstSection","recording");
+
 
          System.out.println("Append a second to s: new Section(s,\"myNextSection\",\"dataset\");...");
          new Section(s,"myNextSection","dataset");

@@ -45,6 +45,7 @@ import java.util.*;
  * @author Jan Grewe, Christine Seitz
  *
  */
+@SuppressWarnings("WeakerAccess")
 public class Property implements Serializable, Cloneable, TreeNode {
 
    private static final long     serialVersionUID = 147L;
@@ -72,10 +73,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Default constructor for creating a property. Only name and the value must be given.
     *
-    * @param name
-    * {@link String}: the name of the new property, mandatory
-    * @param value
-    * {@link Object}: the value the property shall contain, mandatory except for terminologies
+    * @param name {@link String}: the name of the new property, mandatory
+    * @param value {@link Object}: the value the property shall contain, mandatory except for terminologies
     * @throws Exception
     */
    public Property(String name, Object value) throws Exception {
@@ -85,12 +84,9 @@ public class Property implements Serializable, Cloneable, TreeNode {
 
    /**
     *
-    * @param name
-    * {@link String}: the name of the new property, mandatory
-    * @param value
-    * {@link Object}: the value the property shall contain, mandatory except for terminologies
-    * @param type
-    * {@link String}
+    * @param name {@link String}: the name of the new property, mandatory
+    * @param value {@link Object}: the value the property shall contain, mandatory except for terminologies
+    * @param type {@link String}
     * @throws Exception
     */
    public Property(String name, Object value, String type) throws Exception {
@@ -100,16 +96,11 @@ public class Property implements Serializable, Cloneable, TreeNode {
 
    /**
     *
-    * @param name
-    * {@link String}: the name of the new property, mandatory
-    * @param value
-    * {@link Object}: the value the property shall contain, mandatory except for terminologies
-    * @param unit
-    * {@link String}
-    * @param uncertainty
-    * {@link Object}
-    * @param type
-    * {@link String}
+    * @param name {@link String}: the name of the new property, mandatory
+    * @param value {@link Object}: the value the property shall contain, mandatory except for terminologies
+    * @param unit {@link String}
+    * @param uncertainty {@link Object}
+    * @param type {@link String}
     * @throws Exception
     */
    public Property(String name, Object value, String unit, Object uncertainty, String type)
@@ -120,11 +111,11 @@ public class Property implements Serializable, Cloneable, TreeNode {
 
    /**
     * Creates a Property from a Vector containing the property data in the following sequence:
-    * "name","reference","value","unit","uncertainty","type","fileName","valueDefinition","propertyDefinition",
+    * "name","reference","value","unit","uncertainty","type","fileName","valueDefinition",
+    * "propertyDefinition",
     * "dependency","dependencyValue", "synonym","mappingURL"
     *
-    * @param data
-    * {@link Vector} of Objects that contains the data in the sequence as the {@link Property}.columns
+    * @param data {@link Vector} of Objects that contains the data in the sequence as the {@link Property}.columns
     * @throws Exception
     */
    public Property(Vector<Object> data) throws Exception {
@@ -139,18 +130,12 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Creates a Property directly from a Value-Vector; used by the Reader
     *
-    * @param name
-    * {@link String}: the name of the new property, mandatory
-    * @param values
-    * {@link Vector}<Value>: the values the property shall contain, mandatory except for terminologies
-    * @param definition
-    * {@link String}
-    * @param dependency
-    * {@link String}
-    * @param dependencyValue
-    * {@link String}
-    * @param mapping
-    * {@link URL}
+    * @param name {@link String}: the name of the new property, mandatory
+    * @param values {@link Vector}<Value>: the values the property shall contain, mandatory except for terminologies
+    * @param definition {@link String}
+    * @param dependency {@link String}
+    * @param dependencyValue {@link String}
+    * @param mapping {@link URL}
     * @throws Exception
     */
    public Property(String name, Vector<Value> values, String definition, String dependency,
@@ -168,20 +153,13 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Constructor for a property with a single value and according further information. Any of the arguments may be
     * null except for the name of the property.
     *
-    * @param name
-    * {@link String}: the name of the new property, mandatory
-    * @param reference
-    * {@link String}
-    * @param value
-    * {@link String}: the value the property shall contain, mandatory except for terminologies
-    * @param unit
-    * {@link String}
-    * @param uncertainty
-    * {@link Object}
-    * @param type
-    * {@link String}
-    * @param filename
-    * {@link String}
+    * @param name {@link String}: the name of the new property, mandatory
+    * @param reference {@link String}
+    * @param value {@link String}: the value the property shall contain, mandatory except for terminologies
+    * @param unit {@link String}
+    * @param uncertainty {@link Object}
+    * @param type {@link String}
+    * @param filename {@link String}
     * @param definition {@link String}
     * @param valueDefinition {@link String}
     * @param dependency {@link String}
@@ -216,10 +194,10 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * @param values {@link Vector} that will be stored in the values.
     * @param references {@link Vector} of Strings, the references of the Values
     * @param unit {@link String}: The unit of the values. 
-    * @param uncertainties {@link Vector}<Object> vector of value uncertainties.
+    * @param uncertainties {@link Vector} of {@link Object} vector of value uncertainties.
     * @param type {@link String} value data type. There is only one type since mixing different types is not allowed.
-    * @param fileNames {@link Vector}<Object>:  vector of file names
-    * @param valueDefinitions {@link Vector}<String>: Vector of value definitions. 
+    * @param fileNames {@link Vector} {@link Object}:  vector of file names
+    * @param valueDefinitions {@link Vector} {@link String}: Vector of value definitions.
     * @param definition {@link String} The property definition
     * @param dependency {@link String} Property dependence.
     * @param dependencyValue {@link String} the value the dependence Property should have.
@@ -271,11 +249,11 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Called by the Property-constructor to initialize the given components, i.e. checking for isEmpty or ==null (doing
     * nothing when so except for mandatory name, there throwing error)
     *
-    * @param name {@link String} : the Property name.
-    * @param values {@link Vector}<Object>: A Vector of values.
-    * @param definition String the definition of the property
-    * @param dependency String
-    * @param dependencyValue String
+    * @param name {@link String}: the Property name.
+    * @param values {@link Vector} of {@link Object}: A Vector of values.
+    * @param definition {@link String}the definition of the property
+    * @param dependency {@link String}
+    * @param dependencyValue {@link String}
     * @param mapping {@link URL}
     * @throws Exception
     */
@@ -299,8 +277,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Sets the parent section of this property.
     *
-    * @param section
-    * {@link Section} the parent section. Can be null.
+    * @param section {@link Section} the parent section. Can be null.
     */
    public void setParent(Section section) {
       this.parentSection = section;
@@ -320,8 +297,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Set the name of the property
     *
-    * @param name
-    * {@link String} the name of the property.
+    * @param name {@link String} the name of the property.
     */
    public void setName(String name) {
       this.name = name;
@@ -342,8 +318,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Set the definition of this property, i.e. the definition that tells what this property means. Can also be used
     * for removing the definition by passing null.
     *
-    * @param definition
-    * {@link String} the definition. May be used to remove it.
+    * @param definition {@link String} the definition. May be used to remove it.
     */
    public void setDefinition(String definition) {
       if (definition != null)
@@ -404,8 +379,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Returns the content of the i-th value as {@link Float}. If the content cannot be converted to float Float.NaN is
     * returned.
     *
-    * @param i
-    * {@link Integer} the value index.
+    * @param i {@link Integer} the value index.
     * @return {@link Float} the converted contend, or Float.NaN if conversion fails.
     */
    public double getNumber(int i) {
@@ -436,8 +410,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Returns the i-th value's content as {@link String}.
     *
-    * @param i
-    * {@link Integer} the value index.
+    * @param i {@link Integer} the value index.
     * @return {@link String} the content as text.
     */
    public String getText(int i) {
@@ -458,8 +431,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Returns the date component of i-th value's content if possible. Null otherwise.
     *
-    * @param i
-    * {@link Integer} the value index.
+    * @param i {@link Integer} the value index.
     * @return {@link Date} the date component if possible (yyyy-MM-dd format). Null, otherwise.
     */
    public Date getDate(int i) {
@@ -486,8 +458,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Returns the time component of i-th value's content if possible. Null otherwise.
     *
-    * @param i
-    * {@link Integer} the value index.
+    * @param i {@link Integer} the value index.
     * @return {@link Date} the time component if possible (HH:mm:ss format). Null, otherwise.
     */
    public Date getTime(int i) {
@@ -532,20 +503,13 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * property. All arguments except the value can be null or empty. Method also checks whether type of value to add is
     * same, if not throwing warning as not known which type is correct as already existing ones
     *
-    * @param value
-    * {@link Object}: the new value = value-content.
-    * @param id
-    * {@link String}: the id of the value
-    * @param unit
-    * {@link String}
-    * @param uncertainty
-    * {@link Object}: the error estimation of this value.
-    * @param type
-    * {@link String}
-    * @param filename
-    * {@link String}: the default filename which is only of use when binary data is stored.
-    * @param comment
-    * {@link String}: the definition of this value. * @return {@link Boolean}: true if the operation
+    * @param value {@link Object}: the new value = value-content.
+    * @param id {@link String}: the id of the value
+    * @param unit {@link String}
+    * @param uncertainty {@link Object}: the error estimation of this value.
+    * @param type {@link String}
+    * @param filename {@link String}: the default filename which is only of use when binary data is stored.
+    * @param comment {@link String}: the definition of this value. * @return {@link Boolean}: true if the operation
     * succeeded. False if the value is null, or the value already exists in the property.
     */
    public boolean addValue(Object value, String id, String unit, Object uncertainty, String type,
@@ -589,8 +553,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Adds new Values (i.e. instances of class) to the property. Function appends all values stored within the passed
     * property.
     *
-    * @param property
-    * {@link Property}: the property to append.
+    * @param property {@link Property}: the property to append.
     */
    public void addValue(Property property) {
       for (int i = 0; i < property.valueCount(); i++) {
@@ -605,8 +568,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Set the value = value-content of this property. Overwrites old content. Only works for properties with a single
     * value.
     *
-    * @param value
-    * {@link Object}; the new value = value-content.
+    * @param value {@link Object}; the new value = value-content.
     * @return {@link Boolean} true if operation succeeded, false if more than on value = value-content is stored.
     */
    public boolean setValue(Object value) {
@@ -621,10 +583,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Set the value = value-content at a specific position in the values vector.
     *
-    * @param value
-    * {@link Object} the value = value-content
-    * @param index
-    * {@link Integer} the index
+    * @param value {@link Object} the value = value-content
+    * @param index {@link Integer} the index
     * @return {@link Boolean} true if operation was successful, flase otherwise e.g. in case the index is out of
     * bounds.
     */
@@ -659,8 +619,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Get the index of a certain value.
     *
-    * @param value
-    * {@link Value}: the value of which the index should be returned.
+    * @param value {@link Value}: the value of which the index should be returned.
     * @return {@link Integer}: the values index or -1 if the value does not exist.
     */
    public int getValueIndex(Object value) {
@@ -675,10 +634,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Get the index of a value. Searches forward starting at index.
     *
-    * @param value
-    * {@link Value} the value to look for.
-    * @param index
-    * {@link Integer}: the start index of the search.
+    * @param value {@link Value} the value to look for.
+    * @param index {@link Integer}: the start index of the search.
     * @return {@link Integer}: the index or -1 if the value was not found.
     */
    public int getValueIndex(Object value, int index) {
@@ -717,8 +674,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Get a certain value = value-content identified by its index.
     *
-    * @param index
-    * {@link Integer}: the index of the value.
+    * @param index {@link Integer}: the index of the value.
     * @return {@link Object}: the value or null if the index is out of bounds.
     */
    public Object getValue(int index) {
@@ -744,8 +700,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Get a certain value of class Value (meaning with all it's details) identified by its index.
     *
-    * @param index
-    * {@link Integer}: the index of the value.
+    * @param index {@link Integer}: the index of the value.
     * @return {@link Value}: the value or null if the index is out of bounds.
     */
    public Value getWholeValue(int index) {
@@ -761,8 +716,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Removes a certain value from this property.
     *
-    * @param value
-    * {@link Value}: the value to be deleted.
+    * @param value {@link Value}: the value to be deleted.
     * @return {@link Boolean} true if removal was successful, false if not.
     */
    public boolean removeValue(Object value) {
@@ -784,8 +738,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Removes the value at the specified index from the property.
     *
-    * @param index
-    * {@link Integer}: the index.
+    * @param index {@link Integer}: the index.
     * @return {@link Boolean}: true if removal was successful, false if index out of bounds.
     */
    public boolean removeValue(int index) {
@@ -831,8 +784,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Sets the value reference of this property.
     *
-    * @param reference
-    * {@link String}: the definition.
+    * @param reference {@link String}: the definition.
     * @return {@link Boolean} true if operation succeeded, false if there is more than a single value stored in this
     * property.
     */
@@ -850,8 +802,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Sets the value id of this property.
     *
     * Function is marked @deprecated and will be removed!
-    * @param id
-    * {@link String}: the definition.
+    * @param id {@link String}: the definition.
     * @return {@link Boolean} true if operation succeeded, false if there is more than a single value stored in this
     * property.
     * 
@@ -867,10 +818,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
     *
     * Function in marked @deprecated and will be removed in future versions.
     * 
-    * @param id
-    * {@link String}: the new value id.
-    * @param index
-    * {@link Integer}: the index of the value to which the id belongs.
+    * @param id  {@link String}: the new value id.
+    * @param index {@link Integer}: the index of the value to which the id belongs.
     * @return {@link Boolean}: true if new id was set, false if index out of bounds.
     */
    @Deprecated
@@ -882,10 +831,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Set the value reference of a value specified by its index. Overwrites old information.
     *
-    * @param reference
-    * {@link String}: the new value id.
-    * @param index
-    * {@link Integer}: the index of the value to which the id belongs.
+    * @param reference {@link String}: the new value id.
+    * @param index {@link Integer}: the index of the value to which the id belongs.
     * @return {@link Boolean}: true if new id was set, false if index out of bounds.
     */
    public boolean setValueReferenceAt(String reference, int index) {
@@ -948,8 +895,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Sets the Error estimate of this value.
     *
-    * @param uncertainty
-    * {@link Object} the uncertainty of the first value.
+    * @param uncertainty {@link Object} the uncertainty of the first value.
     * @return {@link Boolean} true if operation succeeded, false if there is more than a single value stored in this
     * property.
     */
@@ -965,10 +911,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Set the error of a value specified by its index. Overwrites old information.
     *
-    * @param uncertainty
-    * {@link Object}: the new error estimate.
-    * @param index
-    * {@link Integer}: the index of the value to which the error belongs.
+    * @param uncertainty {@link Object}: the new error estimate.
+    * @param index {@link Integer}: the index of the value to which the error belongs.
     * @return {@link Boolean}: true if new error was set, false if index out of bounds.
     */
    public boolean setValueUncertaintyAt(Object uncertainty, int index) {
@@ -1014,8 +958,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Get the uncertainty estimation stored for a certain value defined by its index.
     *
-    * @param index
-    * {@link Integer}: the index in the values vector.
+    * @param index {@link Integer}: the index in the values vector.
     * @return {@link Object}: the according uncertainty value if existing. An empty String if no error stored or null
     * if the index is out of range.
     */
@@ -1039,8 +982,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Sets the value definition of this property.
     *
-    * @param definition
-    * {@link String}: the definition.
+    * @param definition {@link String}: the definition.
     * @return {@link Boolean} true if operation succeeded, false if there is more than a single value stored in this
     * property.
     */
@@ -1056,10 +998,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Set the value definition of a value specified by its index. Overwrites old information.
     *
-    * @param definition
-    * {@link String}: the new value definition.
-    * @param index
-    * {@link Integer}: the index of the value to which the definition belongs.
+    * @param definition {@link String}: the new value definition.
+    * @param index {@link Integer}: the index of the value to which the definition belongs.
     * @return {@link Boolean}: true if new definition was set, false if index out of bounds.
     */
    public boolean setValueDefinitionAt(String definition, int index) {
@@ -1118,10 +1058,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * will be fused.</li>
     * </ol>
     *
-    * @param otherProperty
-    * {@link Property} the other Property which shall be merged with this property.
-    * @param mergeOption
-    * {@link Integer} the way merging is done.
+    * @param otherProperty {@link Property} the other Property which shall be merged with this property.
+    * @param mergeOption {@link Integer} the way merging is done.
     *
     */
    public void merge(Property otherProperty, int mergeOption) {
@@ -1348,8 +1286,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Checking name and if necessary converting to CamelCase leading characters that are not alphabetical get P_ at the
     * beginning
     *
-    * @param name
-    * {@link String} the requested property name
+    * @param name {@link String} the requested property name
     * @return {@link String} the converted name or the original if all is ok.
     */
    public static String checkNameStyle(String name) {
@@ -1420,9 +1357,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Returns the property as an Vector of Objects. The index of the value must be given.
     *
-    * @param index
-    * {@link Integer}: the index of the selected value.
-    * @return Vector<Object> the content of this property and the specified value. If index out of bounds null is
+    * @param index {@link Integer}: the index of the selected value.
+    * @return {@link Vector} of {@link Object} the content of this property and the specified value. If index out of bounds null is
     * returned.
     */
    public Vector<Object> getPropertyAsVector(int index) {
@@ -1524,8 +1460,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Returns the filename information stored in the specified value defined by the index.
     *
-    * @param index
-    * {@link Integer}: the index to specify which filename shall be returned (i.e. from which value)
+    * @param index {@link Integer}: the index to specify which filename shall be returned (i.e. from which value)
     * @return {@link String}: the filename or null if empty.
     */
    public String getValueFilename(int index) {
@@ -1628,8 +1563,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Careful! Sets all units of this property (i.e. of all values) to the same content! Overwrites old content!
     *
-    * @param unit
-    * {@link String} the new unit.
+    * @param unit {@link String} the new unit.
     */
    public void setUnit(String unit) {
       if (valueCount() > 1)
@@ -1653,8 +1587,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Setting the unit of the value specified by an index to the new unit; Overwrites old content!
     *
-    * @param unit
-    * {@link String} the new unit.
+    * @param unit {@link String} the new unit.
     */
    public void setUnitAt(String unit, int index) {
       values.get(index).setUnit(unit);
@@ -1664,8 +1597,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Careful! Sets the datatype of this property. Overwrites old content!
     *
-    * @param type
-    * {@link String}: the type of data represented by this property.
+    * @param type {@link String}: the type of data represented by this property.
     */
    public void setType(String type) {
       for (Value value : values) {
@@ -1678,8 +1610,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Set the parent of this property. Parents indicate that this property is only meaningful once the parent property
     * is specified.Overwrites old content!
     *
-    * @param dependency
-    * {@link String}: the parent of this property
+    * @param dependency {@link String}: the parent of this property
     */
    public void setDependency(String dependency) {
       if (dependency != null)
@@ -1692,8 +1623,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Set the value of the parent property that makes this property meaningful. Overwrites old content!
     *
-    * @param dependencyValue
-    * {@link String}: the parentValue.
+    * @param dependencyValue {@link String}: the parentValue.
     */
    public void setDependencyValue(String dependencyValue) {
       if (dependencyValue != null)
@@ -1706,8 +1636,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Set the reference of this property. Only working if not more than one value existing!
     *
-    * @param reference
-    * {@link String}: The identifier of the property.
+    * @param reference {@link String}: The identifier of the property.
     * @return {@link Boolean} true if operation succeeded, false if more than one value existing
     */
    public boolean setReference(String reference) {
@@ -1728,8 +1657,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Sets the value mime type of this property.
     *
-    * @param filename
-    * {@link String}: the definition.
+    * @param filename {@link String}: the definition.
     * @return {@link Boolean} true if operation succeeded, false if there is more than a single value stored in this
     * property.
     */
@@ -1769,10 +1697,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Set the value filename of a value specified by its index. Overwrites old information.
     *
-    * @param filename
-    * {@link String}: the default file name which should be used when saving the object.
-    * @param index
-    * {@link Integer}: the index of the value to which the filename belongs.
+    * @param filename {@link String}: the default file name which should be used when saving the object.
+    * @param index {@link Integer}: the index of the value to which the filename belongs.
     * @return {@link Boolean}: true if new name was set, false if index out of bounds.
     * 
     * Function marked as @deprecated use setValueFilenameAt instead
@@ -1796,10 +1722,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Set the filename associated with the binary content of value specified by index. 
     * Overwrites old information.
     *
-    * @param filename
-    * {@link String}: the default file name which should be used when saving the object.
-    * @param index
-    * {@link Integer}: the index of the value to which the filename belongs.
+    * @param filename {@link String}: the default file name which should be used when saving the object.
+    * @param index {@link Integer}: the index of the value to which the filename belongs.
     * @return {@link Boolean}: true if new name was set, false if index out of bounds.
     * 
     */
@@ -1821,8 +1745,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Function to convert the content of the indicated file to an array of bytes. Is primarily for internal use to
     * Base64 encode binary data.
     *
-    * @param file
-    * {@link File}: the file to convert.
+    * @param file {@link File}: the file to convert.
     * @return byte[]: the array of bytes contained in the file.
     * @throws IOException
     */
@@ -1835,11 +1758,9 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Writes the value of this property (if of type binary) to disc. In case there is more than one value stored, the
     * first is written to disc.
     *
-    * @param filename
-    * {@link String}: the full path of the new file.
+    * @param filename {@link String}: the full path of the new file.
     */
    public void writeBinaryToDisc(String filename) throws Exception {
-
       File outFile = new File(filename);
       if (outFile.isDirectory()) {
          if (values.get(0).getFilename().isEmpty()) {
@@ -1855,10 +1776,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Writes the identified value of this property (if of type binary) to disc.
     *
-    * @param filename
-    * {@link String}: the full path of the new file.
-    * @param index
-    * {@link Integer}: the value index.
+    * @param filename {@link String}: the full path of the new file.
+    * @param index {@link Integer}: the value index.
     */
    public void writeBinaryToDisc(String filename, int index) {
       try {
@@ -1874,8 +1793,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Writes the value of this property (if of type binary) to disc. In case there is more than one value stored, the
     * first is written to disc.
     *
-    * @param fileUrl
-    * {@link URL}: the URL of the file.
+    * @param fileUrl {@link URL}: the URL of the file.
     */
    public void writeBinaryToDisc(URL fileUrl) {
       try {
@@ -1890,10 +1808,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Writes the identified value of this property (if of type binary) to disc.
     *
-    * @param fileUrl
-    * {@link URL}: the URL of the file.
-    * @param index
-    * {@link Integer}: the value index.
+    * @param fileUrl {@link URL}: the URL of the file.
+    * @param index {@link Integer}: the value index.
     */
    public void writeBinaryToDisc(URL fileUrl, int index) {
       try {
@@ -1909,8 +1825,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Writes the value of this property (if of type binary) to disc. In case there is more than one value stored, the
     * first is written to disc.
     *
-    * @param fileUri
-    * {@link URI}: THe file URI.
+    * @param fileUri {@link URI}: THe file URI.
     */
    public void writeBinaryToDisc(URI fileUri) {
       try {
@@ -1925,10 +1840,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Write the content of the given property value to disc
     *
-    * @param fileUri
-    * {@link URI}: THe file URI.
-    * @param index
-    * {@link Integer}: the value index.
+    * @param fileUri {@link URI}: THe file URI.
+    * @param index {@link Integer}: the value index.
     */
    public void writeBinaryToDisc(URI fileUri, int index) {
       try {
@@ -1943,10 +1856,8 @@ public class Property implements Serializable, Cloneable, TreeNode {
    /**
     * Write the property content to disc. Function calls public method writeBinaryToDisc.
     *
-    * @param outFile
-    * {@link File}: the File to which the content has to be written.
-    * @param index
-    * {@link Integer}: the index of the value.
+    * @param outFile {@link File}: the File to which the content has to be written.
+    * @param index {@link Integer}: the index of the value.
     */
    private void writeBinary(File outFile, int index) throws Exception {
       if (!this.values.get(0).getType().equalsIgnoreCase("binary")) {

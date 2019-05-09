@@ -49,8 +49,7 @@ public class Reader implements Serializable {
    Vector<Section>               includes         = new Vector<Section>();
    private URL                   fileUrl;
    boolean                       loadIncludes     = false;
-   public static int             NO_CONVERSION    = 1, FULL_CONVERSION = 3, LOAD_AND_RESOLVE = 2,
-           NO_VALIDATION = 4, VALIDATE = 5;
+   public static int             NO_CONVERSION = 1, FULL_CONVERSION = 3, LOAD_AND_RESOLVE = 2, NO_VALIDATION = 4, VALIDATE = 5;
 
 
    public Reader() {
@@ -70,8 +69,10 @@ public class Reader implements Serializable {
    
    
    /**
-    * Reads the odML document from the given InputStream and returns the root section of the odML tree.
-    * This method does not load includes, does not resolve links and does not apply mapping information.
+    * Reads the odML document from the given InputStream and returns the root section
+    * of the odML tree.
+    * This method does not load includes, does not resolve links and does not apply
+    * mapping information.
     * 
     * @param stream the input stream
     * @return {@link Section} the root section of the metadata tree loaded from the input stream

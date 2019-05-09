@@ -399,11 +399,11 @@ public class Section extends Object implements Serializable, TreeNode {
 
 
    /**
-    * Return a child section that matches the requested type. Method does not crawl through the rest of the tree. Use
+    * Return the first(!) child section that matches the requested
+    * type. Method does not crawl through the rest of the tree. Use
     * FindSectionByType, instead.
-    * 
-    * @param type
-    *            {@link String} the type of the desired section.
+    *
+    * @param type {@link String} the type of the desired section.
     * @return {@link Section} the found subsection or null;
     */
    public Section getSectionByType(String type) {
@@ -682,7 +682,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * Set the reference element of the {@link Section}. the reference can be used to point to an entity e.g. defined in
     * a database.
     * 
-    * @param reference
+    * @param reference {@link String} defining an entity defined outsides the odml File
     */
    public void setReference(String reference) {
       this.reference = reference;
@@ -2312,7 +2312,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Defines that this section is a terminology.
     * 
-    * @param isTerminology
+    * @param isTerminology {@link boolean} whether this section is a terminology, i.e. empty properties are stored.
     */
    public void setAsTerminology(boolean isTerminology) {
       this.isTerminology = isTerminology;
