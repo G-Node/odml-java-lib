@@ -11,7 +11,7 @@ package odml.core;
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License along with this software. If not, see
- * <http://www.gnu.org/licenses/>.
+ * <a href="http://gnu.org/licenses">http://gnu.org/licenses</a>.
  */
 
 import odml.util.Mapper;
@@ -116,11 +116,11 @@ public class Reader implements Serializable {
 
 
    /**
-    * Reads a metadata file from the specified url. Function behavior can be controlled using the option parameter: <li>
+    * Reads a metadata file from the specified url. Function behavior can be controlled using the option parameter: <ol><li>
     * NO_CONVERSION : 1. Does nothing else but reading the file and returning the odml tree as defined in the file.</li>
     * <li>LOAD_AND_RESOLVE: 2. Load the file and all external information (defined in the include element) and resolve
     * links.</li> <li>FULL_CONVERSION : 3. loads the file, load external information (defined in the include element)
-    * and resolves links between sections and applies mappings.</li>
+    * and resolves links between sections and applies mappings.</li></ol>
     * 
     * @param file
     *            {@link String} the url of the metadata file.

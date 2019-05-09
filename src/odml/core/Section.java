@@ -11,7 +11,7 @@ package odml.core;
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License along with this software. If not, see
- * <http://www.gnu.org/licenses/>.
+ * <a href="http://gnu.org/licenses">http://gnu.org/licenses</a>
  */
 import odml.util.SectionPath;
 import odml.util.TerminologyManager;
@@ -331,8 +331,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns a subsection as defined by the index.
     * 
-    * @param index
-    *            - int: the index of the requested subsection (i.e. position subsection-array)
+    * @param index int: the index of the requested subsection (i.e. position subsection-array)
     * @return the section of that index or null if index not valid.
     */
    public Section getSection(int index) {
@@ -348,8 +347,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns the first section with its name matching the argument. Matching is case-insensitive.
     * 
-    * @param name
-    *            - {@link String}: the name of the target section. May be a path.
+    * @param name {@link String}: the name of the target section. May be a path.
     * @return the first section matching with its name
     */
    public  Section getSection(String name) {
@@ -388,7 +386,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns all first level subsections.
     * 
-    * @return Vector<Section>: the subsections or null if no subsections.
+    * @return Vector of {@link Section}: the subsections or null if no subsections.
     */
    public Vector<Section> getSections() {
       if (subsections.size() == 0) {
@@ -420,9 +418,8 @@ public class Section extends Object implements Serializable, TreeNode {
     * Returns a Vector of subsections of the requested type. Matching is case-insensitive. <b>Note:</b> function
     * returns those matches in which the search type is super-type (e.g. stimulus/white_noise).
     * 
-    * @param type
-    *            - {@link String}: the type of subsections.
-    * @return Vector<Section> the matching sections or an empty {@link Vector}.
+    * @param type {@link String}: the type of subsections.
+    * @return Vector of {@link Section} the matching sections or an empty {@link Vector}.
     */
    public Vector<Section> getSectionsByType(String type) {
       Vector<Section> temp = new Vector<Section>();
@@ -443,8 +440,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * crawls down all subsection. Returns the first occurrence! If name is a path this method is equivalent to
     * getSection(name).
     * 
-    * @param name
-    *            String the section name.
+    * @param name String the section name.
     * @return The found section or null.
     */
    public Section findSection(String name) {
@@ -465,8 +461,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Finds the first child {@link Section} matching the requested type.
     * 
-    * @param type
-    *            {@link String} the type of the section.
+    * @param type {@link String} the type of the section.
     * @return {@link Section} the section or null;
     */
    public Section findSectionByType(String type) {
@@ -488,8 +483,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Finds all child sections of the specified type. Recursively cycles down the tree.
     * 
-    * @param type
-    *            {@link String} the type of sections.
+    * @param type {@link String} the type of sections.
     * @return {@link Vector} of {@link Section}s, may be empty
     */
    public Vector<Section> findSectionsByType(String type) {
@@ -505,8 +499,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * Returns that Section of the specified type that has the strongest relation to this section. Section relations
     * rate from children over siblings to parents, their siblings, grandparents, their siblings and so on...
     * 
-    * @param type
-    *            {@link String} the type of the target section.
+    * @param type {@link String} the type of the target section.
     * @return The first matching {@link Section};
     */
    public Section getRelatedSection(String type) {
@@ -533,8 +526,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * strengths decrease from children over siblings to parents, their siblings, grandparents, their siblings and so
     * on... Sections with equal relation strength are returned. That means that they are siblings.
     * 
-    * @param type
-    *            {@link String}: The section type like 'stimulus'.
+    * @param type {@link String}: The section type like 'stimulus'.
     * @return {@link Vector} of {@link Section}s which may be empty.
     */
    public Vector<Section> getRelatedSections(String type) {
@@ -576,8 +568,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Removes the subsection at the given index.
     * 
-    * @param index
-    *            {@link Integer} the index of the section.
+    * @param index {@link Integer} the index of the section.
     */
    public boolean removeSection(int index) {
       try {
@@ -593,8 +584,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Deletes a section from the tree.
     * 
-    * @param section
-    *            {@link Section} the section that should be deleted.
+    * @param section {@link Section} the section that should be deleted.
     * @return {@link Boolean} true if operation succeeded. False otherwise.
     */
    public boolean removeSection(Section section) {
@@ -605,8 +595,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Removes the first subsection that matches the specified name. Name can also be a path. 
     * 
-    * @param name
-    *            - {@link String}: the name of the subsection accordingly the path (e.g. sec/subsec/toRemoveSec
+    * @param name {@link String}: the name of the subsection accordingly the path (e.g. sec/subsec/toRemoveSec
     * @return boolean: true if removing successful, false otherwise
     */
    public boolean removeSection(String name) {
@@ -647,9 +636,8 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Sets the type of the section.
     * 
-    * @param type
-    *            - {@link String}: the new type of this section.
-    * @return - boolean: returns true if successful or false if not.
+    * @param type {@link String}: the new type of this section.
+    * @return boolean: returns true if successful or false if not.
     */
    public boolean setType(String type) {
       if (type == null || type.isEmpty()) {
@@ -664,8 +652,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Set the name of the section.
     * 
-    * @param name
-    *            {@link String} the new name.
+    * @param name {@link String} the new name.
     * @return {@link Boolean} whether or not the operation succeeded.
     */
    public boolean setName(String name) {
@@ -702,8 +689,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Sets the description of this section.
     * 
-    * @param definition
-    *            - String: the new description of this section.
+    * @param definition String: the new description of this section.
     */
    public void setDefinition(String definition) {
       this.definition = definition;
@@ -713,8 +699,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Sets the parent for this section
     * 
-    * @param parent
-    *            {@link Section}: the parent that shall be set for the current section
+    * @param parent {@link Section}: the parent that shall be set for the current section
     */
    private void setParent(Section parent) {
       this.parent = parent;
@@ -987,10 +972,9 @@ public class Section extends Object implements Serializable, TreeNode {
 
 
    /**
-    * Removes the property defined by its index the properties that are stored in this section.
+    * Removes the property defined by its index.
     * 
-    * @param index
-    *            {@link Integer} : the index of the property. With -1<index<getPropertyCount().
+    * @param index {@link Integer} : the index of the property. With index less than getPropertyCount().
     * @return {@link Boolean} :true if operation succeeded and false otherwise.
     */
    public boolean removeProperty(int index) {
@@ -1032,9 +1016,8 @@ public class Section extends Object implements Serializable, TreeNode {
 
    /**
     * Returns the property with this index.
-    * 
-    * @param index
-    *            - int: the index in the properties vector.
+    *
+    * @param index int: the index in the properties vector.
     * @return {@link Property}: the property or null if index exceeds the propertyCount.
     */
    public Property getProperty(int index) {
@@ -1053,9 +1036,8 @@ public class Section extends Object implements Serializable, TreeNode {
     * section-name meaning path beginning from current section. In case no direct match is found method also checks the
     * synonyms. The first match is returned. Identical for search via path, just changing position in tree.
     * 
-    * @param name
-    *            - {@link String}: the name of the searched property.
-    * @return - {@link Property}: the first matching property or null if no match found.
+    * @param name {@link String}: the name of the searched property.
+    * @return {@link Property}: the first matching property or null if no match found.
     */
    public Property getProperty(String name) {
       return getProperty(name, true);
@@ -1065,8 +1047,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns the date component of the first value's content of the defined property.
     * 
-    * @param propertyName
-    *            {@link String} the propertyName or path.
+    * @param propertyName {@link String} the propertyName or path.
     * @return {@link Date} the date component or null if property not found or conversion fails.
     */
    public Date getDate(String propertyName) {
@@ -1077,10 +1058,8 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns the date component of the i-th value's content of the defined property.
     * 
-    * @param propertyName
-    *            {@link String} the propertyName or path.
-    * @param i
-    *            {@link Integer} the value index.
+    * @param propertyName {@link String} the propertyName or path.
+    * @param i {@link Integer} the value index.
     * @return {@link Date} the date component or null if property not found or conversion fails.
     */
    public Date getDate(String propertyName, int i) {
@@ -1095,8 +1074,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns the time component of the first value's content of the defined property.
     * 
-    * @param propertyName
-    *            {@link String} the propertyName or path.
+    * @param propertyName {@link String} the propertyName or path.
     * @return {@link Date} the time component or null if property not found or conversion fails.
     */
    public Date getTime(String propertyName) {
@@ -1107,10 +1085,8 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns the time component of the i-th value's content of the defined property.
     * 
-    * @param propertyName
-    *            {@link String} the propertyName or path.
-    * @param index
-    *            {@link Integer} the value index.
+    * @param propertyName {@link String} the propertyName or path.
+    * @param index {@link Integer} the value index.
     * @return {@link Date} the time component or null if property not found or conversion fails.
     */
    public Date getTime(String propertyName, int index) {
@@ -1125,8 +1101,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns the first value's content of the defined property as text.
     * 
-    * @param propertyName
-    *            {@link String} the propertyName or path.
+    * @param propertyName {@link String} the propertyName or path.
     * @return {@link String} the text content or null if property not found or conversion fails.
     */
    public String getText(String propertyName) {
@@ -1137,10 +1112,8 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns the i-th value's text content of the defined property.
     * 
-    * @param propertyName
-    *            {@link String} the propertyName or path.
-    * @param index
-    *            {@link Integer} the value index.
+    * @param propertyName {@link String} the propertyName or path.
+    * @param index {@link Integer} the value index.
     * @return {@link String} the text content or null if property not found or conversion fails.
     */
    public String getText(String propertyName, int index) {
@@ -1155,8 +1128,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns the first value's content as Float of the defined property.
     * 
-    * @param propertyName
-    *            {@link String} the propertyName or path.
+    * @param propertyName {@link String} the propertyName or path.
     * @return {@link Float} the content as Float, Float.NaN if conversion fails or null if property not found.
     */
    public double getNumber(String propertyName) {
@@ -1167,10 +1139,8 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns the i-th value's content as Float of the defined property.
     * 
-    * @param propertyName
-    *            {@link String} the propertyName or path.
-    * @param index
-    *            {@link Integer} the value index.
+    * @param propertyName {@link String} the propertyName or path.
+    * @param index {@link Integer} the value index.
     * @return {@link Float} the content as Float, Float.NaN if conversion fails or null if property not found.
     */
    public double getNumber(String propertyName, int index) {
@@ -1186,10 +1156,8 @@ public class Section extends Object implements Serializable, TreeNode {
     * Internal method to retrieve a property. If the property is not found in this section itself the a possible link
     * will be resolved and the property search starts again.
     * 
-    * @param name
-    *            {@link String} the name of the searched property.
-    * @param resolveLink
-    *            {@link Boolean} indicates whether or not a link should be resolved.
+    * @param name {@link String} the name of the searched property.
+    * @param resolveLink {@link Boolean} indicates whether or not a link should be resolved.
     * @return {@link Property} the found property or null.
     */
    private Property getProperty(String name, boolean resolveLink) {
@@ -1225,7 +1193,7 @@ public class Section extends Object implements Serializable, TreeNode {
    /**
     * Returns all properties stored in this section.
     * 
-    * @return - Vector<odMLProperty>: returns the properties Vector which may be empty.
+    * @return - Vector of {@link Property}: returns the properties Vector which may be empty.
     */
    public Vector<Property> getProperties() {
       return properties;
@@ -1270,10 +1238,8 @@ public class Section extends Object implements Serializable, TreeNode {
     * Merging works recursively. Only those subsections are merged that share the same name and type! Otherwise they
     * are simply added.
     * 
-    * @param otherSection
-    *            {@link Section} the other section which shall be merged with this section.
-    * @param mergeOption
-    *            {@link Integer} the way merging is done.
+    * @param otherSection {@link Section} the other section which shall be merged with this section.
+    * @param mergeOption {@link Integer} the way merging is done.
     * 
     */
    public void merge(Section otherSection, int mergeOption) {
@@ -1406,8 +1372,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * Returns the index of the first matching {@link Property}. Method compares only the name. 
     * the method is marked @deprecated use indexOfProperty instead.
     * 
-    * @param property
-    *            {@link Property} the property that should be found.
+    * @param property {@link Property} the property that should be found.
     * @return int: the index of the property if such a property already exists, -1 if not.
     */
    @Deprecated
@@ -1497,8 +1462,7 @@ public class Section extends Object implements Serializable, TreeNode {
     * traverse the subsections! 
     * Method is marked @deprecated ! Use containsSection(String name, String type) instead.
     * 
-    * @param section
-    *            {@link Section}: the section that one looks for
+    * @param section {@link Section}: the section that one looks for
     * @return {@link Integer}: the index of the section if exists, -1 if not.
     */
    @Deprecated

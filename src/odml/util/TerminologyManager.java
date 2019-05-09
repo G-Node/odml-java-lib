@@ -11,7 +11,7 @@ package odml.util;
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License along with this software. If not, see
- * <http://www.gnu.org/licenses/>.
+ * <a href="http://gnu.org/licenses">http://gnu.org/licenses</a>.
  */
 
 import odml.core.Reader;
@@ -106,6 +106,10 @@ public class TerminologyManager {
 
    /**
     * See loadTerminology(url,string) for information.
+    *
+    * @param url {@link String} the url of the repository as String
+    * @param type {@link String} the desired section type
+    * @return {@link Section}
     */
    public Section loadTerminology(String url, String type) {
       Section s = null;
@@ -124,7 +128,8 @@ public class TerminologyManager {
     * section found in the terminology. If the terminology does not contain that type of section null is returned. If
     * no type is specified, loadTerminology returns the root section of the terminology.
     * 
-    * @param repository {@link URL}
+    * @param repository {@link URL} the url of the repository
+    * @param sectionType {@link String} the desired section type
     * @return {@link Section}
     */
    public Section loadTerminology(URL repository, String sectionType) {

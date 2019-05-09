@@ -11,7 +11,7 @@ package odml.core;
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License along with this software. If not, see
- * <http://www.gnu.org/licenses/>.
+ * <a href="http://gnu.org/licenses">http://gnu.org/licenses</a>.
  */
 
 import javax.swing.tree.TreeNode;
@@ -131,7 +131,7 @@ public class Property implements Serializable, Cloneable, TreeNode {
     * Creates a Property directly from a Value-Vector; used by the Reader
     *
     * @param name {@link String}: the name of the new property, mandatory
-    * @param values {@link Vector}<Value>: the values the property shall contain, mandatory except for terminologies
+    * @param values {@link Vector} of {@link Value}: the values the property shall contain, mandatory except for terminologies
     * @param definition {@link String}
     * @param dependency {@link String}
     * @param dependencyValue {@link String}

@@ -15,7 +15,7 @@ package odml.core;
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License
- * along with this software.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this software.  If not, see <a href="http://gnu.org/licenses">http://gnu.org/licenses</a>.
  */
 import org.apache.commons.codec.binary.Base64;
 

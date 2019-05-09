@@ -11,7 +11,7 @@ package odml.util;
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License along with this software. If not, see
- * <http://www.gnu.org/licenses/>.
+ * <a href="http://gnu.org/licenses">http://gnu.org/licenses</a>.
  */
 
 import odml.core.Property;
@@ -42,8 +42,7 @@ public class Mapper {
    /**
     * Constructor.
     * 
-    * @param original
-    *            A {@link Section} that contains mapping information.
+    * @param original A {@link Section} that contains mapping information.
     */
    public Mapper(Section original) {
       this.original = original;
@@ -103,8 +102,7 @@ public class Mapper {
    /**
     * Fills up empty mapping information in the to-convert tree with mapping information from a terminology.
     * 
-    * @param section
-    *            , the {@link Section} to fill up.
+    * @param section the {@link Section} to fill up.
     */
    private void fillMappings(Section section) {
       // load the terminology
@@ -135,10 +133,8 @@ public class Mapper {
    /**
     * Controls the mapping of a {@link Section}.
     * 
-    * @param origin
-    *            {@link Section} the original section that needs to be mapped
-    * @param mappedParent
-    *            {@link Section} the parent section in the mapped tree.
+    * @param origin {@link Section} the original section that needs to be mapped
+    * @param mappedParent {@link Section} the parent section in the mapped tree.
     * @throws Exception
     */
    private void mapSection(Section origin, Section mappedParent) throws Exception {
@@ -198,8 +194,7 @@ public class Mapper {
    /**
     * Map all Properties of the section
     * 
-    * @param sec
-    *            {@link Section} the section.
+    * @param sec {@link Section} the section.
     */
    private void mapProperties(Section sec) {
       // map the Properties of this section
@@ -216,8 +211,7 @@ public class Mapper {
    /**
     * Maps a certain property.
     * 
-    * @param p
-    *            {@link Property} the Property.
+    * @param p {@link Property} the Property.
     */
    public void mapProperty(Property p) {
       // create a copy of the property.
